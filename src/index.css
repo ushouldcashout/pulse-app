@@ -1,0 +1,55 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom styles for wallet adapter modal */
+.wallet-adapter-modal-wrapper {
+  background-color: rgba(0, 0, 0, 0.9) !important;
+}
+
+.wallet-adapter-modal-container {
+  background-color: #111 !important;
+  border-radius: 1rem !important;
+}
+
+.wallet-adapter-modal-title {
+  color: white !important;
+}
+
+.wallet-adapter-modal-list {
+  margin: 0 !important;
+}
+
+.wallet-adapter-modal-list li {
+  background-color: #1f1f1f !important;
+  border-radius: 0.75rem !important;
+  margin-bottom: 0.5rem !important;
+}
+
+.wallet-adapter-modal-list li:hover {
+  background-color: #2a2a2a !important;
+}
+
+.wallet-adapter-button {
+  background-color: #7c3aed !important;
+  border-radius: 0.75rem !important;
+  height: 3.5rem !important;
+  font-weight: 600 !important;
+}
+
+.wallet-adapter-button:hover {
+  background-color: #6d28d9 !important;
+}
+
+.wallet-adapter-button-trigger {
+  background-color: #7c3aed !important;
+}
+
+/* Hide scrollbar but allow scrolling */
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
