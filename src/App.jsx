@@ -345,6 +345,14 @@ const PulseLogo = ({ size = 34 }) => (
 // ============================================
 // CUSTOM HOOKS FOR ECOSYSTEM DATA
 // ============================================
+const formatUSD = (num) => {
+  if (num == null || isNaN(num)) return '...';
+  if (num >= 1e9) return '$' + (num / 1e9).toFixed(2) + 'B';
+  if (num >= 1e6) return '$' + (num / 1e6).toFixed(2) + 'M';
+  if (num >= 1e3) return '$' + num.toLocaleString('en-US', { maximumFractionDigits: 0 });
+  return '$' + num.toFixed(2);
+};
+
 const useEcosystemData = () => {
   const [tydroTVL, setTydroTVL] = useState(null);
   const [inkTVL, setInkTVL] = useState(null);
@@ -361,21 +369,21 @@ const useEcosystemData = () => {
       if (tydroData && !isNaN(tydroData)) {
         setTydroTVL(parseFloat(tydroData));
       } else {
-        setTydroTVL(234.5);
+        setTydroTVL(140000000);
       }
 
       if (inkData && Array.isArray(inkData)) {
         const ink = inkData.find(c => c.name === 'Ink');
         if (ink) setInkTVL(parseFloat(ink.tvl) || 156.2);
-        else setInkTVL(156.2);
+        else setInkTVL(52000000);
       } else {
-        setInkTVL(156.2);
+        setInkTVL(52000000);
       }
 
       if (nadoData && nadoData.volume24h) {
         setNadoVolume(parseFloat(nadoData.volume24h));
       } else {
-        setNadoVolume(3.4);
+        setNadoVolume(48200000);
       }
 
       setLoading(false);
@@ -392,8 +400,8 @@ const useEcosystemData = () => {
 };
 
 const useNadoData = () => {
-  const [volume24h, setVolume24h] = useState(3.4);
-  const [openInterest, setOpenInterest] = useState(12.8);
+  const [volume24h, setVolume24h] = useState(48200000);
+  const [openInterest, setOpenInterest] = useState(18700000);
   const [topPair, setTopPair] = useState('BTC/USD');
 
   useEffect(() => {
@@ -439,15 +447,15 @@ const EcosystemSidebar = () => {
         </div>
         <div className="sidebar-stat">
           <span>Tydro TVL</span>
-          <span className="sidebar-stat-value">${tydroTVL?.toFixed(1) || '...'}</span>
+          <span className="sidebar-stat-value">{formatUSD(tydroTVL)}</span>
         </div>
         <div className="sidebar-stat">
           <span>Ink TVL</span>
-          <span className="sidebar-stat-value">${inkTVL?.toFixed(1) || '...'}</span>
+          <span className="sidebar-stat-value">{formatUSD(inkTVL)}</span>
         </div>
         <div className="sidebar-stat">
           <span>Nado 24h Vol</span>
-          <span className="sidebar-stat-value">${nadoVolume?.toFixed(1) || '...'}</span>
+          <span className="sidebar-stat-value">{formatUSD(nadoVolume)}</span>
         </div>
       </div>
 
@@ -549,11 +557,11 @@ const LiveFeedSidebar = ({ recentBets, points, winRate = 62 }) => {
         </div>
         <div className="sidebar-stat">
           <span>24h Volume</span>
-          <span className="sidebar-stat-value">${volume24h?.toFixed(2) || '...'}</span>
+          <span className="sidebar-stat-value">{formatUSD(volume24h)}</span>
         </div>
         <div className="sidebar-stat">
           <span>Open Interest</span>
-          <span className="sidebar-stat-value">${openInterest?.toFixed(1) || '...'}</span>
+          <span className="sidebar-stat-value">{formatUSD(openInterest)}</span>
         </div>
         <div className="sidebar-stat">
           <span>Top Pair</span>
