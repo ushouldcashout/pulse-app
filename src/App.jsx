@@ -539,11 +539,6 @@ const LandingPage = ({ onEnter }) => {
             border: '1px solid rgba(255,255,255,0.08)', color: '#fff', textDecoration: 'none',
             fontSize: '13px', fontWeight: '600', transition: 'all 0.2s ease'
           }}>𝕏 Twitter</a>
-          <a href="https://github.com/ushouldcashout/pulse-app" target="_blank" rel="noopener noreferrer" style={{
-            padding: '10px 20px', borderRadius: '12px', background: 'rgba(255,255,255,0.04)',
-            border: '1px solid rgba(255,255,255,0.08)', color: '#fff', textDecoration: 'none',
-            fontSize: '13px', fontWeight: '600', transition: 'all 0.2s ease'
-          }}>🔗 GitHub</a>
         </div>
         <div style={{ fontSize: '11px', color: '#374151' }}>
           Built on Ink • Powered by degen energy • © 2025 Pulse
