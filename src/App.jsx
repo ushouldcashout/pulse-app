@@ -500,18 +500,18 @@ const EcosystemSidebar = () => {
         </div>
         <div className="sidebar-stat">
           <span>Win Rate</span>
-          <span className="sidebar-stat-value">62%</span>
+          <span className="sidebar-stat-value">{winRate}%</span>
         </div>
         <div className="sidebar-stat">
           <span>Streak</span>
-          <span className="sidebar-stat-value">+3</span>
+          <span className="sidebar-stat-value">{streak > 0 ? "+" + streak : streak}</span>
         </div>
       </div>
     </div>
   );
 };
 
-const LiveFeedSidebar = ({ recentBets, points, winRate = 62 }) => {
+const LiveFeedSidebar = ({ recentBets, points, winRate = 0, streak = 0 }) => {
   const { volume24h, openInterest, topPair } = useNadoData();
 
   const comingSoonMarkets = [
@@ -1169,6 +1169,10 @@ const PulseGame = () => {
   const isOnInk = chainId === inkSepolia.id;
 
   const [points, setPoints] = useState(0);
+  const [wins, setWins] = useState(() => { try { return parseInt(localStorage.getItem('pulse_wins')) || 0; } catch(e) { return 0; } });
+  const [losses, setLosses] = useState(() => { try { return parseInt(localStorage.getItem('pulse_losses')) || 0; } catch(e) { return 0; } });
+  const [currentStreak, setCurrentStreak] = useState(() => { try { return parseInt(localStorage.getItem('pulse_streak')) || 0; } catch(e) { return 0; } });
+  const [lastBetResult, setLastBetResult] = useState(null);
   const [phase, setPhase] = useState('betting');
   const [countdown, setCountdown] = useState(20);
   const [price, setPrice] = useState(0);
@@ -1197,6 +1201,9 @@ const PulseGame = () => {
 
   useEffect(() => { try { const p = localStorage.getItem('pulse_points'); if (p) setPoints(parseInt(p)); } catch(e){} }, []);
   useEffect(() => { try { localStorage.setItem('pulse_points', points.toString()); } catch(e){} }, [points]);
+  useEffect(() => { try { localStorage.setItem('pulse_wins', wins.toString()); } catch(e){} }, [wins]);
+  useEffect(() => { try { localStorage.setItem('pulse_losses', losses.toString()); } catch(e){} }, [losses]);
+  useEffect(() => { try { localStorage.setItem('pulse_streak', currentStreak.toString()); } catch(e){} }, [currentStreak]);
 
   // Track transaction lifecycle
   useEffect(() => {
@@ -1266,6 +1273,13 @@ const PulseGame = () => {
       if (snapshotPrice && price) {
         var res = price > snapshotPrice ? 'up' : 'down';
         setRoundResult(res);
+      if (bet) {
+        var won = bet === res;
+        setLastBetResult(won ? 'won' : 'lost');
+        if (won) { setWins(function(w) { return w + 1; }); setCurrentStreak(function(s) { return s > 0 ? s + 1 : 1; }); }
+        else { setLosses(function(l) { return l + 1; }); setCurrentStreak(function(s) { return s < 0 ? s - 1 : -1; }); }
+        setTimeout(function() { setLastBetResult(null); }, 8000);
+      }
       }
     }
     prevPhaseRef.current = phase;
@@ -1542,7 +1556,12 @@ const PulseGame = () => {
                   <div key={priceKey} style={{ fontSize: '24px', fontWeight: '800', letterSpacing: '-1px', lineHeight: 1, animation: priceDir ? (priceDir === 'up' ? 'priceFlashGreen 0.5s ease-out' : 'priceFlashRed 0.5s ease-out') : 'none' }}>
                     {price > 0 ? '$' + price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '...'}
                   </div>
-                  {snapshotPrice && phase !== 'betting' && (
+                  {lastBetResult && (
+              <div style={{ padding: "8px 16px", borderRadius: "10px", fontSize: "14px", fontWeight: "800", textAlign: "center", marginBottom: "8px", animation: "pulse 1.5s ease infinite", background: lastBetResult === "won" ? "rgba(16,185,129,0.15)" : "rgba(239,68,68,0.15)", color: lastBetResult === "won" ? "#10b981" : "#ef4444", border: lastBetResult === "won" ? "1px solid rgba(16,185,129,0.3)" : "1px solid rgba(239,68,68,0.3)" }}>
+                {lastBetResult === "won" ? "YOU WON! +2x" : "LOST - Better luck next round!"}
+              </div>
+            )}
+            {snapshotPrice && phase !== 'betting' && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px' }}>
                       <span style={{ fontSize: '10px', color: '#6b7280' }}>Entry ${snapshotPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                       <span style={{ fontSize: '12px', fontWeight: '800', padding: '1px 6px', borderRadius: '6px', background: price >= snapshotPrice ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)', color: price >= snapshotPrice ? '#10b981' : '#ef4444', border: price >= snapshotPrice ? '1px solid rgba(16,185,129,0.25)' : '1px solid rgba(239,68,68,0.25)' }}>
@@ -1596,12 +1615,18 @@ const PulseGame = () => {
               {/* AMOUNT + BET BUTTONS */}
               <div style={{ padding: '4px 0 0', flexShrink: 0 }}>
                 {/* Amount selector */}
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px", padding: "6px 10px", borderRadius: "8px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                  <div style={{ textAlign: "center" }}><div style={{ fontSize: "8px", color: "#6b7280", letterSpacing: "1px" }}>POOL UP</div><div style={{ fontSize: "12px", fontWeight: "700", color: "#10b981" }}>{pool.up ? pool.up.toFixed(3) : "0"} ETH</div></div>
+                  <div style={{ textAlign: "center" }}><div style={{ fontSize: "8px", color: "#6b7280", letterSpacing: "1px" }}>TOTAL</div><div style={{ fontSize: "12px", fontWeight: "700", color: "#e5e7eb" }}>{((pool.up || 0) + (pool.down || 0)).toFixed(3)} ETH</div></div>
+                  <div style={{ textAlign: "center" }}><div style={{ fontSize: "8px", color: "#6b7280", letterSpacing: "1px" }}>POOL DOWN</div><div style={{ fontSize: "12px", fontWeight: "700", color: "#ef4444" }}>{pool.down ? pool.down.toFixed(3) : "0"} ETH</div></div>
+                </div>
                 <div style={{ display: 'flex', justifyContent: 'center', gap: '4px', marginBottom: '6px' }}>
-                  {[0.001, 0.005, 0.01, 0.05].map(amt => (
-                    <button key={amt} className="amount-btn" onClick={() => setBetAmount(amt)}
-                      style={{ padding: '5px 12px', borderRadius: '8px', border: betAmount === amt ? '1px solid rgba(16,185,129,0.4)' : '1px solid rgba(255,255,255,0.05)', background: betAmount === amt ? 'rgba(16,185,129,0.12)' : 'rgba(255,255,255,0.02)', color: betAmount === amt ? '#10b981' : '#6b7280', fontWeight: '600', fontSize: '11px', cursor: 'pointer' }}
-                    >{amt}</button>
-                  ))}
+                  {[{eth: 0.001, label: '$2'}, {eth: 0.005, label: '$5'}, {eth: 0.01, label: '$10'}, {eth: 0.05, label: '$25'}].map(function(opt) { return (
+                  <button key={opt.eth} className="amount-btn" onClick={function() { setBetAmount(opt.eth); }}
+                    style={{ padding: '6px 10px', borderRadius: '8px', border: '1px solid', borderColor: betAmount === opt.eth ? '#3b82f6' : 'rgba(255,255,255,0.08)', background: betAmount === opt.eth ? 'rgba(59,130,246,0.15)' : 'rgba(255,255,255,0.03)', color: betAmount === opt.eth ? '#60a5fa' : '#9ca3af', fontSize: '11px', fontWeight: '700', cursor: 'pointer', transition: 'all 0.2s' }}>
+                    {opt.label}<span style={{fontSize: '8px', opacity: 0.6, display: 'block'}}>{opt.eth} ETH</span>
+                  </button>
+                ); })}}
                 </div>
 
                 {/* UP / DOWN */}
@@ -1645,7 +1670,7 @@ const PulseGame = () => {
             {/* RIGHT SIDEBAR — Only on desktop */}
             {isDesktop && (
               <div style={{ flexShrink: 0 }}>
-                <LiveFeedSidebar recentBets={recentBets} points={points} />
+                <LiveFeedSidebar recentBets={recentBets} points={points} winRate={wins + losses > 0 ? Math.round(wins / (wins + losses) * 100) : 0} streak={currentStreak} />
               </div>
             )}
           </div>
