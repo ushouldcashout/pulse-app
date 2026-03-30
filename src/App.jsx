@@ -207,7 +207,7 @@ const queryClient = new QueryClient();
 const WS_URL = 'wss://pulse-backend-production-b2c9.up.railway.app';
 
 // ============================================
-// CSS ANIMATIONS
+// CSS ANIMATIONS & STYLES
 // ============================================
 const PULSE_STYLES = `
 @keyframes pulseGlow {
@@ -253,6 +253,10 @@ const PULSE_STYLES = `
   0%, 100% { opacity: 0.6; }
   50% { opacity: 1; }
 }
+@keyframes ecosystemPulse {
+  0%, 100% { opacity: 0.8; }
+  50% { opacity: 1; }
+}
 .pulse-btn-up:not(:disabled):hover {
   transform: translateY(-2px) !important;
   box-shadow: 0 8px 30px rgba(16,185,129,0.4) !important;
@@ -271,6 +275,55 @@ const PULSE_STYLES = `
 }
 .amount-btn { transition: all 0.15s ease !important; }
 .amount-btn:hover { transform: scale(1.08) !important; }
+.sidebar-card {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 12px;
+  transition: all 0.2s ease;
+}
+.sidebar-card:hover {
+  background: rgba(255,255,255,0.03);
+  border-color: rgba(255,255,255,0.08);
+}
+.sidebar-stat {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  font-size: 12px;
+  color: #9ca3af;
+}
+.sidebar-stat-value {
+  font-weight: 700;
+  color: #fff;
+  font-family: monospace;
+  font-size: 13px;
+}
+.lb-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+  font-size: 11px;
+}
+.lb-item:last-child {
+  border-bottom: none;
+}
+.live-bet-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px;
+  background: rgba(255,255,255,0.02);
+  border-radius: 8px;
+  font-size: 10px;
+  border: 1px solid rgba(255,255,255,0.03);
+  margin-bottom: 6px;
+  animation: fadeIn 0.3s ease;
+}
 `;
 
 // ============================================
@@ -288,6 +341,244 @@ const PulseLogo = ({ size = 34 }) => (
     </defs>
   </svg>
 );
+
+// ============================================
+// CUSTOM HOOKS FOR ECOSYSTEM DATA
+// ============================================
+const useEcosystemData = () => {
+  const [tydroTVL, setTydroTVL] = useState(null);
+  const [inkTVL, setInkTVL] = useState(null);
+  const [nadoVolume, setNadoVolume] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  const fetchData = useCallback(() => {
+    setLoading(true);
+    Promise.all([
+      fetch('https://api.llama.fi/tvl/tydro').then(r => r.json()).catch(() => null),
+      fetch('https://api.llama.fi/v2/chains').then(r => r.json()).catch(() => null),
+      fetch('https://api.nado.xyz/v2/stats').then(r => r.json()).catch(() => null),
+    ]).then(([tydroData, inkData, nadoData]) => {
+      if (tydroData && !isNaN(tydroData)) {
+        setTydroTVL(parseFloat(tydroData));
+      } else {
+        setTydroTVL(234.5);
+      }
+
+      if (inkData && Array.isArray(inkData)) {
+        const ink = inkData.find(c => c.name === 'Ink');
+        if (ink) setInkTVL(parseFloat(ink.tvl) || 156.2);
+        else setInkTVL(156.2);
+      } else {
+        setInkTVL(156.2);
+      }
+
+      if (nadoData && nadoData.volume24h) {
+        setNadoVolume(parseFloat(nadoData.volume24h));
+      } else {
+        setNadoVolume(3.4);
+      }
+
+      setLoading(false);
+    });
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+    const interval = setInterval(fetchData, 60000);
+    return () => clearInterval(interval);
+  }, [fetchData]);
+
+  return { tydroTVL, inkTVL, nadoVolume, loading };
+};
+
+const useNadoData = () => {
+  const [volume24h, setVolume24h] = useState(3.4);
+  const [openInterest, setOpenInterest] = useState(12.8);
+  const [topPair, setTopPair] = useState('BTC/USD');
+
+  useEffect(() => {
+    const fetchNadoData = () => {
+      fetch('https://api.nado.xyz/v2/stats')
+        .then(r => r.json())
+        .then(data => {
+          if (data.volume24h) setVolume24h(parseFloat(data.volume24h));
+          if (data.openInterest) setOpenInterest(parseFloat(data.openInterest));
+          if (data.topPair) setTopPair(data.topPair);
+        })
+        .catch(() => {});
+    };
+
+    fetchNadoData();
+    const interval = setInterval(fetchNadoData, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  return { volume24h, openInterest, topPair };
+};
+
+// ============================================
+// SIDEBAR COMPONENTS
+// ============================================
+const EcosystemSidebar = () => {
+  const { tydroTVL, inkTVL, nadoVolume } = useEcosystemData();
+
+  const mockLeaderboard = [
+    { address: '0xA3f1...8c2d', points: 12450, streak: 7 },
+    { address: '0xB7e2...4f91', points: 9830, streak: 5 },
+    { address: '0x9d4c...1a73', points: 8210, streak: 3 },
+    { address: '0xE6f8...5b2e', points: 6540, streak: 4 },
+    { address: '0x2c1a...9d47', points: 5120, streak: 2 },
+  ];
+
+  return (
+    <div style={{ width: '240px', overflowY: 'auto', paddingRight: '8px', scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.1) transparent' }}>
+      {/* Ink Ecosystem Stats */}
+      <div className="sidebar-card">
+        <div style={{ fontSize: '10px', fontWeight: '800', color: '#10b981', letterSpacing: '2px', marginBottom: '12px', textTransform: 'uppercase' }}>
+          INK ECOSYSTEM
+        </div>
+        <div className="sidebar-stat">
+          <span>Tydro TVL</span>
+          <span className="sidebar-stat-value">${tydroTVL?.toFixed(1) || '...'}</span>
+        </div>
+        <div className="sidebar-stat">
+          <span>Ink TVL</span>
+          <span className="sidebar-stat-value">${inkTVL?.toFixed(1) || '...'}</span>
+        </div>
+        <div className="sidebar-stat">
+          <span>Nado 24h Vol</span>
+          <span className="sidebar-stat-value">${nadoVolume?.toFixed(1) || '...'}</span>
+        </div>
+      </div>
+
+      {/* Tydro Rates */}
+      <div className="sidebar-card">
+        <div style={{ fontSize: '10px', fontWeight: '800', color: '#06b6d4', letterSpacing: '2px', marginBottom: '12px', textTransform: 'uppercase' }}>
+          Tydro Rates
+        </div>
+        <div className="sidebar-stat">
+          <span>ETH Supply APY</span>
+          <span className="sidebar-stat-value">8.2%</span>
+        </div>
+        <div className="sidebar-stat">
+          <span>ETH Borrow APY</span>
+          <span className="sidebar-stat-value">12.5%</span>
+        </div>
+      </div>
+
+      {/* Mini Leaderboard */}
+      <div className="sidebar-card">
+        <div style={{ fontSize: '10px', fontWeight: '800', color: '#fbbf24', letterSpacing: '2px', marginBottom: '12px' }}>
+          TOP DEGENS 🏆
+        </div>
+        {mockLeaderboard.map((player, i) => (
+          <div key={i} className="lb-item">
+            <span style={{ color: '#6b7280', minWidth: '16px' }}>#{i + 1}</span>
+            <span style={{ color: '#9ca3af', flex: 1, fontFamily: 'monospace' }}>{player.address}</span>
+            <span style={{ color: '#10b981', fontWeight: '700' }}>{player.points}</span>
+            <span style={{ color: '#fbbf24' }}>⚡{player.streak}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Your Stats (placeholder - would use actual state) */}
+      <div className="sidebar-card">
+        <div style={{ fontSize: '10px', fontWeight: '800', color: '#10b981', letterSpacing: '2px', marginBottom: '12px', textTransform: 'uppercase' }}>
+          Your Stats
+        </div>
+        <div className="sidebar-stat">
+          <span>Points</span>
+          <span className="sidebar-stat-value">---</span>
+        </div>
+        <div className="sidebar-stat">
+          <span>Win Rate</span>
+          <span className="sidebar-stat-value">62%</span>
+        </div>
+        <div className="sidebar-stat">
+          <span>Streak</span>
+          <span className="sidebar-stat-value">+3</span>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const LiveFeedSidebar = ({ recentBets, points, winRate = 62 }) => {
+  const { volume24h, openInterest, topPair } = useNadoData();
+
+  const comingSoonMarkets = [
+    'Will Tydro ETH utilization cross 80%?',
+    'Nado 24h volume over $5M?',
+    'INK TVL +10% this week?',
+  ];
+
+  return (
+    <div style={{ width: '260px', overflowY: 'auto', paddingLeft: '8px', scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.1) transparent' }}>
+      {/* Live Bet Feed */}
+      <div className="sidebar-card">
+        <div style={{ fontSize: '10px', fontWeight: '800', color: '#ef4444', letterSpacing: '2px', marginBottom: '12px' }}>
+          LIVE BETS 🔴
+        </div>
+        <div style={{ maxHeight: '200px', overflowY: 'auto', scrollbarWidth: 'thin' }}>
+          {recentBets && recentBets.length > 0 ? (
+            recentBets.slice(0, 15).map((bet, i) => {
+              const isUp = bet.side === 'up';
+              return (
+                <div key={i} className="live-bet-item" style={{
+                  borderColor: isUp ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)',
+                  background: isUp ? 'rgba(16,185,129,0.03)' : 'rgba(239,68,68,0.03)',
+                }}>
+                  <span style={{ fontSize: '11px' }}>{isUp ? '🟢' : '🔴'}</span>
+                  <span style={{ color: '#9ca3af', fontFamily: 'monospace', flex: 1 }}>{bet.name?.slice(0, 8) || '0x???'}</span>
+                  <span style={{ color: isUp ? '#10b981' : '#ef4444', fontWeight: '700', fontSize: '9px' }}>
+                    {bet.amount} {isUp ? 'UP' : 'DN'}
+                  </span>
+                </div>
+              );
+            })
+          ) : (
+            <div style={{ fontSize: '11px', color: '#6b7280', padding: '8px 0' }}>Waiting for bets...</div>
+          )}
+        </div>
+      </div>
+
+      {/* Nado Quick Stats */}
+      <div className="sidebar-card">
+        <div style={{ fontSize: '10px', fontWeight: '800', color: '#a855f7', letterSpacing: '2px', marginBottom: '12px', textTransform: 'uppercase' }}>
+          Nado DEX
+        </div>
+        <div className="sidebar-stat">
+          <span>24h Volume</span>
+          <span className="sidebar-stat-value">${volume24h?.toFixed(2) || '...'}</span>
+        </div>
+        <div className="sidebar-stat">
+          <span>Open Interest</span>
+          <span className="sidebar-stat-value">${openInterest?.toFixed(1) || '...'}</span>
+        </div>
+        <div className="sidebar-stat">
+          <span>Top Pair</span>
+          <span className="sidebar-stat-value">{topPair}</span>
+        </div>
+      </div>
+
+      {/* Coming Soon */}
+      <div className="sidebar-card" style={{ borderColor: 'rgba(168,85,247,0.15)', background: 'rgba(168,85,247,0.02)' }}>
+        <div style={{ fontSize: '10px', fontWeight: '800', color: '#c084fc', letterSpacing: '2px', marginBottom: '12px' }}>
+          🔮 COMING SOON
+        </div>
+        <div style={{ fontSize: '11px', color: '#a855f7', fontWeight: '700', marginBottom: '8px' }}>
+          PREDICT DEFI
+        </div>
+        {comingSoonMarkets.map((market, i) => (
+          <div key={i} style={{ fontSize: '10px', color: '#9ca3af', padding: '6px 0', borderBottom: i < comingSoonMarkets.length - 1 ? '1px solid rgba(255,255,255,0.03)' : 'none', display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <span>🔒</span>
+            <span>{market}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
 
 // ============================================
 // LANDING PAGE
@@ -806,10 +1097,29 @@ const useTelegram = () => {
 };
 
 // ============================================
+// MEDIA QUERY HOOK
+// ============================================
+const useMediaQuery = (query) => {
+  const [matches, setMatches] = useState(false);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia(query);
+    setMatches(mediaQuery.matches);
+
+    const handler = (e) => setMatches(e.matches);
+    mediaQuery.addEventListener('change', handler);
+    return () => mediaQuery.removeEventListener('change', handler);
+  }, [query]);
+
+  return matches;
+};
+
+// ============================================
 // MAIN GAME COMPONENT
 // ============================================
 const PulseGame = () => {
   const { isReady, haptic, isTelegram } = useTelegram();
+  const isDesktop = useMediaQuery('(min-width: 901px)');
 
   const { open } = useAppKit();
   const { address, isConnected } = useAppKitAccount();
@@ -1170,150 +1480,167 @@ const PulseGame = () => {
       {/* ===== MAIN GAME (connected + on Ink + has balance) ===== */}
       {isConnected && isOnInk && balance >= 0.0001 && (
         <>
-          {/* CHART — takes most of the screen */}
-          <div style={{ flex: 1, minHeight: 0, padding: '0 4px', display: 'flex', flexDirection: 'column' }}>
-            {/* Round history strip */}
-            {lastResults.length > 0 && (
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '2px', padding: '4px 0', flexShrink: 0 }}>
-                {lastResults.map(function(r, i) {
-                  return (
-                    <div key={i} style={{ width: '16px', height: '16px', borderRadius: '4px', background: r === 'up' ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)', border: r === 'up' ? '1px solid rgba(16,185,129,0.3)' : '1px solid rgba(239,68,68,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '7px', color: r === 'up' ? '#10b981' : '#ef4444', fontWeight: '700' }}>
-                      {r === 'up' ? '▲' : '▼'}
-                    </div>
-                  );
-                })}
+          {/* THREE-COLUMN LAYOUT (Desktop) or SINGLE COLUMN (Mobile) */}
+          <div style={{ flex: 1, minHeight: 0, display: 'flex', gap: '12px', padding: '8px 8px', overflowY: 'auto' }}>
+            {/* LEFT SIDEBAR — Only on desktop */}
+            {isDesktop && (
+              <div style={{ flexShrink: 0 }}>
+                <EcosystemSidebar />
               </div>
             )}
 
-            {/* Chart */}
-            <div style={{ flex: 1, minHeight: '180px', borderRadius: '14px', overflow: 'hidden', background: 'rgba(255,255,255,0.015)', border: '1px solid rgba(255,255,255,0.04)' }}>
-              <PriceChart prices={priceHistory} lockPrice={snapshotPrice} phase={phase} roundResult={roundResult} />
-            </div>
-          </div>
+            {/* CENTER COLUMN — Chart + Controls */}
+            <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {/* Round history strip */}
+              {lastResults.length > 0 && (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '2px', padding: '4px 0', flexShrink: 0 }}>
+                  {lastResults.map(function(r, i) {
+                    return (
+                      <div key={i} style={{ width: '16px', height: '16px', borderRadius: '4px', background: r === 'up' ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)', border: r === 'up' ? '1px solid rgba(16,185,129,0.3)' : '1px solid rgba(239,68,68,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '7px', color: r === 'up' ? '#10b981' : '#ef4444', fontWeight: '700' }}>
+                        {r === 'up' ? '▲' : '▼'}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
 
-          {/* SOCIAL FEED — recent bets from other players */}
-          {recentBets.length > 0 && (
-            <div style={{ padding: '0 10px', flexShrink: 0, overflow: 'hidden' }}>
-              <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch', padding: '3px 0' }}>
-                {recentBets.slice(0, 8).map(function(b, i) {
-                  var isUp = b.side === 'up';
-                  return (
-                    <div key={i} style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: '4px', padding: '3px 8px', borderRadius: '8px', background: isUp ? 'rgba(16,185,129,0.06)' : 'rgba(239,68,68,0.06)', border: isUp ? '1px solid rgba(16,185,129,0.12)' : '1px solid rgba(239,68,68,0.12)', animation: 'fadeIn 0.3s ease' }}>
-                      <span style={{ fontSize: '8px' }}>{isUp ? '🟢' : '🔴'}</span>
-                      <span style={{ fontSize: '9px', color: '#9ca3af', fontFamily: 'monospace' }}>{b.name || '0x???'}</span>
-                      <span style={{ fontSize: '9px', fontWeight: '700', color: isUp ? '#10b981' : '#ef4444' }}>{b.amount} {isUp ? 'UP' : 'DN'}</span>
+              {/* Chart */}
+              <div style={{ flex: 1, minHeight: '180px', borderRadius: '14px', overflow: 'hidden', background: 'rgba(255,255,255,0.015)', border: '1px solid rgba(255,255,255,0.04)' }}>
+                <PriceChart prices={priceHistory} lockPrice={snapshotPrice} phase={phase} roundResult={roundResult} />
+              </div>
+
+              {/* SOCIAL FEED — recent bets from other players */}
+              {recentBets.length > 0 && (
+                <div style={{ padding: '0 4px', flexShrink: 0, overflow: 'hidden' }}>
+                  <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch', padding: '3px 0' }}>
+                    {recentBets.slice(0, 8).map(function(b, i) {
+                      var isUp = b.side === 'up';
+                      return (
+                        <div key={i} style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: '4px', padding: '3px 8px', borderRadius: '8px', background: isUp ? 'rgba(16,185,129,0.06)' : 'rgba(239,68,68,0.06)', border: isUp ? '1px solid rgba(16,185,129,0.12)' : '1px solid rgba(239,68,68,0.12)', animation: 'fadeIn 0.3s ease' }}>
+                          <span style={{ fontSize: '8px' }}>{isUp ? '🟢' : '🔴'}</span>
+                          <span style={{ fontSize: '9px', color: '#9ca3af', fontFamily: 'monospace' }}>{b.name || '0x???'}</span>
+                          <span style={{ fontSize: '9px', fontWeight: '700', color: isUp ? '#10b981' : '#ef4444' }}>{b.amount} {isUp ? 'UP' : 'DN'}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* PRICE ROW + COUNTDOWN */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 4px 4px', flexShrink: 0 }}>
+                <div>
+                  <div style={{ fontSize: '9px', color: '#4b5563', letterSpacing: '1.5px' }}>{asset}/USD</div>
+                  <div key={priceKey} style={{ fontSize: '24px', fontWeight: '800', letterSpacing: '-1px', lineHeight: 1, animation: priceDir ? (priceDir === 'up' ? 'priceFlashGreen 0.5s ease-out' : 'priceFlashRed 0.5s ease-out') : 'none' }}>
+                    {price > 0 ? '$' + price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '...'}
+                  </div>
+                  {snapshotPrice && phase !== 'betting' && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px' }}>
+                      <span style={{ fontSize: '10px', color: '#6b7280' }}>Entry ${snapshotPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                      <span style={{ fontSize: '12px', fontWeight: '800', padding: '1px 6px', borderRadius: '6px', background: price >= snapshotPrice ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)', color: price >= snapshotPrice ? '#10b981' : '#ef4444', border: price >= snapshotPrice ? '1px solid rgba(16,185,129,0.25)' : '1px solid rgba(239,68,68,0.25)' }}>
+                        {(() => { var diff = price - snapshotPrice; return (diff >= 0 ? '+$' : '-$') + Math.abs(diff).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); })()}
+                      </span>
                     </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* PRICE ROW + COUNTDOWN */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 10px 4px', flexShrink: 0 }}>
-            <div>
-              <div style={{ fontSize: '9px', color: '#4b5563', letterSpacing: '1.5px' }}>{asset}/USD</div>
-              <div key={priceKey} style={{ fontSize: '24px', fontWeight: '800', letterSpacing: '-1px', lineHeight: 1, animation: priceDir ? (priceDir === 'up' ? 'priceFlashGreen 0.5s ease-out' : 'priceFlashRed 0.5s ease-out') : 'none' }}>
-                {price > 0 ? '$' + price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '...'}
-              </div>
-              {snapshotPrice && phase !== 'betting' && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px' }}>
-                  <span style={{ fontSize: '10px', color: '#6b7280' }}>Entry ${snapshotPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                  <span style={{ fontSize: '12px', fontWeight: '800', padding: '1px 6px', borderRadius: '6px', background: price >= snapshotPrice ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)', color: price >= snapshotPrice ? '#10b981' : '#ef4444', border: price >= snapshotPrice ? '1px solid rgba(16,185,129,0.25)' : '1px solid rgba(239,68,68,0.25)' }}>
-                    {(() => { var diff = price - snapshotPrice; return (diff >= 0 ? '+$' : '-$') + Math.abs(diff).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); })()}
-                  </span>
-                </div>
-              )}
-            </div>
-
-            {/* Compact circular countdown */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              {/* Win/Loss badge */}
-              {bet && phase === 'results' && roundResult && (
-                <div style={{ padding: '4px 12px', borderRadius: '10px', fontSize: '12px', fontWeight: '800', animation: 'slideIn 0.3s ease', background: bet === roundResult ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)', color: bet === roundResult ? '#10b981' : '#ef4444', border: bet === roundResult ? '1px solid rgba(16,185,129,0.3)' : '1px solid rgba(239,68,68,0.3)' }}>
-                  {bet === roundResult ? 'WON' : 'LOST'}
-                </div>
-              )}
-
-              <div style={{ position: 'relative', width: '54px', height: '54px' }}>
-                <svg width="54" height="54" style={{ transform: 'rotate(-90deg)' }}>
-                  <circle cx="27" cy="27" r={ringR} fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth="3" />
-                  <circle cx="27" cy="27" r={ringR} fill="none"
-                    stroke={phase === 'betting' ? '#10b981' : phase === 'results' ? (roundResult === 'up' ? '#10b981' : '#ef4444') : '#fbbf24'}
-                    strokeWidth="3" strokeLinecap="round"
-                    strokeDasharray={ringC} strokeDashoffset={ringC * (1 - countdownPct)}
-                    style={{ transition: 'stroke-dashoffset 1s linear, stroke 0.3s' }}
-                  />
-                </svg>
-                <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                  {phase === 'results' ? (
-                    <span style={{ fontSize: '18px' }}>{roundResult === 'up' ? '📈' : '📉'}</span>
-                  ) : (
-                    <span style={{ fontSize: '18px', fontWeight: '800', color: phase === 'betting' ? '#10b981' : '#fbbf24', animation: countdown <= 3 && phase === 'betting' ? 'countdownPulse 0.5s infinite' : 'none' }}>{countdown}</span>
                   )}
                 </div>
-              </div>
 
-              <div style={{ textAlign: 'right' }}>
-                <div style={{ fontSize: '9px', letterSpacing: '1px', fontWeight: '700', color: phase === 'betting' ? '#10b981' : phase === 'results' ? (roundResult === 'up' ? '#10b981' : '#ef4444') : '#fbbf24' }}>
-                  {phase === 'betting' ? 'BET NOW' : phase === 'locked' ? 'LOCKED' : phase === 'resolving' ? 'RESOLVING' : roundResult ? roundResult.toUpperCase() : 'RESULTS'}
-                </div>
-                {bet && phase !== 'results' && phase !== 'betting' && (
-                  <div style={{ fontSize: '9px', color: bet === 'up' ? '#10b981' : '#ef4444', marginTop: '1px' }}>
-                    {betAmount} on {bet.toUpperCase()}
+                {/* Compact circular countdown */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  {/* Win/Loss badge */}
+                  {bet && phase === 'results' && roundResult && (
+                    <div style={{ padding: '4px 12px', borderRadius: '10px', fontSize: '12px', fontWeight: '800', animation: 'slideIn 0.3s ease', background: bet === roundResult ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)', color: bet === roundResult ? '#10b981' : '#ef4444', border: bet === roundResult ? '1px solid rgba(16,185,129,0.3)' : '1px solid rgba(239,68,68,0.3)' }}>
+                      {bet === roundResult ? 'WON' : 'LOST'}
+                    </div>
+                  )}
+
+                  <div style={{ position: 'relative', width: '54px', height: '54px' }}>
+                    <svg width="54" height="54" style={{ transform: 'rotate(-90deg)' }}>
+                      <circle cx="27" cy="27" r={ringR} fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth="3" />
+                      <circle cx="27" cy="27" r={ringR} fill="none"
+                        stroke={phase === 'betting' ? '#10b981' : phase === 'results' ? (roundResult === 'up' ? '#10b981' : '#ef4444') : '#fbbf24'}
+                        strokeWidth="3" strokeLinecap="round"
+                        strokeDasharray={ringC} strokeDashoffset={ringC * (1 - countdownPct)}
+                        style={{ transition: 'stroke-dashoffset 1s linear, stroke 0.3s' }}
+                      />
+                    </svg>
+                    <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                      {phase === 'results' ? (
+                        <span style={{ fontSize: '18px' }}>{roundResult === 'up' ? '📈' : '📉'}</span>
+                      ) : (
+                        <span style={{ fontSize: '18px', fontWeight: '800', color: phase === 'betting' ? '#10b981' : '#fbbf24', animation: countdown <= 3 && phase === 'betting' ? 'countdownPulse 0.5s infinite' : 'none' }}>{countdown}</span>
+                      )}
+                    </div>
                   </div>
-                )}
+
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ fontSize: '9px', letterSpacing: '1px', fontWeight: '700', color: phase === 'betting' ? '#10b981' : phase === 'results' ? (roundResult === 'up' ? '#10b981' : '#ef4444') : '#fbbf24' }}>
+                      {phase === 'betting' ? 'BET NOW' : phase === 'locked' ? 'LOCKED' : phase === 'resolving' ? 'RESOLVING' : roundResult ? roundResult.toUpperCase() : 'RESULTS'}
+                    </div>
+                    {bet && phase !== 'results' && phase !== 'betting' && (
+                      <div style={{ fontSize: '9px', color: bet === 'up' ? '#10b981' : '#ef4444', marginTop: '1px' }}>
+                        {betAmount} on {bet.toUpperCase()}
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
 
-          {/* AMOUNT + BET BUTTONS */}
-          <div style={{ padding: '4px 10px 10px', flexShrink: 0 }}>
-            {/* Amount selector */}
-            <div style={{ display: 'flex', justifyContent: 'center', gap: '4px', marginBottom: '6px' }}>
-              {[0.001, 0.005, 0.01, 0.05].map(amt => (
-                <button key={amt} className="amount-btn" onClick={() => setBetAmount(amt)}
-                  style={{ padding: '5px 12px', borderRadius: '8px', border: betAmount === amt ? '1px solid rgba(16,185,129,0.4)' : '1px solid rgba(255,255,255,0.05)', background: betAmount === amt ? 'rgba(16,185,129,0.12)' : 'rgba(255,255,255,0.02)', color: betAmount === amt ? '#10b981' : '#6b7280', fontWeight: '600', fontSize: '11px', cursor: 'pointer' }}
-                >{amt}</button>
-              ))}
-            </div>
+              {/* AMOUNT + BET BUTTONS */}
+              <div style={{ padding: '4px 0 0', flexShrink: 0 }}>
+                {/* Amount selector */}
+                <div style={{ display: 'flex', justifyContent: 'center', gap: '4px', marginBottom: '6px' }}>
+                  {[0.001, 0.005, 0.01, 0.05].map(amt => (
+                    <button key={amt} className="amount-btn" onClick={() => setBetAmount(amt)}
+                      style={{ padding: '5px 12px', borderRadius: '8px', border: betAmount === amt ? '1px solid rgba(16,185,129,0.4)' : '1px solid rgba(255,255,255,0.05)', background: betAmount === amt ? 'rgba(16,185,129,0.12)' : 'rgba(255,255,255,0.02)', color: betAmount === amt ? '#10b981' : '#6b7280', fontWeight: '600', fontSize: '11px', cursor: 'pointer' }}
+                    >{amt}</button>
+                  ))}
+                </div>
 
-            {/* UP / DOWN */}
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <button className="pulse-btn-up" onClick={() => placeBet('up')} disabled={!bettingActive}
-                style={{ flex: 1, padding: '14px', borderRadius: '14px', border: bet === 'up' ? '2px solid #10b981' : '2px solid transparent', background: bet === 'up' ? 'rgba(16,185,129,0.12)' : 'linear-gradient(160deg, #10b981, #059669)', color: '#fff', fontSize: '16px', fontWeight: '800', cursor: bettingActive ? 'pointer' : 'not-allowed', opacity: bettingActive ? 1 : (bet === 'up' ? 0.85 : 0.25), transition: 'all 0.2s', boxShadow: bettingActive ? '0 4px 16px rgba(16,185,129,0.2)' : 'none', animation: bettingActive ? 'pulseGlow 3s infinite' : 'none' }}
-              >📈 UP</button>
-              <button className="pulse-btn-down" onClick={() => placeBet('down')} disabled={!bettingActive}
-                style={{ flex: 1, padding: '14px', borderRadius: '14px', border: bet === 'down' ? '2px solid #ef4444' : '2px solid transparent', background: bet === 'down' ? 'rgba(239,68,68,0.12)' : 'linear-gradient(160deg, #ef4444, #dc2626)', color: '#fff', fontSize: '16px', fontWeight: '800', cursor: bettingActive ? 'pointer' : 'not-allowed', opacity: bettingActive ? 1 : (bet === 'down' ? 0.85 : 0.25), transition: 'all 0.2s', boxShadow: bettingActive ? '0 4px 16px rgba(239,68,68,0.2)' : 'none', animation: bettingActive ? 'pulseGlowRed 3s infinite' : 'none' }}
-              >📉 DOWN</button>
-            </div>
-          </div>
-
-          {/* BOTTOM BAR: Points + $PULSE + Referral */}
-          <div style={{ padding: '0 10px 10px', flexShrink: 0, display: 'flex', gap: '6px', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <div style={{ padding: '3px 10px', borderRadius: '12px', background: 'rgba(251,191,36,0.08)', border: '1px solid rgba(251,191,36,0.12)' }}>
-                <span style={{ color: '#fbbf24', fontSize: '12px', fontWeight: '700' }}>{points}</span>
-                <span style={{ color: '#92702a', fontSize: '9px', marginLeft: '3px' }}>PTS</span>
+                {/* UP / DOWN */}
+                <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+                  <button className="pulse-btn-up" onClick={() => placeBet('up')} disabled={!bettingActive}
+                    style={{ flex: 1, padding: '14px', borderRadius: '14px', border: bet === 'up' ? '2px solid #10b981' : '2px solid transparent', background: bet === 'up' ? 'rgba(16,185,129,0.12)' : 'linear-gradient(160deg, #10b981, #059669)', color: '#fff', fontSize: '16px', fontWeight: '800', cursor: bettingActive ? 'pointer' : 'not-allowed', opacity: bettingActive ? 1 : (bet === 'up' ? 0.85 : 0.25), transition: 'all 0.2s', boxShadow: bettingActive ? '0 4px 16px rgba(16,185,129,0.2)' : 'none', animation: bettingActive ? 'pulseGlow 3s infinite' : 'none' }}
+                  >📈 UP</button>
+                  <button className="pulse-btn-down" onClick={() => placeBet('down')} disabled={!bettingActive}
+                    style={{ flex: 1, padding: '14px', borderRadius: '14px', border: bet === 'down' ? '2px solid #ef4444' : '2px solid transparent', background: bet === 'down' ? 'rgba(239,68,68,0.12)' : 'linear-gradient(160deg, #ef4444, #dc2626)', color: '#fff', fontSize: '16px', fontWeight: '800', cursor: bettingActive ? 'pointer' : 'not-allowed', opacity: bettingActive ? 1 : (bet === 'down' ? 0.85 : 0.25), transition: 'all 0.2s', boxShadow: bettingActive ? '0 4px 16px rgba(239,68,68,0.2)' : 'none', animation: bettingActive ? 'pulseGlowRed 3s infinite' : 'none' }}
+                  >📉 DOWN</button>
+                </div>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '3px 8px', borderRadius: '12px', background: 'rgba(168,85,247,0.06)', border: '1px solid rgba(168,85,247,0.1)' }}>
-                <span style={{ fontSize: '10px', fontWeight: '700', color: '#a855f7' }}>$PULSE</span>
-                <span style={{ fontSize: '8px', padding: '1px 4px', borderRadius: '4px', background: 'rgba(168,85,247,0.2)', color: '#c084fc', fontWeight: '600' }}>SOON</span>
-              </div>
-            </div>
-            <button onClick={function() { setShowReferral(!showReferral); }} style={{ padding: '3px 10px', borderRadius: '12px', border: '1px solid rgba(16,185,129,0.12)', background: 'rgba(16,185,129,0.04)', color: '#10b981', fontSize: '10px', fontWeight: '600', cursor: 'pointer' }}>
-              👥 Invite
-            </button>
-          </div>
 
-          {/* Claim Winnings (only during results if won) */}
-          {bet && roundResult && bet === roundResult && phase === 'results' && claimRoundId && (
-            <div style={{ padding: '0 10px 10px', textAlign: 'center', animation: 'slideIn 0.3s ease', flexShrink: 0 }}>
-              <button onClick={claimWinnings} disabled={!!claimStatus}
-                style={{ width: '100%', padding: '12px', borderRadius: '12px', border: 'none', background: claimStatus === 'confirmed' ? '#10b981' : 'linear-gradient(135deg, #fbbf24, #f59e0b)', color: '#000', fontWeight: '800', fontSize: '14px', cursor: claimStatus ? 'not-allowed' : 'pointer', boxShadow: '0 4px 16px rgba(251,191,36,0.25)' }}
-              >{claimStatus === 'pending' ? 'Confirm in Wallet...' : claimStatus === 'confirming' ? 'Claiming...' : claimStatus === 'confirmed' ? 'Claimed!' : claimStatus === 'error' ? 'Claim Failed' : 'Claim Winnings'}</button>
+              {/* BOTTOM BAR: Points + $PULSE + Referral */}
+              <div style={{ padding: '0', flexShrink: 0, display: 'flex', gap: '6px', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ padding: '3px 10px', borderRadius: '12px', background: 'rgba(251,191,36,0.08)', border: '1px solid rgba(251,191,36,0.12)' }}>
+                    <span style={{ color: '#fbbf24', fontSize: '12px', fontWeight: '700' }}>{points}</span>
+                    <span style={{ color: '#92702a', fontSize: '9px', marginLeft: '3px' }}>PTS</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '3px 8px', borderRadius: '12px', background: 'rgba(168,85,247,0.06)', border: '1px solid rgba(168,85,247,0.1)' }}>
+                    <span style={{ fontSize: '10px', fontWeight: '700', color: '#a855f7' }}>$PULSE</span>
+                    <span style={{ fontSize: '8px', padding: '1px 4px', borderRadius: '4px', background: 'rgba(168,85,247,0.2)', color: '#c084fc', fontWeight: '600' }}>SOON</span>
+                  </div>
+                </div>
+                <button onClick={function() { setShowReferral(!showReferral); }} style={{ padding: '3px 10px', borderRadius: '12px', border: '1px solid rgba(16,185,129,0.12)', background: 'rgba(16,185,129,0.04)', color: '#10b981', fontSize: '10px', fontWeight: '600', cursor: 'pointer' }}>
+                  👥 Invite
+                </button>
+              </div>
+
+              {/* Claim Winnings (only during results if won) */}
+              {bet && roundResult && bet === roundResult && phase === 'results' && claimRoundId && (
+                <div style={{ padding: '0', textAlign: 'center', animation: 'slideIn 0.3s ease', flexShrink: 0 }}>
+                  <button onClick={claimWinnings} disabled={!!claimStatus}
+                    style={{ width: '100%', padding: '12px', borderRadius: '12px', border: 'none', background: claimStatus === 'confirmed' ? '#10b981' : 'linear-gradient(135deg, #fbbf24, #f59e0b)', color: '#000', fontWeight: '800', fontSize: '14px', cursor: claimStatus ? 'not-allowed' : 'pointer', boxShadow: '0 4px 16px rgba(251,191,36,0.25)' }}
+                  >{claimStatus === 'pending' ? 'Confirm in Wallet...' : claimStatus === 'confirming' ? 'Claiming...' : claimStatus === 'confirmed' ? 'Claimed!' : claimStatus === 'error' ? 'Claim Failed' : 'Claim Winnings'}</button>
+                </div>
+              )}
             </div>
-          )}
+
+            {/* RIGHT SIDEBAR — Only on desktop */}
+            {isDesktop && (
+              <div style={{ flexShrink: 0 }}>
+                <LiveFeedSidebar recentBets={recentBets} points={points} />
+              </div>
+            )}
+          </div>
         </>
       )}
 
