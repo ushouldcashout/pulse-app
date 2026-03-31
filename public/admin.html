@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pulse Admin Dashboard</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0a0a0f;color:#e5e7eb;min-height:100vh}
+.login{display:flex;align-items:center;justify-content:center;min-height:100vh;flex-direction:column;gap:16px}
+.login h1{font-size:24px;color:#60a5fa;letter-spacing:2px}
+.login input{padding:12px 20px;border-radius:8px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);color:#e5e7eb;font-size:14px;width:300px;outline:none}
+.login button{padding:12px 20px;border-radius:8px;border:none;background:rgba(59,130,246,0.3);color:#60a5fa;font-size:14px;font-weight:700;cursor:pointer;width:300px}
+.login button:hover{background:rgba(59,130,246,0.5)}
+.dashboard{display:none;padding:20px;max-width:1200px;margin:0 auto}
+.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid rgba(255,255,255,0.08)}
+.header h1{font-size:20px;color:#60a5fa;letter-spacing:2px}
+.header button{padding:8px 16px;border-radius:6px;border:none;background:rgba(239,68,68,0.2);color:#ef4444;cursor:pointer;font-size:12px;font-weight:600}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:24px}
+.stat-card{padding:16px;border-radius:10px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06)}
+.stat-card .label{font-size:10px;color:#6b7280;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:4px}
+.stat-card .value{font-size:24px;font-weight:800;color:#e5e7eb}
+.stat-card .value.green{color:#10b981}
+.stat-card .value.blue{color:#60a5fa}
+.stat-card .value.red{color:#ef4444}
+.stat-card .value.yellow{color:#fbbf24}
+.section{margin-bottom:24px}
+.section h2{font-size:14px;color:#9ca3af;letter-spacing:1.5px;margin-bottom:12px;text-transform:uppercase}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{text-align:left;padding:8px 12px;color:#6b7280;border-bottom:1px solid rgba(255,255,255,0.08);font-size:10px;letter-spacing:1px;text-transform:uppercase}
+td{padding:8px 12px;border-bottom:1px solid rgba(255,255,255,0.04);color:#d1d5db}
+tr:hover{background:rgba(255,255,255,0.02)}
+.controls{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.controls button{padding:8px 14px;border-radius:6px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.03);color:#9ca3af;cursor:pointer;font-size:11px;font-weight:600}
+.controls button:hover{background:rgba(59,130,246,0.15);color:#60a5fa;border-color:rgba(59,130,246,0.3)}
+.controls button.active{background:rgba(59,130,246,0.2);color:#60a5fa;border-color:rgba(59,130,246,0.3)}
+.bot-card{padding:12px;border-radius:8px;background:rgba(168,85,247,0.05);border:1px solid rgba(168,85,247,0.15);margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}
+.refresh-btn{padding:6px 12px;border-radius:6px;border:none;background:rgba(16,185,129,0.2);color:#10b981;cursor:pointer;font-size:11px;font-weight:600}
+.error{color:#ef4444;font-size:12px;margin-top:8px}
+.loading{color:#6b7280;font-size:12px;text-align:center;padding:20px}
+</style>
+</head>
+<body>
+
+<div id="loginScreen" class="login">
+  <h1>PULSE ADMIN</h1>
+  <input type="password" id="passwordInput" placeholder="Enter admin password" onkeydown="if(event.key==='Enter')login()">
+  <button onclick="login()">Access Dashboard</button>
+  <div id="loginError" class="error"></div>
+</div>
+
+<div id="dashboard" class="dashboard">
+  <div class="header">
+    <h1>PULSE ADMIN DASHBOARD</h1>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button class="refresh-btn" onclick="refreshAll()">Refresh</button>
+      <button onclick="logout()">Logout</button>
+    </div>
+  </div>
+
+  <div class="stats-grid" id="statsGrid">
+    <div class="stat-card"><div class="label">Total Users</div><div class="value blue" id="totalUsers">...</div></div>
+    <div class="stat-card"><div class="label">Active Today</div><div class="value green" id="activeToday">...</div></div>
+    <div class="stat-card"><div class="label">Total Bets</div><div class="value" id="totalBets">...</div></div>
+    <div class="stat-card"><div class="label">Total Rounds</div><div class="value" id="totalRounds">...</div></div>
+    <div class="stat-card"><div class="label">Total Wagered</div><div class="value yellow" id="totalWagered">...</div></div>
+    <div class="stat-card"><div class="label">Total Deposits</div><div class="value green" id="totalDeposits">...</div></div>
+    <div class="stat-card"><div class="label">Total Withdrawals</div><div class="value red" id="totalWithdrawals">...</div></div>
+    <div class="stat-card"><div class="label">House Rake (10%)</div><div class="value green" id="houseProfit">...</div></div>
+    <div class="stat-card"><div class="label">User Liability</div><div class="value red" id="userBalance">...</div></div>
+    <div class="stat-card"><div class="label">Bot Balance</div><div class="value" id="botBalance">...</div></div>
+    <div class="stat-card"><div class="label">Win Rate (Users)</div><div class="value blue" id="winRate">...</div></div>
+    <div class="stat-card"><div class="label">Referral Payouts</div><div class="value" id="referralPayouts">...</div></div>
+  </div>
+
+  <div class="section">
+    <h2>Bot Management</h2>
+    <div class="controls">
+      <button onclick="toggleBots()">Toggle Bots On/Off</button>
+      <button onclick="fetchBots()">Refresh Bot Data</button>
+    </div>
+    <div id="botsContainer"></div>
+  </div>
+
+  <div class="section">
+    <h2>Users</h2>
+    <div id="usersContainer"><div class="loading">Loading...</div></div>
+  </div>
+
+  <div class="section">
+    <h2>Recent Rounds</h2>
+    <div id="roundsContainer"><div class="loading">Loading...</div></div>
+  </div>
+
+  <div class="section">
+    <h2>Rake Management</h2>
+    <div id="rakeContainer"></div>
+  </div>
+</div>
+
+<script>
+var API_BASE = 'https://pulse-backend-production-b2c9.up.railway.app';
+var adminSecret = '';
+
+function login() {
+  adminSecret = document.getElementById('passwordInput').value;
+  if (!adminSecret) { document.getElementById('loginError').textContent = 'Enter password'; return; }
+  fetch(API_BASE + '/api/admin/stats', { headers: { 'x-admin-secret': adminSecret } })
+    .then(function(r) { if (!r.ok) throw new Error('Invalid password'); return r.json(); })
+    .then(function() {
+      document.getElementById('loginScreen').style.display = 'none';
+      document.getElementById('dashboard').style.display = 'block';
+      sessionStorage.setItem('pulse_admin', adminSecret);
+      refreshAll();
+    })
+    .catch(function(e) { document.getElementById('loginError').textContent = e.message; });
+}
+
+function logout() {
+  sessionStorage.removeItem('pulse_admin');
+  adminSecret = '';
+  document.getElementById('loginScreen').style.display = '';
+  document.getElementById('dashboard').style.display = 'none';
+}
+
+function api(path) {
+  return fetch(API_BASE + path, { headers: { 'x-admin-secret': adminSecret } }).then(function(r) { return r.json(); });
+}
+
+function fmt(n) { return n != null ? Number(n).toLocaleString('en-US', {maximumFractionDigits: 2}) : '0'; }
+
+function refreshAll() {
+  fetchStats();
+  fetchUsers();
+  fetchBots();
+  fetchRounds();
+  fetchRake();
+}
+
+function fetchStats() {
+  api('/api/admin/stats').then(function(d) {
+    document.getElementById('totalUsers').textContent = fmt(d.totalUsers || d.stats?.totalUsers);
+    document.getElementById('activeToday').textContent = fmt(d.activeToday || d.stats?.activeToday);
+    document.getElementById('totalBets').textContent = fmt(d.totalBets || d.stats?.totalBets);
+    document.getElementById('totalRounds').textContent = fmt(d.totalRounds || d.stats?.totalRounds);
+    document.getElementById('totalWagered').textContent = '$' + fmt(d.totalWagered || d.stats?.totalWagered);
+    document.getElementById('totalDeposits').textContent = '$' + fmt(d.totalDeposits || d.stats?.totalDeposits);
+    document.getElementById('totalWithdrawals').textContent = '$' + fmt(d.totalWithdrawals || d.stats?.totalWithdrawals);
+    document.getElementById('houseProfit').textContent = '$' + fmt(d.houseProfit || d.stats?.houseProfit);
+    document.getElementById('userBalance').textContent = '$' + fmt(d.userBalance || d.stats?.userBalance);
+    document.getElementById('botBalance').textContent = '$' + fmt(d.botBalance || d.stats?.botBalance);
+    var wins = d.totalWins || d.stats?.totalWins || 0;
+    var losses = d.totalLosses || d.stats?.totalLosses || 0;
+    document.getElementById('winRate').textContent = (wins + losses > 0 ? Math.round(wins / (wins + losses) * 100) : 0) + '%';
+    document.getElementById('referralPayouts').textContent = '$' + fmt(d.referralPayouts || d.stats?.referralPayouts);
+  }).catch(function(e) { console.error('Stats error:', e); });
+}
+
+function fetchUsers() {
+  api('/api/admin/users').then(function(d) {
+    var users = d.users || d || [];
+    var html = '<table><thead><tr><th>User</th><th>TG ID</th><th>Balance</th><th>Wagered</th><th>Wins</th><th>Losses</th><th>Win%</th><th>Joined</th></tr></thead><tbody>';
+    users.forEach(function(u) {
+      var wr = (u.totalWins || 0) + (u.totalLosses || 0) > 0 ? Math.round((u.totalWins || 0) / ((u.totalWins || 0) + (u.totalLosses || 0)) * 100) : 0;
+      html += '<tr><td>' + (u.username || u.firstName || 'anon') + '</td><td style="font-family:monospace;font-size:10px">' + (u.telegramId || '').substring(0, 15) + '</td><td>$' + fmt(u.balance) + '</td><td>$' + fmt(u.totalWagered) + '</td><td style="color:#10b981">' + (u.totalWins || 0) + '</td><td style="color:#ef4444">' + (u.totalLosses || 0) + '</td><td>' + wr + '%</td><td style="font-size:10px;color:#6b7280">' + (u.createdAt ? new Date(u.createdAt).toLocaleDateString() : '') + '</td></tr>';
+    });
+    html += '</tbody></table>';
+    document.getElementById('usersContainer').innerHTML = html;
+  }).catch(function(e) { document.getElementById('usersContainer').innerHTML = '<div class="error">Failed to load users</div>'; });
+}
+
+function fetchBots() {
+  api('/api/admin/bots').then(function(d) {
+    var bots = d.bots || d || [];
+    var config = d.config || {};
+    var html = '<div style="margin-bottom:12px;font-size:11px;color:#9ca3af">Config: Participation ' + ((config.participationRate || 0) * 100) + '% | Min $' + (config.minBet || 0) + ' | Max $' + (config.maxBet || 0) + ' | ' + (config.enabled ? '<span style="color:#10b981">ENABLED</span>' : '<span style="color:#ef4444">DISABLED</span>') + '</div>';
+    (Array.isArray(bots) ? bots : []).forEach(function(b) {
+      html += '<div class="bot-card"><div><strong style="color:#c084fc">' + (b.firstName || b.username) + '</strong><span style="margin-left:8px;font-size:10px;color:#6b7280">' + (b.telegramId || '') + '</span></div><div style="font-weight:700">$' + fmt(b.balance) + '</div></div>';
+    });
+    document.getElementById('botsContainer').innerHTML = html;
+  }).catch(function(e) { document.getElementById('botsContainer').innerHTML = '<div class="error">Failed to load bots</div>'; });
+}
+
+function toggleBots() {
+  fetch(API_BASE + '/api/admin/bots/toggle', { method: 'POST', headers: { 'x-admin-secret': adminSecret, 'Content-Type': 'application/json' } })
+    .then(function(r) { return r.json(); })
+    .then(function(d) { alert('Bots ' + (d.enabled ? 'enabled' : 'disabled')); fetchBots(); })
+    .catch(function(e) { alert('Error: ' + e.message); });
+}
+
+function fetchRounds() {
+  fetch(API_BASE + '/api/rounds').then(function(r) { return r.json(); }).then(function(d) {
+    var rounds = d.rounds || d || [];
+    var html = '<table><thead><tr><th>#</th><th>Result</th><th>Pool Up</th><th>Pool Down</th><th>Start Price</th><th>End Price</th><th>Status</th></tr></thead><tbody>';
+    rounds.slice(0, 20).forEach(function(r) {
+      html += '<tr><td>' + (r.roundNumber || r.id) + '</td><td style="color:' + (r.result === 'up' ? '#10b981' : '#ef4444') + ';font-weight:700">' + (r.result || '-').toUpperCase() + '</td><td>$' + fmt(r.poolUp) + '</td><td>$' + fmt(r.poolDown) + '</td><td>$' + fmt(r.startPrice) + '</td><td>$' + fmt(r.endPrice) + '</td><td style="font-size:10px">' + (r.status || '') + '</td></tr>';
+    });
+    html += '</tbody></table>';
+    document.getElementById('roundsContainer').innerHTML = html;
+  }).catch(function(e) { document.getElementById('roundsContainer').innerHTML = '<div class="error">Failed to load rounds</div>'; });
+}
+
+function fetchRake() {
+  api('/api/admin/rake').then(function(d) {
+    document.getElementById('rakeContainer').innerHTML = '<div class="stat-card" style="display:inline-block"><div class="label">Total Rake Collected</div><div class="value green">$' + fmt(d.totalRake || d.rake || 0) + '</div></div>';
+  }).catch(function(e) { document.getElementById('rakeContainer').innerHTML = '<div class="error">Failed to load rake</div>'; });
+}
+
+// Auto-login if saved
+(function() {
+  var saved = sessionStorage.getItem('pulse_admin');
+  if (saved) { adminSecret = saved; document.getElementById('passwordInput').value = saved; login(); }
+})();
+</script>
+</body>
+</html>
