@@ -612,6 +612,8 @@ const LiveFeedSidebar = ({ recentBets, points, winRate = 0, streak = 0}) => {
 const ChatBox = () => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
+  const [editingName, setEditingName] = useState(false);
+  const [nameInput, setNameInput] = useState("");
   const [username, setUsername] = useState(() => { try { return localStorage.getItem("pulse_chat_name") || "anon_" + Math.random().toString(36).slice(2,6); } catch(e) { return "anon"; } });
   const messagesEndRef = useRef(null);
   const wsRef = useRef(null);
