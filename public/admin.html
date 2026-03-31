@@ -96,6 +96,32 @@ tr:hover{background:rgba(255,255,255,0.02)}
     <h2>Rake Management</h2>
     <div id="rakeContainer"></div>
   </div>
+
+  <div class="section">
+    <h2>AI Agents</h2>
+    <div class="controls">
+      <button onclick="registerAgent()">Register New Agent</button>
+      <button onclick="fetchAgents()">Refresh Agents</button>
+    </div>
+    <div id="agentsContainer"><div class="loading">Click refresh to load...</div></div>
+  </div>
+
+  <div class="section">
+    <h2>Ideas Forum</h2>
+    <div class="controls">
+      <button onclick="fetchIdeas()">Refresh Ideas</button>
+    </div>
+    <div id="ideasContainer"><div class="loading">Click refresh to load...</div></div>
+  </div>
+
+  <div class="section">
+    <h2>DeFi Markets</h2>
+    <div class="controls">
+      <button onclick="fetchDefiMarkets()">Refresh Markets</button>
+    </div>
+    <div id="defiContainer"><div class="loading">Click refresh to load...</div></div>
+  </div>
+
 </div>
 
 <script>
@@ -204,6 +230,66 @@ function fetchRake() {
   api('/api/admin/rake').then(function(d) {
     document.getElementById('rakeContainer').innerHTML = '<div class="stat-card" style="display:inline-block"><div class="label">Total Rake Collected</div><div class="value green">$' + fmt(d.totalRake || d.rake || 0) + '</div></div>';
   }).catch(function(e) { document.getElementById('rakeContainer').innerHTML = '<div class="error">Failed to load rake</div>'; });
+}
+
+
+function fetchAgents() {
+  api('/api/admin/agents').then(function(d) {
+    var agents = d.agents || [];
+    if (agents.length === 0) { document.getElementById('agentsContainer').innerHTML = '<div style="font-size:11px;color:#6b7280">No agents registered</div>'; return; }
+    var html = '<table><thead><tr><th>Name</th><th>ID</th><th>API Key</th><th>Bets</th><th>Wagered</th></tr></thead><tbody>';
+    agents.forEach(function(a) {
+      html += '<tr><td style="color:#c084fc;font-weight:700">' + a.agentName + '</td><td style="font-family:monospace;font-size:10px">' + a.telegramId + '</td><td style="font-family:monospace;font-size:9px">' + a.keyPrefix + '</td><td>' + a.totalBets + '</td><td>$' + fmt(a.totalWagered) + '</td></tr>';
+    });
+    html += '</tbody></table>';
+    document.getElementById('agentsContainer').innerHTML = html;
+  }).catch(function() { document.getElementById('agentsContainer').innerHTML = '<div class="error">Failed to load agents</div>'; });
+}
+
+function registerAgent() {
+  var name = prompt('Agent name:');
+  if (!name) return;
+  var tid = prompt('Telegram ID for agent:');
+  if (!tid) return;
+  fetch(API_BASE + '/api/agent/register', { method: 'POST', headers: { 'x-admin-secret': adminSecret, 'Content-Type': 'application/json' }, body: JSON.stringify({ agentName: name, telegramId: tid }) })
+    .then(function(r) { return r.json(); })
+    .then(function(d) { if (d.apiKey) { alert('Agent registered! API Key: ' + d.apiKey); fetchAgents(); } else { alert('Error: ' + (d.error || 'Unknown')); } })
+    .catch(function(e) { alert('Error: ' + e.message); });
+}
+
+function fetchIdeas() {
+  fetch(API_BASE + '/api/ideas').then(function(r) { return r.json(); }).then(function(d) {
+    var ideas = d.ideas || [];
+    if (ideas.length === 0) { document.getElementById('ideasContainer').innerHTML = '<div style="font-size:11px;color:#6b7280">No ideas submitted yet</div>'; return; }
+    var html = '<table><thead><tr><th>Title</th><th>Author</th><th>Category</th><th>For</th><th>Against</th><th>Voters</th><th>Status</th><th>Action</th></tr></thead><tbody>';
+    ideas.forEach(function(i) {
+      html += '<tr><td style="font-weight:600">' + i.title + '</td><td>' + i.author + '</td><td>' + i.category + '</td><td style="color:#10b981">' + i.pointsFor + '</td><td style="color:#ef4444">' + i.pointsAgainst + '</td><td>' + i.voterCount + '</td><td>' + i.status + '</td><td><button onclick="updateIdeaStatus(' + i.id + ')" style="font-size:9px;padding:2px 6px;cursor:pointer">Update</button></td></tr>';
+    });
+    html += '</tbody></table>';
+    document.getElementById('ideasContainer').innerHTML = html;
+  }).catch(function() { document.getElementById('ideasContainer').innerHTML = '<div class="error">Failed to load ideas</div>'; });
+}
+
+function updateIdeaStatus(ideaId) {
+  var status = prompt('New status (active/approved/rejected/implemented):');
+  if (!status) return;
+  fetch(API_BASE + '/api/admin/ideas/' + ideaId + '/status', { method: 'POST', headers: { 'x-admin-secret': adminSecret, 'Content-Type': 'application/json' }, body: JSON.stringify({ status: status }) })
+    .then(function(r) { return r.json(); })
+    .then(function(d) { if (d.success) { fetchIdeas(); } else { alert('Error: ' + (d.error || 'Unknown')); } })
+    .catch(function(e) { alert('Error: ' + e.message); });
+}
+
+function fetchDefiMarkets() {
+  fetch(API_BASE + '/api/defi/markets').then(function(r) { return r.json(); }).then(function(d) {
+    var markets = d.markets || [];
+    if (markets.length === 0) { document.getElementById('defiContainer').innerHTML = '<div style="font-size:11px;color:#6b7280">No active DeFi markets</div>'; return; }
+    var html = '<table><thead><tr><th>Name</th><th>Asset</th><th>Status</th><th>Pool Up</th><th>Pool Down</th><th>Bets</th><th>Result</th></tr></thead><tbody>';
+    markets.forEach(function(m) {
+      html += '<tr><td style="font-weight:600">' + m.name + '</td><td>' + m.asset + '</td><td style="color:' + (m.status === 'betting' ? '#10b981' : m.status === 'resolved' ? '#6b7280' : '#fbbf24') + '">' + m.status.toUpperCase() + '</td><td>$' + fmt(m.poolUp) + '</td><td>$' + fmt(m.poolDown) + '</td><td>' + m.betCount + '</td><td style="color:' + (m.result === 'up' ? '#10b981' : '#ef4444') + ';font-weight:700">' + (m.result ? m.result.toUpperCase() : '-') + '</td></tr>';
+    });
+    html += '</tbody></table>';
+    document.getElementById('defiContainer').innerHTML = html;
+  }).catch(function() { document.getElementById('defiContainer').innerHTML = '<div class="error">Failed to load markets</div>'; });
 }
 
 // Auto-login if saved
