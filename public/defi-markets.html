@@ -1,0 +1,1219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Predict DeFi - Pulse Markets</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-dark: #0a0e27;
+            --accent-green: #00d4aa;
+            --accent-purple: #9d4edd;
+            --text-primary: #ffffff;
+            --text-secondary: #a0aec0;
+            --border-color: #1a202c;
+            --card-bg: #0f1419;
+            --success: #00d4aa;
+            --danger: #ff6b6b;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-primary);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+        }
+
+        /* Sidebar Navigation */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 250px;
+            height: 100vh;
+            background-color: var(--card-bg);
+            border-right: 1px solid var(--border-color);
+            padding: 2rem 0;
+            overflow-y: auto;
+            z-index: 100;
+        }
+
+        .sidebar-header {
+            padding: 0 1.5rem 2rem;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 2rem;
+        }
+
+        .sidebar-logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-green), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .sidebar-nav {
+            list-style: none;
+        }
+
+        .sidebar-nav li {
+            margin: 0;
+        }
+
+        .sidebar-nav a {
+            display: block;
+            padding: 0.75rem 1.5rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+        }
+
+        .sidebar-nav a:hover {
+            color: var(--accent-green);
+            background-color: rgba(0, 212, 170, 0.1);
+            border-left-color: var(--accent-green);
+        }
+
+        .sidebar-nav a.active {
+            color: var(--accent-green);
+            background-color: rgba(0, 212, 170, 0.1);
+            border-left-color: var(--accent-green);
+            font-weight: 600;
+        }
+
+        /* Main Content */
+        main {
+            margin-left: 250px;
+            min-height: 100vh;
+        }
+
+        .top-bar {
+            background-color: var(--card-bg);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+
+        .back-link {
+            color: var(--accent-green);
+            text-decoration: none;
+            font-weight: 600;
+            transition: opacity 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .back-link:hover {
+            opacity: 0.8;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Header Section */
+        .header {
+            margin-bottom: 3rem;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, var(--accent-green), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+        }
+
+        /* Markets Grid */
+        .markets-section {
+            margin-bottom: 4rem;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--text-primary);
+        }
+
+        .markets-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .market-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .market-card:hover {
+            border-color: var(--accent-green);
+            box-shadow: 0 0 20px rgba(0, 212, 170, 0.1);
+        }
+
+        .market-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+        .market-tag {
+            display: inline-block;
+            background-color: rgba(0, 212, 170, 0.15);
+            color: var(--accent-green);
+            padding: 0.35rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .market-question {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            line-height: 1.5;
+            color: var(--text-primary);
+        }
+
+        .metric-display {
+            background-color: rgba(0, 0, 0, 0.3);
+            border-left: 3px solid var(--accent-green);
+            padding: 1rem;
+            border-radius: 6px;
+            margin-bottom: 1.5rem;
+            font-size: 0.95rem;
+        }
+
+        .metric-label {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .metric-value {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--accent-green);
+            margin-bottom: 0.5rem;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 1rem;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-green), var(--accent-purple));
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+
+        .market-meta {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+        }
+
+        .meta-item {
+            background-color: rgba(0, 0, 0, 0.3);
+            padding: 0.75rem;
+            border-radius: 6px;
+        }
+
+        .meta-label {
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            margin-bottom: 0.25rem;
+        }
+
+        .meta-value {
+            font-weight: 600;
+            color: var(--accent-green);
+        }
+
+        .betting-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .odds-display {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .odds-button {
+            position: relative;
+            padding: 1rem;
+            border-radius: 8px;
+            border: 2px solid var(--border-color);
+            background-color: transparent;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+        }
+
+        .odds-button.yes {
+            border-color: var(--success);
+            color: var(--success);
+        }
+
+        .odds-button.yes:hover {
+            background-color: rgba(0, 212, 170, 0.15);
+            box-shadow: 0 0 15px rgba(0, 212, 170, 0.3);
+        }
+
+        .odds-button.no {
+            border-color: var(--danger);
+            color: var(--danger);
+        }
+
+        .odds-button.no:hover {
+            background-color: rgba(255, 107, 107, 0.15);
+            box-shadow: 0 0 15px rgba(255, 107, 107, 0.3);
+        }
+
+        .odds-percentage {
+            display: block;
+            font-size: 1.2rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .odds-label {
+            font-size: 0.75rem;
+            opacity: 0.8;
+        }
+
+        .countdown {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            margin-top: 0.5rem;
+        }
+
+        .view-details-btn {
+            width: 100%;
+            padding: 0.75rem;
+            background-color: rgba(0, 212, 170, 0.1);
+            border: 1px solid var(--accent-green);
+            color: var(--accent-green);
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .view-details-btn:hover {
+            background-color: var(--accent-green);
+            color: var(--bg-dark);
+        }
+
+        /* How It Works Section */
+        .how-it-works {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 4rem;
+        }
+
+        .how-it-works h2 {
+            margin-bottom: 1.5rem;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+        }
+
+        .feature {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .feature-number {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-green), var(--accent-purple));
+            flex-shrink: 0;
+            font-weight: 700;
+            font-size: 1.2rem;
+        }
+
+        .feature-content h3 {
+            margin-bottom: 0.5rem;
+            color: var(--accent-green);
+        }
+
+        .feature-content p {
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        /* History Table */
+        .history-section {
+            margin-bottom: 4rem;
+        }
+
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+        }
+
+        .history-table thead {
+            background-color: rgba(0, 212, 170, 0.1);
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .history-table th {
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--accent-green);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+        }
+
+        .history-table td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-secondary);
+        }
+
+        .history-table tbody tr:hover {
+            background-color: rgba(0, 212, 170, 0.05);
+        }
+
+        .history-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .result-yes {
+            color: var(--success);
+            font-weight: 600;
+        }
+
+        .result-no {
+            color: var(--danger);
+            font-weight: 600;
+        }
+
+        /* Leaderboard */
+        .leaderboard-section {
+            margin-bottom: 4rem;
+        }
+
+        .leaderboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .leaderboard-item {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .rank-badge {
+            display: inline-block;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-green), var(--accent-purple));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .leaderboard-item h3 {
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        .leaderboard-item p {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+        }
+
+        .profit-display {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--accent-green);
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background-color: var(--card-bg);
+            border: 1px solid var(--accent-green);
+            border-radius: 12px;
+            padding: 2rem;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 10px 40px rgba(0, 212, 170, 0.2);
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 1rem;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+
+        .close-btn:hover {
+            color: var(--accent-green);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 0.75rem;
+            background-color: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--accent-green);
+            box-shadow: 0 0 10px rgba(0, 212, 170, 0.2);
+        }
+
+        .modal-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.95rem;
+            text-transform: uppercase;
+            border: none;
+        }
+
+        .btn-primary {
+            background-color: var(--accent-green);
+            color: var(--bg-dark);
+            flex: 1;
+        }
+
+        .btn-primary:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background-color: transparent;
+            border: 1px solid var(--accent-green);
+            color: var(--accent-green);
+            flex: 1;
+        }
+
+        .btn-secondary:hover {
+            background-color: rgba(0, 212, 170, 0.1);
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(0, 212, 170, 0.3);
+            border-top-color: var(--accent-green);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-right: 0.5rem;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            padding: 1rem 1.5rem;
+            background-color: var(--accent-green);
+            color: var(--bg-dark);
+            border-radius: 6px;
+            font-weight: 600;
+            z-index: 2000;
+            animation: slideInUp 0.3s ease;
+        }
+
+        .toast.error {
+            background-color: var(--danger);
+            color: white;
+        }
+
+        @keyframes slideInUp {
+            from {
+                transform: translateY(100px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 200px;
+            }
+
+            main {
+                margin-left: 0;
+            }
+
+            .top-bar {
+                flex-direction: column;
+                gap: 1rem;
+                align-items: flex-start;
+            }
+
+            .container {
+                padding: 1rem;
+            }
+
+            .header h1 {
+                font-size: 1.8rem;
+            }
+
+            .markets-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .market-meta {
+                grid-template-columns: 1fr;
+            }
+
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .history-table {
+                font-size: 0.85rem;
+            }
+
+            .history-table th,
+            .history-table td {
+                padding: 0.75rem;
+            }
+
+            .leaderboard-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .sidebar {
+                display: none;
+            }
+
+            main {
+                margin-left: 0;
+            }
+
+            .header h1 {
+                font-size: 1.5rem;
+            }
+
+            .modal-content {
+                max-width: 100%;
+            }
+
+            .modal-actions {
+                grid-template-columns: 1fr;
+            }
+
+            .toast {
+                left: 1rem;
+                right: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar Navigation -->
+    <nav class="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-logo">Pulse</div>
+        </div>
+        <ul class="sidebar-nav">
+            <li><a href="https://pulsebet.fun">Markets</a></li>
+            <li><a href="https://pulsebet.fun/defi-markets.html" class="active">DeFi Predictions</a></li>
+            <li><a href="https://pulsebet.fun">Portfolio</a></li>
+            <li><a href="https://pulsebet.fun">Leaderboard</a></li>
+            <li><a href="https://pulsebet.fun">Help</a></li>
+        </ul>
+    </nav>
+
+    <!-- Main Content -->
+    <main>
+        <!-- Top Bar -->
+        <div class="top-bar">
+            <a href="https://pulsebet.fun" class="back-link">â Back to Pulse</a>
+            <div style="font-size: 0.9rem; color: var(--text-secondary);">
+                Connected to Ink Ecosystem
+            </div>
+        </div>
+
+        <!-- Page Content -->
+        <div class="container">
+            <!-- Header -->
+            <section class="header">
+                <h1>Predict DeFi</h1>
+                <p>Join the Ink ecosystem community predicting DeFi metrics. Place bets on real on-chain data and compete on the leaderboard.</p>
+            </section>
+
+            <!-- Active Markets -->
+            <section class="markets-section">
+                <h2 class="section-title">Active Markets</h2>
+                <div class="markets-grid">
+                    <!-- Market 1: Tydro ETH Utilization -->
+                    <div class="market-card">
+                        <div class="market-header">
+                            <span class="market-tag">TYDRO</span>
+                        </div>
+                        <div class="market-question">Will Tydro lending pool ETH utilization exceed 80% by end of week?</div>
+
+                        <div class="metric-display">
+                            <div class="metric-label">Current Utilization</div>
+                            <div class="metric-value">72.4%</div>
+                            <div style="font-size: 0.8rem; color: var(--text-secondary);">Data from <a href="#" style="color: var(--accent-green); text-decoration: none;">Tydro Protocol</a></div>
+                        </div>
+
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 90.5%;"></div>
+                        </div>
+
+                        <div class="market-meta">
+                            <div class="meta-item">
+                                <div class="meta-label">Pool Size</div>
+                                <div class="meta-value">4.2K Points</div>
+                            </div>
+                            <div class="meta-item">
+                                <div class="meta-label">Participants</div>
+                                <div class="meta-value">127</div>
+                            </div>
+                        </div>
+
+                        <div class="betting-section">
+                            <div class="odds-display">
+                                <button class="odds-button yes" onclick="openBetModal('tydro-eth', 'YES', 65)">
+                                    <span class="odds-percentage">65%</span>
+                                    <span class="odds-label">Yes</span>
+                                </button>
+                                <button class="odds-button no" onclick="openBetModal('tydro-eth', 'NO', 35)">
+                                    <span class="odds-percentage">35%</span>
+                                    <span class="odds-label">No</span>
+                                </button>
+                            </div>
+                            <div class="countdown">Ends in 4 days, 12 hours</div>
+                        </div>
+
+                        <button class="view-details-btn" onclick="toggleDetails('tydro-eth')">View Details</button>
+                    </div>
+
+                    <!-- Market 2: Nado Volume -->
+                    <div class="market-card">
+                        <div class="market-header">
+                            <span class="market-tag">NADO</span>
+                        </div>
+                        <div class="market-question">Will Nado DEX hit $50M in 24h volume?</div>
+
+                        <div class="metric-display">
+                            <div class="metric-label">Current 24h Volume</div>
+                            <div class="metric-value">$48.2M</div>
+                            <div style="font-size: 0.8rem; color: var(--text-secondary);">Updated 2 minutes ago</div>
+                        </div>
+
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 96.4%;"></div>
+                        </div>
+
+                        <div class="market-meta">
+                            <div class="meta-item">
+                                <div class="meta-label">Pool Size</div>
+                                <div class="meta-value">3.8K Points</div>
+                            </div>
+                            <div class="meta-item">
+                                <div class="meta-label">Participants</div>
+                                <div class="meta-value">95</div>
+                            </div>
+                        </div>
+
+                        <div class="betting-section">
+                            <div class="odds-display">
+                                <button class="odds-button yes" onclick="openBetModal('nado-vol', 'YES', 72)">
+                                    <span class="odds-percentage">72%</span>
+                                    <span class="odds-label">Yes</span>
+                                </button>
+                                <button class="odds-button no" onclick="openBetModal('nado-vol', 'NO', 28)">
+                                    <span class="odds-percentage">28%</span>
+                                    <span class="odds-label">No</span>
+                                </button>
+                            </div>
+                            <div class="countdown">Ends in 1 day, 8 hours</div>
+                        </div>
+
+                        <button class="view-details-btn" onclick="toggleDetails('nado-vol')">View Details</button>
+                    </div>
+
+                    <!-- Market 3: INK TVL Growth -->
+                    <div class="market-card">
+                        <div class="market-header">
+                            <span class="market-tag">INK</span>
+                        </div>
+                        <div class="market-question">Will total INK chain TVL grow 10%+ this week?</div>
+
+                        <div class="metric-display">
+                            <div class="metric-label">Current TVL / Starting TVL</div>
+                            <div class="metric-value">$284M / $267M</div>
+                            <div style="font-size: 0.8rem; color: var(--accent-green);">â 6.4% growth</div>
+                        </div>
+
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 64%;"></div>
+                        </div>
+
+                        <div class="market-meta">
+                            <div class="meta-item">
+                                <div class="meta-label">Pool Size</div>
+                                <div class="meta-value">5.1K Points</div>
+                            </div>
+                            <div class="meta-item">
+                                <div class="meta-label">Participants</div>
+                                <div class="meta-value">156</div>
+                            </div>
+                        </div>
+
+                        <div class="betting-section">
+                            <div class="odds-display">
+                                <button class="odds-button yes" onclick="openBetModal('ink-tvl', 'YES', 58)">
+                                    <span class="odds-percentage">58%</span>
+                                    <span class="odds-label">Yes</span>
+                                </button>
+                                <button class="odds-button no" onclick="openBetModal('ink-tvl', 'NO', 42)">
+                                    <span class="odds-percentage">42%</span>
+                                    <span class="odds-label">No</span>
+                                </button>
+                            </div>
+                            <div class="countdown">Ends in 5 days, 18 hours</div>
+                        </div>
+
+                        <button class="view-details-btn" onclick="toggleDetails('ink-tvl')">View Details</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- How It Works -->
+            <section class="how-it-works">
+                <h2 class="section-title">How It Works</h2>
+                <div class="features-grid">
+                    <div class="feature">
+                        <div class="feature-number">1</div>
+                        <div class="feature-content">
+                            <h3>Weekly Markets</h3>
+                            <p>New prediction markets launch every Monday at 00:00 UTC and resolve Sunday at 23:59 UTC.</p>
+                        </div>
+                    </div>
+                    <div class="feature">
+                        <div class="feature-number">2</div>
+                        <div class="feature-content">
+                            <h3>Place Your Bets</h3>
+                            <p>Use your points to bet YES or NO on real DeFi metrics. Higher odds = lower probability.</p>
+                        </div>
+                    </div>
+                    <div class="feature">
+                        <div class="feature-number">3</div>
+                        <div class="feature-content">
+                            <h3>Automatic Resolution</h3>
+                            <p>Markets resolve automatically using on-chain data from verified protocol sources.</p>
+                        </div>
+                    </div>
+                    <div class="feature">
+                        <div class="feature-number">4</div>
+                        <div class="feature-content">
+                            <h3>Parimutuel Payouts</h3>
+                            <p>Win your share of the losing side pool proportional to your stake. Fair and transparent.</p>
+                        </div>
+                    </div>
+                    <div class="feature">
+                        <div class="feature-number">5</div>
+                        <div class="feature-content">
+                            <h3>House Rake</h3>
+                            <p>Pulse takes a 10% rake from winning pools to maintain operations and fund ecosystem development.</p>
+                        </div>
+                    </div>
+                    <div class="feature">
+                        <div class="feature-number">6</div>
+                        <div class="feature-content">
+                            <h3>Compete</h3>
+                            <p>Track your profit and compete against other predictors on the DeFi leaderboard.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Market History -->
+            <section class="history-section">
+                <h2 class="section-title">Market History</h2>
+                <table class="history-table">
+                    <thead>
+                        <tr>
+                            <th>Market Question</th>
+                            <th>Result</th>
+                            <th>Pool Size</th>
+                            <th>Participants</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Will Lido staking reach 40% of total ETH staked?</td>
+                            <td><span class="result-yes">YES</span></td>
+                            <td>12.4K Points</td>
+                            <td>347</td>
+                        </tr>
+                        <tr>
+                            <td>Will Aave governance token hit $200?</td>
+                            <td><span class="result-no">NO</span></td>
+                            <td>8.9K Points</td>
+                            <td>203</td>
+                        </tr>
+                        <tr>
+                            <td>Will Uniswap V4 deploy on Mainnet in Q1 2026?</td>
+                            <td><span class="result-yes">YES</span></td>
+                            <td>15.2K Points</td>
+                            <td>412</td>
+                        </tr>
+                        <tr>
+                            <td>Will OpenLeverage TVL exceed $500M?</td>
+                            <td><span class="result-no">NO</span></td>
+                            <td>6.7K Points</td>
+                            <td>178</td>
+                        </tr>
+                        <tr>
+                            <td>Will Curve DAO proposal pass with 80%+ votes?</td>
+                            <td><span class="result-yes">YES</span></td>
+                            <td>10.3K Points</td>
+                            <td>289</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- Leaderboard -->
+            <section class="leaderboard-section">
+                <h2 class="section-title">Top DeFi Predictors</h2>
+                <div class="leaderboard-grid">
+                    <div class="leaderboard-item">
+                        <div class="rank-badge">1</div>
+                        <h3>0xAce Trading</h3>
+                        <p>DeFi Analyst â¢ 47 Markets Won</p>
+                        <div class="profit-display">+$2,847 Points</div>
+                    </div>
+                    <div class="leaderboard-item">
+                        <div class="rank-badge">2</div>
+                        <h3>LiquidityHunter</h3>
+                        <p>Protocol Specialist â¢ 39 Markets Won</p>
+                        <div class="profit-display">+$2,164 Points</div>
+                    </div>
+                    <div class="leaderboard-item">
+                        <div class="rank-badge">3</div>
+                        <h3>ChainDataMaven</h3>
+                        <p>Data Researcher â¢ 35 Markets Won</p>
+                        <div class="profit-display">+$1,892 Points</div>
+                    </div>
+                    <div class="leaderboard-item">
+                        <div class="rank-badge">4</div>
+                        <h3>VolumeWhisperer</h3>
+                        <p>Trading Bot Engineer â¢ 31 Markets Won</p>
+                        <div class="profit-display">+$1,624 Points</div>
+                    </div>
+                    <div class="leaderboard-item">
+                        <div class="rank-badge">5</div>
+                        <h3>TvlSentinel</h3>
+                        <p>Risk Manager â¢ 28 Markets Won</p>
+                        <div class="profit-display">+$1,421 Points</div>
+                    </div>
+                    <div class="leaderboard-item">
+                        <div class="rank-badge">6</div>
+                        <h3>YieldFarmer99</h3>
+                        <p>Strategy Designer â¢ 24 Markets Won</p>
+                        <div class="profit-display">+$982 Points</div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Bet Modal -->
+    <div id="betModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Place Bet</h2>
+                <button class="close-btn" onclick="closeBetModal()">&times;</button>
+            </div>
+
+            <form id="betForm" onsubmit="submitBet(event)">
+                <div class="form-group">
+                    <label>Bet Amount (Points)</label>
+                    <input type="number" id="betAmount" placeholder="Enter amount" min="1" step="1" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Telegram ID (for verification)</label>
+                    <input type="text" id="telegramId" placeholder="Your Telegram ID" required>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeBetModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Place Bet</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const BACKEND_API = 'https://pulse-backend-production-b2c9.up.railway.app';
+        let currentBet = {
+            marketId: null,
+            side: null,
+            odds: null
+        };
+
+        // Open bet modal
+        function openBetModal(marketId, side, odds) {
+            currentBet = { marketId, side, odds };
+            const modal = document.getElementById('betModal');
+            const title = document.getElementById('modalTitle');
+
+            title.textContent = `Place ${side} Bet`;
+            modal.classList.add('active');
+            document.getElementById('betAmount').focus();
+        }
+
+        // Close bet modal
+        function closeBetModal() {
+            const modal = document.getElementById('betModal');
+            modal.classList.remove('active');
+            document.getElementById('betForm').reset();
+        }
+
+        // Submit bet
+        async function submitBet(event) {
+            event.preventDefault();
+
+            const amount = parseInt(document.getElementById('betAmount').value);
+            const telegramId = document.getElementById('telegramId').value;
+
+            if (!amount || !telegramId) {
+                showToast('Please fill in all fields', 'error');
+                return;
+            }
+
+            const submitBtn = event.target.querySelector('.btn-primary');
+            const originalText = submitBtn.textContent;
+            submitBtn.innerHTML = '<span class="loading-spinner"></span>Placing...';
+            submitBtn.disabled = true;
+
+            try {
+                const response = await fetch(`${BACKEND_API}/api/defi/markets/${currentBet.marketId}/bet`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        side: currentBet.side.toLowerCase(),
+                        amount: amount,
+                        telegramId: telegramId
+                    })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.message || 'Failed to place bet');
+                }
+
+                const data = await response.json();
+                showToast(`Bet placed! Your ${currentBet.side} position: ${amount} points`, 'success');
+                closeBetModal();
+
+            } catch (error) {
+                console.error('Bet error:', error);
+                showToast(error.message || 'Error placing bet', 'error');
+            } finally {
+                submitBtn.textContent = originalText;
+                submitBtn.disabled = false;
+            }
+        }
+
+        // Show toast notification
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type === 'error' ? 'error' : ''}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+
+        // Toggle market details (placeholder for expansion)
+        function toggleDetails(marketId) {
+            showToast(`Viewing details for ${marketId}`, 'success');
+            // In a full implementation, this would expand the card or navigate to a detail page
+        }
+
+        // Close modal when clicking outside
+        window.addEventListener('click', (event) => {
+            const modal = document.getElementById('betModal');
+            if (event.target === modal) {
+                closeBetModal();
+            }
+        });
+
+        // Load active markets on page load
+        async function loadMarkets() {
+            try {
+                const response = await fetch(`${BACKEND_API}/api/defi/markets`);
+                if (response.ok) {
+                    const markets = await response.json();
+                    console.log('Markets loaded:', markets);
+                    // Markets are already displayed statically; in a full implementation,
+                    // this would populate the cards dynamically with real-time data
+                }
+            } catch (error) {
+                console.error('Error loading markets:', error);
+            }
+        }
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', () => {
+            loadMarkets();
+        });
+    </script>
+</body>
+</html>
