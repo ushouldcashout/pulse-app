@@ -511,7 +511,7 @@ const EcosystemSidebar = () => {
   );
 };
 
-const LiveFeedSidebar = ({ recentBets, points, winRate = 0, streak = 0 }) => {
+const LiveFeedSidebar = ({ recentBets, points, winRate = 0, streak = 0 , winRate = 0, streak = 0}) => {
   const { volume24h, openInterest, topPair } = useNadoData();
 
   const comingSoonMarkets = [
@@ -1507,7 +1507,7 @@ const PulseGame = () => {
             {/* LEFT SIDEBAR — Only on desktop */}
             {isDesktop && (
               <div style={{ flexShrink: 0 }}>
-                <EcosystemSidebar />
+                <EcosystemSidebar  winRate={wins + losses > 0 ? Math.round(wins / (wins + losses) * 100) : 0} streak={currentStreak} />
               </div>
             )}
 
