@@ -776,7 +776,7 @@ const LandingPage = ({ onEnter }) => {
           10s predictions. bet it.
         </div>
         <p style={{ fontSize: '18px', color: '#9ca3af', maxWidth: '500px', margin: '0 auto 32px', lineHeight: 1.5 }}>
-          up or down? 10 seconds. not financial advice, just vibes.</div>
+          up or down? 10 seconds. not financial advice, just vibes.</p>
       </div>
 
       {/* LIVE STATS BAR */}
