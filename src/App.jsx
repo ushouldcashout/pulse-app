@@ -395,12 +395,12 @@ const useEcosystemData = () => {
     const interval = setInterval(fetchData, 60000);
   var saveName = function() {
     var n = nameInput.trim();
-    if (n && n.length > 0 && n.length <= 16) {
-      setUsername(n);
-      try { localStorage.setItem('pulse_chat_name', n); } catch(e) {}
-      setEditingName(false);
-    }
-  };
+    if (!n || n.length < 1 || n.length > 16) return;
+    setUsername(n);
+    setNameInput(n);
+    setEditingName(false);
+    try { localStorage.setItem('pulse_chat_name', n); } catch(e) {}
+  }
 
     return () => clearInterval(interval);
   }, [fetchData]);
@@ -586,27 +586,30 @@ const LiveFeedSidebar = ({ recentBets, points, winRate = 0, streak = 0}) => {
         </div>
       </div>
 
-      {/* DeFi Prediction Markets */}
+      {/* DeFi Prediction Markets - Ink Ecosystem */}
       <div className="sidebar-card" style={{ borderColor: 'rgba(168,85,247,0.15)', background: 'rgba(168,85,247,0.02)' }}>
         <div style={{ fontSize: '10px', fontWeight: '800', color: '#c084fc', letterSpacing: '2px', marginBottom: '12px' }}>
           PREDICT DEFI
         </div>
         {[
-          { name: 'ETH 1min', asset: 'ETH', dur: 60, icon: String.fromCodePoint(9830) },
-          { name: 'SOL 5min', asset: 'SOL', dur: 300, icon: String.fromCodePoint(9883) },
-          { name: 'BTC 15min', asset: 'BTC', dur: 900, icon: String.fromCodePoint(9889) }
+          { q: 'Tydro ETH utilization > 80%?', tag: 'TYDRO', color: '#06b6d4', yes: 64, no: 36 },
+          { q: 'Nado 24h volume over $5M?', tag: 'NADO', color: '#a855f7', yes: 51, no: 49 },
+          { q: 'INK TVL +10% this week?', tag: 'INK', color: '#10b981', yes: 72, no: 28 }
         ].map(function(m, i) {
           return (
-            <div key={i} style={{ padding: '8px', borderRadius: '8px', background: 'rgba(168,85,247,0.04)', border: '1px solid rgba(168,85,247,0.1)', marginBottom: '6px', cursor: 'pointer' }}
-              onClick={function() { window.open('https://pulsebet.fun?market=' + m.asset + '_' + m.dur, '_self'); }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '11px', fontWeight: '700', color: '#e5e7eb' }}>{m.icon} {m.name}</span>
-                <span style={{ fontSize: '9px', padding: '2px 6px', borderRadius: '4px', background: 'rgba(16,185,129,0.15)', color: '#10b981', fontWeight: '600' }}>LIVE</span>
+            <div key={i} style={{ padding: '10px', borderRadius: '8px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', marginBottom: '6px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
+                <span style={{ fontSize: '8px', padding: '1px 5px', borderRadius: '4px', background: m.color + '20', color: m.color, fontWeight: '700' }}>{m.tag}</span>
+                <span style={{ fontSize: '10px', color: '#d1d5db', fontWeight: '600', lineHeight: '1.3' }}>{m.q}</span>
               </div>
-              <div style={{ fontSize: '9px', color: '#6b7280', marginTop: '4px' }}>Predict {m.asset} direction in {m.dur >= 60 ? Math.round(m.dur / 60) + ' min' : m.dur + 's'}</div>
+              <div style={{ display: 'flex', gap: '4px' }}>
+                <button style={{ flex: m.yes, padding: '4px 0', borderRadius: '4px 0 0 4px', border: '1px solid rgba(16,185,129,0.2)', background: 'rgba(16,185,129,0.08)', color: '#10b981', fontSize: '9px', fontWeight: '700', cursor: 'pointer' }}>YES {m.yes}%</button>
+                <button style={{ flex: m.no, padding: '4px 0', borderRadius: '0 4px 4px 0', border: '1px solid rgba(239,68,68,0.2)', background: 'rgba(239,68,68,0.08)', color: '#ef4444', fontSize: '9px', fontWeight: '700', cursor: 'pointer' }}>NO {m.no}%</button>
+              </div>
             </div>
           );
         })}
+        <div style={{ fontSize: '8px', color: '#4b5563', textAlign: 'center', marginTop: '4px' }}>Markets resolve weekly</div>
       </div>
     </div>
   );
@@ -619,9 +622,9 @@ const LiveFeedSidebar = ({ recentBets, points, winRate = 0, streak = 0}) => {
 const ChatBox = () => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
-  const [editingName, setEditingName] = useState(false);
+  const [editingName, setEditingName] = useState(function() { try { var n = localStorage.getItem('pulse_chat_name'); return !n || !n.trim(); } catch(e) { return true; } });
   const [nameInput, setNameInput] = useState("");
-  const [username, setUsername] = useState(() => { try { return localStorage.getItem("pulse_chat_name") || "anon_" + Math.random().toString(36).slice(2,6); } catch(e) { return "anon"; } });
+  const [username, setUsername] = useState(function() { try { var n = localStorage.getItem('pulse_chat_name'); if (n && n.trim()) return n.trim(); } catch(e) {} return ''; });
   const messagesEndRef = useRef(null);
   const wsRef = useRef(null);
 
@@ -662,7 +665,7 @@ const ChatBox = () => {
             {editingName ? (
               <input value={nameInput} onChange={function(e) { setNameInput(e.target.value); }} onKeyDown={function(e) { if (e.key === "Enter") saveName(); if (e.key === "Escape") setEditingName(false); }} onBlur={saveName} autoFocus style={{ fontSize: "9px", padding: "2px 6px", borderRadius: "4px", border: "1px solid rgba(96,165,250,0.3)", background: "rgba(96,165,250,0.1)", color: "#60a5fa", outline: "none", width: "80px" }} />
             ) : (
-              <button onClick={function() { setNameInput(username); setEditingName(true); }} style={{ fontSize: "9px", padding: "2px 6px", borderRadius: "4px", border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.03)", color: "#9ca3af", cursor: "pointer" }}>{username}</button>
+              <button onClick={function() { setEditingName(true); setNameInput(username); }} style={{ background: 'none', border: 'none', color: username ? '#9ca3af' : '#fbbf24', fontSize: '10px', cursor: 'pointer', padding: '2px 6px', borderRadius: '4px', maxWidth: '80px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: username ? '400' : '700', animation: username ? 'none' : 'countdownPulse 1.5s infinite' }}>{username || 'Set nickname...'}</button>
             )}
           </div>
         </div>
