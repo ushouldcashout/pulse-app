@@ -591,7 +591,7 @@
             color: var(--text-primary);
         }
 
-        /* Form Styles */
+        /* Form */
         .form-group {
             display: flex;
             flex-direction: column;
@@ -790,6 +790,7 @@
             display: flex;
             justify-content: space-between;
             font-size: 12px;
+            color: var(--text-secondary);
         }
 
         .vote-stat {
@@ -1004,14 +1005,6 @@
             .modal-content {
                 padding: 20px;
             }
-
-            .form-actions {
-                flex-direction: column;
-            }
-
-            .detail-header {
-                flex-direction: column;
-            }
         }
 
         @media (max-width: 600px) {
@@ -1153,3 +1146,748 @@
     </style>
 </head>
 <body>
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-logo">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="M12 6v6l4 2"></path>
+            </svg>
+            <span>Pulse</span>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="#" class="nav-item active" data-nav="active">
+                <span>⚡</span>
+                <span>Active Ideas</span>
+            </a>
+            <a href="#" class="nav-item" data-nav="top">
+                <span>🔥</span>
+                <span>Top Ideas</span>
+            </a>
+            <a href="#" class="nav-item" data-nav="mine">
+                <span>💡</span>
+                <span>My Ideas</span>
+            </a>
+            <a href="#" class="nav-item" data-nav="votes">
+                <span>🗳️</span>
+                <span>My Votes</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-stats">
+            <div class="stat-item">
+                <span class="stat-label">Total Ideas</span>
+                <span class="stat-value" id="stat-total-ideas">0</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Active Votes</span>
+                <span class="stat-value" id="stat-active-votes">0</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Points Distributed</span>
+                <span class="stat-value" id="stat-points-dist">0</span>
+            </div>
+        </div>
+
+        <div class="sidebar-section">
+            <div class="sidebar-expandable">
+                <button class="sidebar-expandable-btn" id="qorum-btn">
+                    <span>How QORUM Works</span>
+                    <span>▼</span>
+                </button>
+                <div class="sidebar-expandable-content" id="qorum-content">
+                    <strong style="color: var(--accent-green); display: block; margin-bottom: 12px;">Points System</strong>
+                    <p style="margin-bottom: 12px;">Points earned from playing Pulse games can be spent to:</p>
+                    <p style="margin-bottom: 12px;">• Submit ideas (minimum 10 points)</p>
+                    <p style="margin-bottom: 12px;">• Vote FOR or AGAINST ideas</p>
+                    <p style="margin-bottom: 12px;">• More points = more voting power</p>
+                    <p style="margin-bottom: 12px;">Ideas with enough FOR votes get implemented. Points spent on voting are distributed to the winning side.</p>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main>
+        <!-- Top Bar -->
+        <div class="top-bar">
+            <div class="top-bar-left">
+                <a href="https://pulsebet.fun" class="back-link">
+                    <span>←</span>
+                    <span>Back to Pulse</span>
+                </a>
+            </div>
+            <div class="points-display">
+                <span class="points-label">Your Points</span>
+                <span class="points-value" id="user-points">--</span>
+            </div>
+            <button class="submit-idea-btn" id="submit-idea-btn">
+                <span>+</span>
+                <span>Submit Idea</span>
+            </button>
+        </div>
+
+        <!-- Content Area -->
+        <div class="content-area">
+            <!-- List View -->
+            <div id="list-view" class="list-view">
+                <div class="content-header">
+                    <h1 class="content-title">Ideas & QORUM</h1>
+                    <p class="content-subtitle">Shape Pulse's future. Submit ideas, vote on features, and earn rewards.</p>
+                </div>
+
+                <!-- Category Tabs -->
+                <div class="category-tabs" id="category-tabs">
+                    <button class="category-tab active" data-category="all">All</button>
+                    <button class="category-tab" data-category="features">Features</button>
+                    <button class="category-tab" data-category="markets">Markets</button>
+                    <button class="category-tab" data-category="rewards">Rewards</button>
+                    <button class="category-tab" data-category="community">Community</button>
+                    <button class="category-tab" data-category="bug-reports">Bug Reports</button>
+                </div>
+
+                <!-- Filter & Sort -->
+                <div class="filter-sort-bar">
+                    <div class="filter-group">
+                        <span class="filter-label">Sort by:</span>
+                        <select id="sort-by">
+                            <option value="most-votes">Most Votes</option>
+                            <option value="newest">Newest</option>
+                            <option value="ending-soon">Ending Soon</option>
+                            <option value="most-discussed">Most Discussed</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <span class="filter-label">Status:</span>
+                        <select id="filter-status">
+                            <option value="all">All</option>
+                            <option value="active">Active</option>
+                            <option value="approved">Approved</option>
+                            <option value="implemented">Implemented</option>
+                            <option value="rejected">Rejected</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Ideas List -->
+                <div class="ideas-list" id="ideas-list">
+                    <!-- Populated by JavaScript -->
+                </div>
+            </div>
+
+            <!-- Detail View -->
+            <div id="detail-view" class="detail-view">
+                <button class="back-link" id="back-to-list" style="margin-bottom: 24px;">
+                    <span>←</span>
+                    <span>Back to Ideas</span>
+                </button>
+
+                <div class="detail-header">
+                    <div>
+                        <h1 class="detail-title" id="detail-title">--</h1>
+                        <div class="detail-meta-row" id="detail-author-row">
+                            <div class="idea-author">
+                                <div class="avatar" id="detail-avatar">A</div>
+                                <span id="detail-author">Author Name</span>
+                            </div>
+                        </div>
+                        <div class="detail-meta-row">
+                            <span id="detail-date">Created: --</span>
+                            <span id="detail-status" class="badge">Active</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="detail-body">
+                    <div class="detail-section">
+                        <h3 class="detail-section-title">Description</h3>
+                        <p class="detail-description" id="detail-description">--</p>
+                    </div>
+
+                    <div class="detail-section">
+                        <h3 class="detail-section-title">Voting</h3>
+                        <div class="vote-bar-container">
+                            <div class="vote-bar">
+                                <div class="vote-bar-for" id="vote-bar-for" style="width: 0%;">
+                                    <span id="vote-bar-for-text"></span>
+                                </div>
+                                <div class="vote-bar-against" id="vote-bar-against" style="width: 0%;">
+                                    <span id="vote-bar-against-text"></span>
+                                </div>
+                            </div>
+                            <div class="vote-stats">
+                                <div class="vote-stat vote-stat-for">
+                                    <div class="vote-stat-color"></div>
+                                    <span><strong id="vote-for-count">0</strong> FOR</span>
+                                </div>
+                                <div class="vote-stat vote-stat-against">
+                                    <div class="vote-stat-color"></div>
+                                    <span><strong id="vote-against-count">0</strong> AGAINST</span>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="form-hint" style="margin-bottom: 16px;">Total Points: <strong id="total-points-committed" style="color: var(--accent-green);">0</strong></p>
+
+                        <div class="vote-controls">
+                            <button class="vote-btn vote-btn-for" id="vote-for-btn">Vote FOR</button>
+                            <button class="vote-btn vote-btn-against" id="vote-against-btn">Vote AGAINST</button>
+                        </div>
+
+                        <div class="points-input-group">
+                            <label class="form-label">Points to Commit: <span id="points-display">10</span></label>
+                            <div class="points-range">
+                                <input type="range" id="vote-points-slider" min="1" max="100" value="10">
+                                <span class="points-amount" id="vote-points-amount">10</span>
+                            </div>
+                            <p class="form-hint">Available: <strong id="available-points-detail" style="color: var(--accent-green);">100</strong> points</p>
+                        </div>
+                    </div>
+
+                    <div class="detail-section">
+                        <h3 class="detail-section-title">Discussion</h3>
+                        <div class="comments-section">
+                            <div class="comment">
+                                <div class="comment-author">
+                                    <div class="avatar" style="width: 24px; height: 24px; font-size: 10px;">JD</div>
+                                    <span class="comment-author-name">John Doe</span>
+                                    <span class="comment-time">2 days ago</span>
+                                </div>
+                                <p class="comment-text">This is a great idea! It would really improve the user experience. I'm voting for it.</p>
+                            </div>
+                            <div class="comment">
+                                <div class="comment-author">
+                                    <div class="avatar" style="width: 24px; height: 24px; font-size: 10px;">SM</div>
+                                    <span class="comment-author-name">Sarah Miller</span>
+                                    <span class="comment-time">1 day ago</span>
+                                </div>
+                                <p class="comment-text">I have some concerns about the implementation cost. Would love to see more details.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Submit Idea Modal -->
+    <div class="modal" id="submit-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Submit Your Idea</h2>
+                <button class="modal-close" id="submit-modal-close">&times;</button>
+            </div>
+
+            <form id="submit-form">
+                <div class="form-group">
+                    <label class="form-label">Title</label>
+                    <input type="text" id="idea-title" placeholder="What's your idea?" maxlength="100" required>
+                    <p class="form-hint">100 characters max</p>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Category</label>
+                    <select id="idea-category" required>
+                        <option value="">Select a category</option>
+                        <option value="features">Features</option>
+                        <option value="markets">Markets</option>
+                        <option value="rewards">Rewards</option>
+                        <option value="community">Community</option>
+                        <option value="bug-reports">Bug Reports</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Description</label>
+                    <textarea id="idea-description" placeholder="Explain your idea in detail..." required></textarea>
+                    <p class="form-hint">Be clear and concise. Include why this matters.</p>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Points to Stake</label>
+                    <input type="number" id="idea-points" min="10" max="1000" value="10" required>
+                    <p class="form-hint">Minimum 10 points required (anti-spam measure)</p>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn-secondary" id="submit-modal-cancel">Cancel</button>
+                    <button type="submit" class="btn-primary">Submit Idea</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // State
+        let currentIdeas = [];
+        let selectedCategory = 'all';
+        let selectedSort = 'most-votes';
+        let selectedStatus = 'all';
+        let userPoints = 0;
+        let selectedIdeaId = null;
+        let userTelegramId = 'user_' + Math.random().toString(36).substr(2, 9);
+
+        // API Configuration
+        const API_BASE = 'https://pulse-backend-production-b2c9.up.railway.app/api';
+
+        // Mock data for initial display
+        const mockIdeas = [
+            {
+                id: 1,
+                title: 'Add Dark Mode to Dashboard',
+                category: 'features',
+                author: 'Sarah Chen',
+                avatar: 'SC',
+                description: 'Implement a dark mode toggle for the dashboard to reduce eye strain during night trading sessions.',
+                fullDescription: 'I propose adding a dark mode option to the Pulse dashboard. This would:\n\n• Reduce eye strain during evening/night trading\n• Improve battery life on mobile devices\n• Provide a more modern user experience\n\nThe toggle should be in user settings and sync across devices.',
+                voteFor: 2845,
+                voteAgainst: 120,
+                status: 'active',
+                createdAt: '2024-03-15',
+                timeRemaining: '5 days 12 hours',
+                comments: 3
+            },
+            {
+                id: 2,
+                title: 'Support for Crypto Market Predictions',
+                category: 'markets',
+                author: 'Alex Rivera',
+                avatar: 'AR',
+                description: 'Expand Pulse to include cryptocurrency price prediction markets, tapping into the rapidly growing crypto trader community.',
+                fullDescription: 'This proposal would add cryptocurrency prediction markets to Pulse, including:\n\n• Bitcoin price predictions\n• Ethereum price predictions\n• Layer 2 altcoin predictions\n\nThis would significantly expand our addressable market and attract crypto traders.',
+                voteFor: 1920,
+                voteAgainst: 340,
+                status: 'active',
+                createdAt: '2024-03-12',
+                timeRemaining: '8 days 3 hours',
+                comments: 8
+            },
+            {
+                id: 3,
+                title: 'Implement Referral Rewards System',
+                category: 'rewards',
+                author: 'Marcus Johnson',
+                avatar: 'MJ',
+                description: 'Create a referral program that rewards users for inviting friends to join Pulse betting platform.',
+                fullDescription: 'A comprehensive referral system where:\n\n• Users get 5% of friend\'s trading volume as bonus points\n• Friends get 100 bonus points on first trade\n• Tiered rewards for multiple referrals\n• Shareable referral links',
+                voteFor: 3120,
+                voteAgainst: 89,
+                status: 'approved',
+                createdAt: '2024-02-28',
+                timeRemaining: null,
+                comments: 15
+            },
+            {
+                id: 4,
+                title: 'Fix: High Slippage on Large Orders',
+                category: 'bug-reports',
+                author: 'Emily Zhang',
+                avatar: 'EZ',
+                description: 'Users report experiencing high slippage when placing large prediction orders during peak hours.',
+                fullDescription: 'There\'s a critical issue affecting large order execution:\n\n• Orders >$10,000 show 5-8% slippage during peak hours\n• Small orders (<$1,000) work fine\n• Issue appears to be with our liquidity pool management\n• Affects approximately 2% of daily trades',
+                voteFor: 5680,
+                voteAgainst: 45,
+                status: 'implemented',
+                createdAt: '2024-02-15',
+                timeRemaining: null,
+                comments: 4
+            },
+            {
+                id: 5,
+                title: 'Weekly Community Challenges with Prize Pool',
+                category: 'community',
+                author: 'David Kim',
+                avatar: 'DK',
+                description: 'Organize weekly prediction challenges where top performers share a growing prize pool funded by platform.',
+                fullDescription: 'Weekly challenges would:\n\n• Feature specific prediction markets\n• Top 10 performers split 1000 bonus points\n• Create friendly competition\n• Boost user engagement\n• Run every Monday-Sunday',
+                voteFor: 1240,
+                voteAgainst: 320,
+                status: 'active',
+                createdAt: '2024-03-08',
+                timeRemaining: '12 days 6 hours',
+                comments: 6
+            },
+            {
+                id: 6,
+                title: 'Remove API Rate Limiting for Premium Users',
+                category: 'features',
+                author: 'Lisa Park',
+                avatar: 'LP',
+                description: 'Allow premium tier users unlimited API calls for algorithmic trading integration.',
+                fullDescription: 'Premium users should have:\n\n• Unlimited API requests (vs 1000/day limit)\n• Priority webhook delivery\n• Custom data feeds\n• Dedicated support channel\n• $99/month premium tier',
+                voteFor: 2100,
+                voteAgainst: 1200,
+                status: 'rejected',
+                createdAt: '2024-02-10',
+                timeRemaining: null,
+                comments: 12
+            }
+        ];
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', init);
+
+        async function init() {
+            setupEventListeners();
+            loadUserPoints();
+            loadIdeas();
+            updateStats();
+        }
+
+        function setupEventListeners() {
+            // Submit Idea
+            document.getElementById('submit-idea-btn').addEventListener('click', openSubmitModal);
+            document.getElementById('submit-modal-close').addEventListener('click', closeSubmitModal);
+            document.getElementById('submit-modal-cancel').addEventListener('click', closeSubmitModal);
+            document.getElementById('submit-form').addEventListener('submit', handleSubmitIdea);
+
+            // Category tabs
+            document.querySelectorAll('.category-tab').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    document.querySelectorAll('.category-tab').forEach(b => b.classList.remove('active'));
+                    e.target.classList.add('active');
+                    selectedCategory = e.target.dataset.category;
+                    filterAndSortIdeas();
+                });
+            });
+
+            // Filter & Sort
+            document.getElementById('sort-by').addEventListener('change', (e) => {
+                selectedSort = e.target.value;
+                filterAndSortIdeas();
+            });
+
+            document.getElementById('filter-status').addEventListener('change', (e) => {
+                selectedStatus = e.target.value;
+                filterAndSortIdeas();
+            });
+
+            // Back to list
+            document.getElementById('back-to-list').addEventListener('click', showListView);
+
+            // Navigation
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+                    item.classList.add('active');
+                });
+            });
+
+            // QORUM expandable
+            document.getElementById('qorum-btn').addEventListener('click', (e) => {
+                const content = document.getElementById('qorum-content');
+                const btn = document.getElementById('qorum-btn');
+                content.classList.toggle('open');
+                btn.classList.toggle('open');
+            });
+
+            // Vote points slider
+            document.getElementById('vote-points-slider').addEventListener('input', (e) => {
+                const points = e.target.value;
+                document.getElementById('vote-points-amount').textContent = points;
+                document.getElementById('points-display').textContent = points;
+            });
+
+            // Vote buttons
+            document.getElementById('vote-for-btn').addEventListener('click', () => handleVote('for'));
+            document.getElementById('vote-against-btn').addEventListener('click', () => handleVote('against'));
+
+            // Close modal on outside click
+            document.getElementById('submit-modal').addEventListener('click', (e) => {
+                if (e.target.id === 'submit-modal') closeSubmitModal();
+            });
+        }
+
+        function loadUserPoints() {
+            // Simulate fetching from API
+            setTimeout(() => {
+                userPoints = Math.floor(Math.random() * 1000) + 50;
+                document.getElementById('user-points').textContent = userPoints.toLocaleString();
+                document.getElementById('available-points-detail').textContent = userPoints.toLocaleString();
+            }, 300);
+        }
+
+        function loadIdeas() {
+            // Use mock data, but would be from API in production
+            currentIdeas = mockIdeas;
+            filterAndSortIdeas();
+        }
+
+        function filterAndSortIdeas() {
+            let filtered = currentIdeas;
+
+            // Filter by category
+            if (selectedCategory !== 'all') {
+                filtered = filtered.filter(idea => idea.category === selectedCategory);
+            }
+
+            // Filter by status
+            if (selectedStatus !== 'all') {
+                filtered = filtered.filter(idea => idea.status === selectedStatus);
+            }
+
+            // Sort
+            switch (selectedSort) {
+                case 'most-votes':
+                    filtered.sort((a, b) => (b.voteFor + b.voteAgainst) - (a.voteFor + a.voteAgainst));
+                    break;
+                case 'newest':
+                    filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                    break;
+                case 'ending-soon':
+                    filtered.sort((a, b) => (a.timeRemaining ? 0 : 1) - (b.timeRemaining ? 0 : 1));
+                    break;
+                case 'most-discussed':
+                    filtered.sort((a, b) => b.comments - a.comments);
+                    break;
+            }
+
+            renderIdeas(filtered);
+        }
+
+        function renderIdeas(ideas) {
+            const list = document.getElementById('ideas-list');
+
+            if (ideas.length === 0) {
+                list.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">💭</div>
+                        <div class="empty-state-title">No ideas found</div>
+                        <p>Try adjusting your filters or category selection</p>
+                    </div>
+                `;
+                return;
+            }
+
+            list.innerHTML = ideas.map(idea => `
+                <div class="idea-card" onclick="showDetailView(${idea.id})">
+                    <div class="idea-header">
+                        <h3 class="idea-title">${idea.title}</h3>
+                        <div class="idea-badges">
+                            <span class="badge category">${capitalizeCategory(idea.category)}</span>
+                            <span class="badge status-${idea.status}">${capitalizeStatus(idea.status)}</span>
+                        </div>
+                    </div>
+
+                    <div class="idea-author">
+                        <div class="avatar">${idea.avatar}</div>
+                        <span>${idea.author}</span>
+                    </div>
+
+                    <p class="idea-description">${truncate(idea.description, 100)}</p>
+
+                    <div class="idea-meta">
+                        <div class="idea-meta-left">
+                            <div class="vote-info">
+                                <span>🗳️</span>
+                                <span class="vote-count">${(idea.voteFor + idea.voteAgainst).toLocaleString()} votes</span>
+                            </div>
+                            ${idea.timeRemaining ? `
+                                <div class="time-remaining">
+                                    ⏱️ ${idea.timeRemaining} left
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function showDetailView(ideaId) {
+            selectedIdeaId = ideaId;
+            const idea = currentIdeas.find(i => i.id === ideaId);
+
+            if (!idea) return;
+
+            // Update detail view
+            document.getElementById('detail-title').textContent = idea.title;
+            document.getElementById('detail-author').textContent = idea.author;
+            document.getElementById('detail-avatar').textContent = idea.avatar;
+            document.getElementById('detail-description').textContent = idea.fullDescription;
+            document.getElementById('detail-date').textContent = `Created: ${formatDate(idea.createdAt)}`;
+            document.getElementById('detail-status').textContent = capitalizeStatus(idea.status);
+            document.getElementById('detail-status').className = `badge status-${idea.status}`;
+
+            // Update votes
+            const total = idea.voteFor + idea.voteAgainst;
+            const forPercent = total > 0 ? (idea.voteFor / total) * 100 : 50;
+            const againstPercent = 100 - forPercent;
+
+            document.getElementById('vote-bar-for').style.width = forPercent + '%';
+            document.getElementById('vote-bar-for-text').textContent = forPercent.toFixed(0) + '%';
+
+            document.getElementById('vote-bar-against').style.width = againstPercent + '%';
+            document.getElementById('vote-bar-against-text').textContent = againstPercent.toFixed(0) + '%';
+
+            document.getElementById('vote-for-count').textContent = idea.voteFor.toLocaleString();
+            document.getElementById('vote-against-count').textContent = idea.voteAgainst.toLocaleString();
+            document.getElementById('total-points-committed').textContent = total.toLocaleString();
+
+            // Update vote buttons
+            const isActive = idea.status === 'active';
+            document.getElementById('vote-for-btn').disabled = !isActive;
+            document.getElementById('vote-against-btn').disabled = !isActive;
+            document.getElementById('vote-points-slider').disabled = !isActive;
+
+            // Reset slider
+            document.getElementById('vote-points-slider').value = 10;
+            document.getElementById('vote-points-amount').textContent = 10;
+
+            // Show detail view
+            document.getElementById('list-view').style.display = 'none';
+            document.getElementById('detail-view').classList.add('open');
+        }
+
+        function showListView() {
+            document.getElementById('list-view').style.display = 'block';
+            document.getElementById('detail-view').classList.remove('open');
+            selectedIdeaId = null;
+        }
+
+        function openSubmitModal() {
+            document.getElementById('submit-modal').classList.add('open');
+        }
+
+        function closeSubmitModal() {
+            document.getElementById('submit-modal').classList.remove('open');
+            document.getElementById('submit-form').reset();
+        }
+
+        async function handleSubmitIdea(e) {
+            e.preventDefault();
+
+            const title = document.getElementById('idea-title').value;
+            const category = document.getElementById('idea-category').value;
+            const description = document.getElementById('idea-description').value;
+            const pointsStaked = parseInt(document.getElementById('idea-points').value);
+
+            if (pointsStaked < 10) {
+                alert('Minimum 10 points required');
+                return;
+            }
+
+            if (pointsStaked > userPoints) {
+                alert('Insufficient points. You have ' + userPoints + ' points.');
+                return;
+            }
+
+            try {
+                // In production, this would POST to the API
+                const response = await fetch(`${API_BASE}/ideas`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        title,
+                        description,
+                        category,
+                        telegramId: userTelegramId,
+                        pointsStaked
+                    })
+                }).catch(() => null);
+
+                // Simulate success
+                const newIdea = {
+                    id: currentIdeas.length + 1,
+                    title,
+                    category,
+                    author: 'You',
+                    avatar: 'ME',
+                    description,
+                    fullDescription: description,
+                    voteFor: pointsStaked,
+                    voteAgainst: 0,
+                    status: 'active',
+                    createdAt: new Date().toISOString().split('T')[0],
+                    timeRemaining: '7 days',
+                    comments: 0
+                };
+
+                currentIdeas.unshift(newIdea);
+                userPoints -= pointsStaked;
+                document.getElementById('user-points').textContent = userPoints.toLocaleString();
+
+                closeSubmitModal();
+                filterAndSortIdeas();
+                alert('Idea submitted successfully!');
+            } catch (error) {
+                console.error('Error submitting idea:', error);
+                alert('Error submitting idea. Please try again.');
+            }
+        }
+
+        async function handleVote(side) {
+            if (!selectedIdeaId) return;
+
+            const points = parseInt(document.getElementById('vote-points-slider').value);
+
+            if (points > userPoints) {
+                alert('Insufficient points for this vote');
+                return;
+            }
+
+            try {
+                // In production, POST to the API
+                const response = await fetch(`${API_BASE}/ideas/${selectedIdeaId}/vote`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        side,
+                        points,
+                        telegramId: userTelegramId
+                    })
+                }).catch(() => null);
+
+                // Update local state
+                const idea = currentIdeas.find(i => i.id === selectedIdeaId);
+                if (idea) {
+                    if (side === 'for') {
+                        idea.voteFor += points;
+                    } else {
+                        idea.voteAgainst += points;
+                    }
+                }
+
+                userPoints -= points;
+                document.getElementById('user-points').textContent = userPoints.toLocaleString();
+                document.getElementById('available-points-detail').textContent = userPoints.toLocaleString();
+
+                // Refresh detail view
+                showDetailView(selectedIdeaId);
+                alert(`Voted ${side.toUpperCase()} with ${points} points!`);
+            } catch (error) {
+                console.error('Error voting:', error);
+                alert('Error placing vote. Please try again.');
+            }
+        }
+
+        function updateStats() {
+            document.getElementById('stat-total-ideas').textContent = currentIdeas.length;
+            document.getElementById('stat-active-votes').textContent = currentIdeas.filter(i => i.status === 'active').length;
+            const totalPoints = currentIdeas.reduce((sum, i) => sum + i.voteFor + i.voteAgainst, 0);
+            document.getElementById('stat-points-dist').textContent = totalPoints.toLocaleString();
+        }
+
+        // Utilities
+        function capitalizeCategory(cat) {
+            return cat.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+        }
+
+        function capitalizeStatus(status) {
+            return status.charAt(0).toUpperCase() + status.slice(1);
+        }
+
+        function truncate(text, length) {
+            return text.length > length ? text.substring(0, length) + '...' : text;
+        }
+
+        function formatDate(dateStr) {
+            return new Date(dateStr).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+        }
+    </script>
+</body>
+</html>
