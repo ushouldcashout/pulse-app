@@ -550,7 +550,26 @@ const LiveFeedSidebar = ({ recentBets, points, winRate = 0, streak = 0}) => {
         </div>
       </div>
 
-      {/* Nado Quick Stats */}
+      {/* Your Stats */}
+      <div className="sidebar-card">
+        <div style={{ fontSize: "10px", fontWeight: "800", color: "#fbbf24", letterSpacing: "2px", marginBottom: "12px" }}>
+          YOUR STATS
+        </div>
+        <div className="sidebar-stat">
+          <span>Win Rate</span>
+          <span className="sidebar-stat-value" style={{ color: "#10b981" }}>{winRate}%</span>
+        </div>
+        <div className="sidebar-stat">
+          <span>Streak</span>
+          <span className="sidebar-stat-value" style={{ color: streak > 0 ? "#10b981" : streak < 0 ? "#ef4444" : "#6b7280" }}>{streak > 0 ? "+" + streak + " W" : streak < 0 ? streak + " L" : "0"}</span>
+        </div>
+        <div className="sidebar-stat">
+          <span>Points</span>
+          <span className="sidebar-stat-value" style={{ color: "#fbbf24" }}>{points}</span>
+        </div>
+      </div>
+
+            {/* Nado Quick Stats */}
       <div className="sidebar-card">
         <div style={{ fontSize: '10px', fontWeight: '800', color: '#a855f7', letterSpacing: '2px', marginBottom: '12px', textTransform: 'uppercase' }}>
           Nado DEX
@@ -596,6 +615,8 @@ const ChatBox = () => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [username, setUsername] = useState(() => { try { return localStorage.getItem("pulse_chat_name") || "anon_" + Math.random().toString(36).slice(2,6); } catch(e) { return "anon"; } });
+  const [editingName, setEditingName] = useState(false);
+  const [nameInput, setNameInput] = useState("");
   const messagesEndRef = useRef(null);
   const wsRef = useRef(null);
 
@@ -621,6 +642,8 @@ const ChatBox = () => {
     if (messagesEndRef.current) messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+    var saveName = function() { var n = nameInput.trim(); if (n && n.length > 0 && n.length <= 16) { setUsername(n); try { localStorage.setItem("pulse_chat_name", n); } catch(e){} setEditingName(false); } };
+
   var sendMessage = function() {
     if (!input.trim() || !wsRef.current) return;
     wsRef.current.send(JSON.stringify({ type: "chat", data: { user: username, text: input.trim(), ts: Date.now() } }));
@@ -630,8 +653,16 @@ const ChatBox = () => {
 
   return (
     <div className="sidebar-card" style={{ display: "flex", flexDirection: "column", height: "280px", borderColor: "rgba(59,130,246,0.15)", background: "rgba(59,130,246,0.02)" }}>
-      <div style={{ fontSize: "10px", fontWeight: "800", color: "#60a5fa", letterSpacing: "2px", marginBottom: "8px" }}>
-        LIVE CHAT
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+        <div style={{ fontSize: "10px", fontWeight: "800", color: "#10b981", letterSpacing: "2px" }}>LIVE CHAT</div>
+        {editingName ? (
+          <div style={{ display: "flex", gap: "4px", alignItems: "center" }}>
+            <input value={nameInput} onChange={function(e) { setNameInput(e.target.value); }} onKeyDown={function(e) { if (e.key === "Enter") saveName(); }} placeholder="nickname" maxLength={16} style={{ width: "80px", padding: "2px 6px", borderRadius: "4px", border: "1px solid rgba(16,185,129,0.3)", background: "rgba(255,255,255,0.05)", color: "#e5e7eb", fontSize: "9px", outline: "none" }} autoFocus />
+            <button onClick={saveName} style={{ padding: "2px 6px", borderRadius: "4px", border: "none", background: "rgba(16,185,129,0.2)", color: "#10b981", fontSize: "8px", cursor: "pointer", fontWeight: "700" }}>OK</button>
+          </div>
+        ) : (
+          <button onClick={function() { setNameInput(username); setEditingName(true); }} style={{ padding: "2px 6px", borderRadius: "4px", border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.03)", color: "#9ca3af", fontSize: "9px", cursor: "pointer" }}>{username}</button>
+        )}
       </div>
       <div style={{ flex: 1, overflowY: "auto", marginBottom: "8px", fontSize: "11px" }}>
         {messages.length === 0 && <div style={{ color: "#4b5563", textAlign: "center", marginTop: "40px" }}>No messages yet. Say gm!</div>}
@@ -1260,9 +1291,17 @@ const PulseGame = () => {
   const [priceHistory, setPriceHistory] = useState([]); // last 80 prices for chart
   const [showReferral, setShowReferral] = useState(false);
   const [recentBets, setRecentBets] = useState([]); // social feed: [{side, amount, name}]
+  const [wins, setWins] = useState(function() { try { return parseInt(localStorage.getItem('pulse_wins')) || 0; } catch(e) { return 0; } });
+  const [losses, setLosses] = useState(function() { try { return parseInt(localStorage.getItem('pulse_losses')) || 0; } catch(e) { return 0; } });
+  const [currentStreak, setCurrentStreak] = useState(function() { try { return parseInt(localStorage.getItem('pulse_streak')) || 0; } catch(e) { return 0; } });
+  const [lastBetResult, setLastBetResult] = useState(null);
+  const [activeBetInfo, setActiveBetInfo] = useState(null);
 
   useEffect(() => { try { const p = localStorage.getItem('pulse_points'); if (p) setPoints(parseInt(p)); } catch(e){} }, []);
   useEffect(() => { try { localStorage.setItem('pulse_points', points.toString()); } catch(e){} }, [points]);
+  useEffect(function() { try { localStorage.setItem('pulse_wins', wins.toString()); } catch(e){} }, [wins]);
+  useEffect(function() { try { localStorage.setItem('pulse_losses', losses.toString()); } catch(e){} }, [losses]);
+  useEffect(function() { try { localStorage.setItem('pulse_streak', currentStreak.toString()); } catch(e){} }, [currentStreak]);
   useEffect(() => { try { localStorage.setItem('pulse_wins', wins.toString()); } catch(e){} }, [wins]);
   useEffect(() => { try { localStorage.setItem('pulse_losses', losses.toString()); } catch(e){} }, [losses]);
   useEffect(() => { try { localStorage.setItem('pulse_streak', currentStreak.toString()); } catch(e){} }, [currentStreak]);
@@ -1295,7 +1334,7 @@ const PulseGame = () => {
       haptic('notification', 'success');
       refetchBalance();
       // Clear after 3 seconds
-      setTimeout(function() { setTxStatus(null); setBet(null); resetTx(); }, 3000);
+      setTimeout(function() { setTxStatus(null); resetTx(); }, 3000);
     } else if (isTxReverted) {
       setTxStatus('error');
       setTxErrorMsg('Transaction reverted on-chain');
@@ -1327,6 +1366,7 @@ const PulseGame = () => {
       // Clear previous bet
       if (!txStatus) { setBet(null); }
       setRoundResult(null);
+      setActiveBetInfo(null);
       setClaimRoundId(null);
       setClaimStatus(null);
     }
@@ -1423,6 +1463,7 @@ const PulseGame = () => {
 
     haptic('impact', 'medium');
     setBet(dir);
+    setActiveBetInfo({ direction: dir, amount: betAmount });
     setTxStatus('pending');
     setTxErrorMsg('');
     txTypeRef.current = 'bet';
@@ -1588,6 +1629,16 @@ const PulseGame = () => {
                 </div>
               )}
 
+              {/* Active Bet Indicator */}
+              {activeBetInfo && (
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", padding: "6px 12px", borderRadius: "10px", background: activeBetInfo.direction === "up" ? "rgba(16,185,129,0.08)" : "rgba(239,68,68,0.08)", border: activeBetInfo.direction === "up" ? "1px solid rgba(16,185,129,0.2)" : "1px solid rgba(239,68,68,0.2)", animation: "fadeIn 0.3s ease" }}>
+                  <span style={{ fontSize: "11px" }}>{activeBetInfo.direction === "up" ? "\u{1F7E2}" : "\u{1F534}"}</span>
+                  <span style={{ fontSize: "11px", fontWeight: "700", color: activeBetInfo.direction === "up" ? "#10b981" : "#ef4444" }}>YOUR BET: {activeBetInfo.direction.toUpperCase()}</span>
+                  <span style={{ fontSize: "11px", color: "#9ca3af" }}>|</span>
+                  <span style={{ fontSize: "11px", fontWeight: "700", color: "#e5e7eb" }}>{activeBetInfo.amount} ETH</span>
+                </div>
+              )}
+
               {/* Chart */}
               <div style={{ flex: 1, minHeight: '180px', borderRadius: '14px', overflow: 'hidden', background: 'rgba(255,255,255,0.015)', border: '1px solid rgba(255,255,255,0.04)' }}>
                 <PriceChart prices={priceHistory} lockPrice={snapshotPrice} phase={phase} roundResult={roundResult} />
@@ -1619,10 +1670,10 @@ const PulseGame = () => {
                     {price > 0 ? '$' + price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '...'}
                   </div>
                   {lastBetResult && (
-              <div style={{ padding: "8px 16px", borderRadius: "10px", fontSize: "14px", fontWeight: "800", textAlign: "center", marginBottom: "8px", animation: "pulse 1.5s ease infinite", background: lastBetResult === "won" ? "rgba(16,185,129,0.15)" : "rgba(239,68,68,0.15)", color: lastBetResult === "won" ? "#10b981" : "#ef4444", border: lastBetResult === "won" ? "1px solid rgba(16,185,129,0.3)" : "1px solid rgba(239,68,68,0.3)" }}>
-                {lastBetResult === "won" ? "YOU WON! +2x" : "LOST - Better luck next round!"}
-              </div>
-            )}
+                <div style={{ padding: "10px 16px", borderRadius: "12px", textAlign: "center", fontSize: "16px", fontWeight: "800", animation: "slideIn 0.3s ease, pulseGlow 2s ease infinite", background: lastBetResult === "won" ? "rgba(16,185,129,0.15)" : "rgba(239,68,68,0.15)", color: lastBetResult === "won" ? "#10b981" : "#ef4444", border: lastBetResult === "won" ? "2px solid rgba(16,185,129,0.3)" : "2px solid rgba(239,68,68,0.3)", boxShadow: lastBetResult === "won" ? "0 0 20px rgba(16,185,129,0.15)" : "0 0 20px rgba(239,68,68,0.15)" }}>
+                  {lastBetResult === "won" ? "\u{1F389} YOU WON! +2x PAYOUT" : "\u{274C} LOST - Better luck next round!"}
+                </div>
+              )}}
             {snapshotPrice && phase !== 'betting' && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px' }}>
                       <span style={{ fontSize: '10px', color: '#6b7280' }}>Entry ${snapshotPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
