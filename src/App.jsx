@@ -1632,7 +1632,7 @@ const PulseGame = () => {
               {/* Active Bet Indicator */}
               {activeBetInfo && (
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", padding: "6px 12px", borderRadius: "10px", background: activeBetInfo.direction === "up" ? "rgba(16,185,129,0.08)" : "rgba(239,68,68,0.08)", border: activeBetInfo.direction === "up" ? "1px solid rgba(16,185,129,0.2)" : "1px solid rgba(239,68,68,0.2)", animation: "fadeIn 0.3s ease" }}>
-                  <span style={{ fontSize: "11px" }}>{activeBetInfo.direction === "up" ? "\u{1F7E2}" : "\u{1F534}"}</span>
+                  <span style={{ fontSize: "11px" }}>{activeBetInfo.direction === "up" ? "🟢" : "🔴"}</span>
                   <span style={{ fontSize: "11px", fontWeight: "700", color: activeBetInfo.direction === "up" ? "#10b981" : "#ef4444" }}>YOUR BET: {activeBetInfo.direction.toUpperCase()}</span>
                   <span style={{ fontSize: "11px", color: "#9ca3af" }}>|</span>
                   <span style={{ fontSize: "11px", fontWeight: "700", color: "#e5e7eb" }}>{activeBetInfo.amount} ETH</span>
@@ -1671,7 +1671,7 @@ const PulseGame = () => {
                   </div>
                   {lastBetResult && (
                 <div style={{ padding: "10px 16px", borderRadius: "12px", textAlign: "center", fontSize: "16px", fontWeight: "800", animation: "slideIn 0.3s ease, pulseGlow 2s ease infinite", background: lastBetResult === "won" ? "rgba(16,185,129,0.15)" : "rgba(239,68,68,0.15)", color: lastBetResult === "won" ? "#10b981" : "#ef4444", border: lastBetResult === "won" ? "2px solid rgba(16,185,129,0.3)" : "2px solid rgba(239,68,68,0.3)", boxShadow: lastBetResult === "won" ? "0 0 20px rgba(16,185,129,0.15)" : "0 0 20px rgba(239,68,68,0.15)" }}>
-                  {lastBetResult === "won" ? "\u{1F389} YOU WON! +2x PAYOUT" : "\u{274C} LOST - Better luck next round!"}
+                  {lastBetResult === "won" ? "🎉 YOU WON! +2x PAYOUT" : "❌ LOST - Better luck next round!"}
                 </div>
               )}}
             {snapshotPrice && phase !== 'betting' && (
