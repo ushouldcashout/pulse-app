@@ -586,20 +586,27 @@ const LiveFeedSidebar = ({ recentBets, points, winRate = 0, streak = 0}) => {
         </div>
       </div>
 
-      {/* Coming Soon */}
+      {/* DeFi Prediction Markets */}
       <div className="sidebar-card" style={{ borderColor: 'rgba(168,85,247,0.15)', background: 'rgba(168,85,247,0.02)' }}>
         <div style={{ fontSize: '10px', fontWeight: '800', color: '#c084fc', letterSpacing: '2px', marginBottom: '12px' }}>
-          🔮 COMING SOON
-        </div>
-        <div style={{ fontSize: '11px', color: '#a855f7', fontWeight: '700', marginBottom: '8px' }}>
           PREDICT DEFI
         </div>
-        {comingSoonMarkets.map((market, i) => (
-          <div key={i} style={{ fontSize: '10px', color: '#9ca3af', padding: '6px 0', borderBottom: i < comingSoonMarkets.length - 1 ? '1px solid rgba(255,255,255,0.03)' : 'none', display: 'flex', alignItems: 'center', gap: '4px' }}>
-            <span>🔒</span>
-            <span>{market}</span>
-          </div>
-        ))}
+        {[
+          { name: 'ETH 1min', asset: 'ETH', dur: 60, icon: String.fromCodePoint(9830) },
+          { name: 'SOL 5min', asset: 'SOL', dur: 300, icon: String.fromCodePoint(9883) },
+          { name: 'BTC 15min', asset: 'BTC', dur: 900, icon: String.fromCodePoint(9889) }
+        ].map(function(m, i) {
+          return (
+            <div key={i} style={{ padding: '8px', borderRadius: '8px', background: 'rgba(168,85,247,0.04)', border: '1px solid rgba(168,85,247,0.1)', marginBottom: '6px', cursor: 'pointer' }}
+              onClick={function() { window.open('https://pulsebet.fun?market=' + m.asset + '_' + m.dur, '_self'); }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '11px', fontWeight: '700', color: '#e5e7eb' }}>{m.icon} {m.name}</span>
+                <span style={{ fontSize: '9px', padding: '2px 6px', borderRadius: '4px', background: 'rgba(16,185,129,0.15)', color: '#10b981', fontWeight: '600' }}>LIVE</span>
+              </div>
+              <div style={{ fontSize: '9px', color: '#6b7280', marginTop: '4px' }}>Predict {m.asset} direction in {m.dur >= 60 ? Math.round(m.dur / 60) + ' min' : m.dur + 's'}</div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -1287,6 +1294,7 @@ const PulseGame = () => {
   const [priceKey, setPriceKey] = useState(0); // triggers re-animation on price change
   const [priceHistory, setPriceHistory] = useState([]); // last 80 prices for chart
   const [showReferral, setShowReferral] = useState(false);
+  const [showIdeas, setShowIdeas] = useState(false);
   const [recentBets, setRecentBets] = useState([]); // social feed: [{side, amount, name}]
 
   useEffect(() => { try { const p = localStorage.getItem('pulse_points'); if (p) setPoints(parseInt(p)); } catch(e){} }, []);
@@ -1754,6 +1762,9 @@ const PulseGame = () => {
                     <span style={{ fontSize: '8px', padding: '1px 4px', borderRadius: '4px', background: 'rgba(168,85,247,0.2)', color: '#c084fc', fontWeight: '600' }}>SOON</span>
                   </div>
                 </div>
+                <button onClick={function() { setShowIdeas(!showIdeas); }} style={{ padding: '3px 10px', borderRadius: '12px', border: '1px solid rgba(168,85,247,0.12)', background: 'rgba(168,85,247,0.04)', color: '#a855f7', fontSize: '10px', fontWeight: '600', cursor: 'pointer' }}>
+                  Ideas
+                </button>
                 <button onClick={function() { setShowReferral(!showReferral); }} style={{ padding: '3px 10px', borderRadius: '12px', border: '1px solid rgba(16,185,129,0.12)', background: 'rgba(16,185,129,0.04)', color: '#10b981', fontSize: '10px', fontWeight: '600', cursor: 'pointer' }}>
                   👥 Invite
                 </button>
@@ -1799,6 +1810,53 @@ const PulseGame = () => {
               <button onClick={function() { window.open('https://t.me/share/url?url=' + encodeURIComponent('https://pulsebet.fun?ref=' + (address ? address.slice(0, 8) : '')) + '&text=' + encodeURIComponent('Predict BTC in 10 seconds on Pulse! Earn $PULSE points.'), '_blank'); }} style={{ flex: 1, padding: '10px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.03)', color: '#fff', fontSize: '12px', cursor: 'pointer', fontWeight: '600' }}>Telegram</button>
               <button onClick={function() { window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent('Predicting BTC price in 10 seconds on @PulseBet! Earn $PULSE points.\n\nhttps://pulsebet.fun?ref=' + (address ? address.slice(0, 8) : '')), '_blank'); }} style={{ flex: 1, padding: '10px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.03)', color: '#fff', fontSize: '12px', cursor: 'pointer', fontWeight: '600' }}>X / Twitter</button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Ideas Forum Overlay */}
+      {showIdeas && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.9)', backdropFilter: 'blur(8px)', zIndex: 90, display: 'flex', flexDirection: 'column', padding: '20px', animation: 'fadeIn 0.2s ease', overflowY: 'auto' }}>
+          <div style={{ maxWidth: '500px', width: '100%', margin: '0 auto' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <div>
+                <div style={{ fontSize: '18px', fontWeight: '800', color: '#a855f7' }}>Ideas Forum</div>
+                <div style={{ fontSize: '11px', color: '#6b7280', marginTop: '2px' }}>Vote with your points (QORUM)</div>
+              </div>
+              <button onClick={function() { setShowIdeas(false); }} style={{ background: 'none', border: 'none', color: '#6b7280', fontSize: '20px', cursor: 'pointer' }}>X</button>
+            </div>
+            <div style={{ padding: '16px', borderRadius: '12px', background: 'rgba(168,85,247,0.06)', border: '1px solid rgba(168,85,247,0.15)', marginBottom: '16px' }}>
+              <div style={{ fontSize: '12px', color: '#c084fc', fontWeight: '700', marginBottom: '8px' }}>How QORUM Works</div>
+              <div style={{ fontSize: '11px', color: '#9ca3af', lineHeight: '1.5' }}>Spend your earned points to vote on ideas. More points = more voting power. Top ideas get built into Pulse.</div>
+            </div>
+            {[
+              { id: 1, title: 'Multi-asset predictions (ETH, SOL)', cat: 'feature', votes: 342, voters: 28 },
+              { id: 2, title: 'Tournament mode with prize pools', cat: 'feature', votes: 289, voters: 21 },
+              { id: 3, title: 'Social trading - copy top players', cat: 'feature', votes: 256, voters: 19 },
+              { id: 4, title: 'Mobile push notifications for rounds', cat: 'improvement', votes: 198, voters: 15 },
+              { id: 5, title: 'Weekly leaderboard with $PULSE rewards', cat: 'market', votes: 175, voters: 12 },
+              { id: 6, title: 'Longer timeframe markets (1h, 4h)', cat: 'market', votes: 156, voters: 11 }
+            ].map(function(idea) {
+              return (
+                <div key={idea.id} style={{ padding: '12px', borderRadius: '10px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', marginBottom: '8px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px' }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: '12px', fontWeight: '600', color: '#e5e7eb', marginBottom: '4px' }}>{idea.title}</div>
+                      <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                        <span style={{ fontSize: '9px', padding: '2px 6px', borderRadius: '4px', background: idea.cat === 'feature' ? 'rgba(59,130,246,0.1)' : idea.cat === 'market' ? 'rgba(168,85,247,0.1)' : 'rgba(251,191,36,0.1)', color: idea.cat === 'feature' ? '#60a5fa' : idea.cat === 'market' ? '#c084fc' : '#fbbf24', fontWeight: '600' }}>{idea.cat}</span>
+                        <span style={{ fontSize: '9px', color: '#6b7280' }}>{idea.voters} voters</span>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
+                      <button style={{ width: '28px', height: '20px', borderRadius: '4px', border: '1px solid rgba(16,185,129,0.2)', background: 'rgba(16,185,129,0.06)', color: '#10b981', fontSize: '10px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>+</button>
+                      <span style={{ fontSize: '12px', fontWeight: '800', color: '#a855f7' }}>{idea.votes}</span>
+                      <button style={{ width: '28px', height: '20px', borderRadius: '4px', border: '1px solid rgba(239,68,68,0.2)', background: 'rgba(239,68,68,0.06)', color: '#ef4444', fontSize: '10px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>-</button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+            <div style={{ textAlign: 'center', marginTop: '12px', fontSize: '11px', color: '#4b5563' }}>Submit ideas in our Telegram group</div>
           </div>
         </div>
       )}
