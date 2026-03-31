@@ -773,25 +773,10 @@ const LandingPage = ({ onEnter }) => {
           PULSE
         </h1>
         <div style={{ fontSize: '13px', fontWeight: '700', letterSpacing: '4px', color: '#fbbf24', marginBottom: '20px', textTransform: 'uppercase' }}>
-          10-SECOND CRYPTO PREDICTIONS
+          10s predictions. bet it.
         </div>
         <p style={{ fontSize: '18px', color: '#9ca3af', maxWidth: '500px', margin: '0 auto 32px', lineHeight: 1.5 }}>
-          Predict if BTC goes <span style={{ color: '#10b981', fontWeight: '700' }}>UP</span> or <span style={{ color: '#ef4444', fontWeight: '700' }}>DOWN</span> in 10 seconds.
-          <br />Win ETH. Earn <span style={{ color: '#a855f7', fontWeight: '700' }}>$PULSE</span> points. Climb the leaderboard.
-        </p>
-
-        <button className="landing-btn" onClick={onEnter} style={{
-          padding: '16px 48px', fontSize: '18px', fontWeight: '800', border: 'none', borderRadius: '16px',
-          background: 'linear-gradient(135deg, #fbbf24, #f59e0b, #fbbf24)', backgroundSize: '200% 200%',
-          animation: 'gradientShift 3s ease infinite', color: '#000', cursor: 'pointer',
-          boxShadow: '0 8px 32px rgba(251,191,36,0.3)', transition: 'all 0.2s ease', position: 'relative'
-        }}>
-          🎯 START PLAYING
-        </button>
-
-        <div style={{ marginTop: '12px', fontSize: '11px', color: '#4b5563' }}>
-          Ink Sepolia Testnet • No real funds at risk
-        </div>
+          up or down? 10 seconds. not financial advice, just vibes.</div>
       </div>
 
       {/* LIVE STATS BAR */}
@@ -815,16 +800,16 @@ const LandingPage = ({ onEnter }) => {
         })}
       </div>
 
-      {/* HOW IT WORKS */}
+      {/* how to play */}
       <div style={{ padding: '40px 20px', maxWidth: '700px', margin: '0 auto' }}>
         <h2 style={{ textAlign: 'center', fontSize: '24px', fontWeight: '800', marginBottom: '32px' }}>
           ⚡ HOW IT WORKS
         </h2>
         <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', justifyContent: 'center' }}>
           {[
-            { step: '1', title: 'CONNECT', desc: 'Link your wallet in one tap. Works with MetaMask, WalletConnect, or Coinbase.', icon: '🔗', color: '#06b6d4' },
-            { step: '2', title: 'PREDICT', desc: 'BTC going UP or DOWN in the next 10 seconds? Pick your side and bet ETH.', icon: '🎯', color: '#fbbf24' },
-            { step: '3', title: 'WIN', desc: 'Called it right? Claim your ETH winnings + earn $PULSE points instantly.', icon: '💰', color: '#10b981' },
+            { step: '1', title: 'CONNECT', desc: 'connect wallet. metamask, walletconnect, whatever.', icon: '🔗', color: '#06b6d4' },
+            { step: '2', title: 'PREDICT', desc: 'BTC up or down in 10 seconds. pick a side. bet ETH.', icon: '🎯', color: '#fbbf24' },
+            { step: '3', title: 'WIN', desc: 'called it? claim ETH + earn points. simple.', icon: '💰', color: '#10b981' },
           ].map(function(s) {
             return (
               <div className="step-card" key={s.step} style={{
@@ -938,7 +923,7 @@ const LandingPage = ({ onEnter }) => {
           }}>𝕏 Twitter</a>
         </div>
         <div style={{ fontSize: '11px', color: '#374151' }}>
-          Built on Ink • Powered by degen energy • © 2025 Pulse
+          Built on Ink • degen energy only • © 2025 Pulse
         </div>
       </div>
     </div>
