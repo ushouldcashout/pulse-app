@@ -1553,6 +1553,26 @@ const PulseGame = () => {
         )}
       </div>
 
+      {/* ===== NAV BAR ===== */}
+      {isConnected && (
+        <div style={{ display: 'flex', gap: '4px', padding: '0 14px 6px', flexShrink: 0, overflowX: 'auto', scrollbarWidth: 'none' }}>
+          {[
+            { label: 'Predict', icon: '🎯', href: null, active: true },
+            { label: 'DeFi Markets', icon: '📊', href: '/defi-markets.html' },
+            { label: 'Ideas', icon: '💡', href: '/ideas.html' },
+            { label: 'Docs', icon: '📖', href: '/agent-docs.html' },
+          ].map(function(item, i) {
+            return (
+              <button key={i} onClick={function() { if (item.href) { try { window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp.openLink(window.location.origin + item.href) : window.open(item.href, '_blank'); } catch(e) { window.open(item.href, '_blank'); } } }}
+                style={{ padding: '4px 10px', borderRadius: '10px', border: item.active ? '1px solid rgba(16,185,129,0.3)' : '1px solid rgba(255,255,255,0.06)', background: item.active ? 'rgba(16,185,129,0.1)' : 'rgba(255,255,255,0.03)', color: item.active ? '#10b981' : '#6b7280', fontSize: '11px', fontWeight: '600', cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                {item.icon} {item.label}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+
       {/* ===== CONNECT PROMPT (only when not connected) ===== */}
       {!isConnected && (
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
