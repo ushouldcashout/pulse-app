@@ -427,7 +427,7 @@ const useNadoData = () => {
 // ============================================
 // SIDEBAR COMPONENTS
 // ============================================
-const EcosystemSidebar = () => {
+const EcosystemSidebar = ({winRate = 0, streak = 0}) => {
   const { tydroTVL, inkTVL, nadoVolume } = useEcosystemData();
 
   const mockLeaderboard = [
@@ -511,7 +511,7 @@ const EcosystemSidebar = () => {
   );
 };
 
-const LiveFeedSidebar = ({ recentBets, points, winRate = 0, streak = 0 , winRate = 0, streak = 0}) => {
+const LiveFeedSidebar = ({ recentBets, points, winRate = 0, streak = 0}) => {
   const { volume24h, openInterest, topPair } = useNadoData();
 
   const comingSoonMarkets = [
