@@ -591,6 +591,68 @@ const LiveFeedSidebar = ({ recentBets, points, winRate = 0, streak = 0}) => {
 // ============================================
 // LANDING PAGE
 // ============================================
+
+const ChatBox = () => {
+  const [messages, setMessages] = useState([]);
+  const [input, setInput] = useState("");
+  const [username, setUsername] = useState(() => { try { return localStorage.getItem("pulse_chat_name") || "anon_" + Math.random().toString(36).slice(2,6); } catch(e) { return "anon"; } });
+  const messagesEndRef = useRef(null);
+  const wsRef = useRef(null);
+
+  useEffect(() => {
+    try { localStorage.setItem("pulse_chat_name", username); } catch(e) {}
+  }, [username]);
+
+  useEffect(() => {
+    var ws = new WebSocket("wss://pulse-backend-production-b2c9.up.railway.app");
+    wsRef.current = ws;
+    ws.onmessage = function(e) {
+      try {
+        var d = JSON.parse(e.data);
+        if (d.type === "chat") {
+          setMessages(function(prev) { return prev.concat([d.data]).slice(-50); });
+        }
+      } catch(err) {}
+    };
+    return function() { ws.close(); };
+  }, []);
+
+  useEffect(() => {
+    if (messagesEndRef.current) messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  var sendMessage = function() {
+    if (!input.trim() || !wsRef.current) return;
+    wsRef.current.send(JSON.stringify({ type: "chat", data: { user: username, text: input.trim(), ts: Date.now() } }));
+    setMessages(function(prev) { return prev.concat([{ user: username, text: input.trim(), ts: Date.now(), self: true }]).slice(-50); });
+    setInput("");
+  };
+
+  return (
+    <div className="sidebar-card" style={{ display: "flex", flexDirection: "column", height: "280px", borderColor: "rgba(59,130,246,0.15)", background: "rgba(59,130,246,0.02)" }}>
+      <div style={{ fontSize: "10px", fontWeight: "800", color: "#60a5fa", letterSpacing: "2px", marginBottom: "8px" }}>
+        LIVE CHAT
+      </div>
+      <div style={{ flex: 1, overflowY: "auto", marginBottom: "8px", fontSize: "11px" }}>
+        {messages.length === 0 && <div style={{ color: "#4b5563", textAlign: "center", marginTop: "40px" }}>No messages yet. Say gm!</div>}
+        {messages.map(function(msg, i) {
+          return <div key={i} style={{ marginBottom: "4px", wordBreak: "break-word" }}>
+            <span style={{ color: msg.self ? "#60a5fa" : "#a78bfa", fontWeight: "700", fontSize: "10px" }}>{msg.user}: </span>
+            <span style={{ color: "#d1d5db" }}>{msg.text}</span>
+          </div>;
+        })}
+        <div ref={messagesEndRef} />
+      </div>
+      <div style={{ display: "flex", gap: "4px" }}>
+        <input value={input} onChange={function(e) { setInput(e.target.value); }} onKeyDown={function(e) { if (e.key === "Enter") sendMessage(); }}
+          placeholder="Type a message..."
+          style={{ flex: 1, padding: "6px 8px", borderRadius: "6px", border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.05)", color: "#e5e7eb", fontSize: "11px", outline: "none" }} />
+        <button onClick={sendMessage} style={{ padding: "6px 10px", borderRadius: "6px", border: "none", background: "rgba(59,130,246,0.2)", color: "#60a5fa", fontSize: "11px", fontWeight: "700", cursor: "pointer" }}>Send</button>
+      </div>
+    </div>
+  );
+};
+
 const LANDING_STYLES = `
 @keyframes heroGlow {
   0%, 100% { text-shadow: 0 0 20px rgba(251,191,36,0.4), 0 0 60px rgba(251,191,36,0.1); }
@@ -1671,6 +1733,7 @@ const PulseGame = () => {
             {isDesktop && (
               <div style={{ flexShrink: 0 }}>
                 <LiveFeedSidebar recentBets={recentBets} points={points} winRate={wins + losses > 0 ? Math.round(wins / (wins + losses) * 100) : 0} streak={currentStreak} />
+            <ChatBox />
               </div>
             )}
           </div>
