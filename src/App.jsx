@@ -681,6 +681,7 @@ const ChatBox = () => {
         <button onClick={sendMessage} style={{ padding: "6px 10px", borderRadius: "6px", border: "none", background: "rgba(59,130,246,0.2)", color: "#60a5fa", fontSize: "11px", fontWeight: "700", cursor: "pointer" }}>Send</button>
       </div>
     </div>
+    </div>
   );
 };
 
@@ -936,6 +937,7 @@ const LandingPage = ({ onEnter }) => {
           Built on Ink • Powered by degen energy • © 2025 Pulse
         </div>
       </div>
+    </div>
     </div>
   );
 };
