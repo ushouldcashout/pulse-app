@@ -270,6 +270,7 @@
 
         .content-header {
             margin-bottom: 32px;
+            position: relative;
         }
 
         .content-title {
@@ -454,6 +455,78 @@
         .badge.status-rejected {
             border-color: var(--error);
             color: var(--error);
+        }
+
+        .badge.status-pending_review {
+            border-color: var(--warning);
+            color: var(--warning);
+            animation: pulse-glow 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .admin-controls {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(0, 212, 170, 0.1);
+        }
+
+        .admin-btn {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 14px;
+        }
+
+        .admin-btn-approve {
+            background-color: var(--success);
+            color: white;
+        }
+
+        .admin-btn-approve:hover {
+            background-color: #2ecc71;
+            box-shadow: 0 2px 8px rgba(46, 204, 113, 0.3);
+        }
+
+        .admin-btn-reject {
+            background-color: var(--error);
+            color: white;
+        }
+
+        .admin-btn-reject:hover {
+            background-color: #e74c3c;
+            box-shadow: 0 2px 8px rgba(231, 76, 60, 0.3);
+        }
+
+        .pending-review-message {
+            background-color: rgba(241, 196, 15, 0.1);
+            border: 1px solid var(--warning);
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 20px;
+            color: var(--warning);
+            font-size: 14px;
+        }
+
+        .idea-cap-counter {
+            position: absolute;
+            top: 12px;
+            right: 24px;
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.6);
+            background-color: rgba(0, 0, 0, 0.3);
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-weight: 500;
         }
 
         .idea-author {
@@ -1143,6 +1216,201 @@
             margin-bottom: 8px;
             color: var(--text-primary);
         }
+
+        /* Toast Notifications */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 16px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            color: white;
+            max-width: 400px;
+            word-wrap: break-word;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            z-index: 9999;
+            animation: slideInToast 0.3s ease-out;
+            opacity: 0;
+        }
+
+        .toast.show {
+            opacity: 1;
+        }
+
+        @keyframes slideInToast {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .toast-success {
+            background-color: var(--success);
+        }
+
+        .toast-error {
+            background-color: var(--error);
+        }
+
+        .toast-info {
+            background-color: var(--accent-purple);
+        }
+
+        /* Voter List Table */
+        .voters-section {
+            margin-top: 24px;
+        }
+
+        .voters-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        .voters-table thead {
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .voters-table th {
+            padding: 12px;
+            text-align: left;
+            color: var(--text-secondary);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 11px;
+            letter-spacing: 0.5px;
+        }
+
+        .voters-table td {
+            padding: 12px;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-secondary);
+        }
+
+        .voter-address {
+            font-family: 'Courier New', monospace;
+            color: var(--accent-green);
+            font-weight: 500;
+        }
+
+        .voter-side {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 11px;
+            text-transform: uppercase;
+        }
+
+        .voter-side-for {
+            background-color: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .voter-side-against {
+            background-color: rgba(239, 68, 68, 0.1);
+            color: var(--error);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        /* Comment Input Area */
+        .comment-input-area {
+            margin-top: 24px;
+            padding: 16px;
+            background-color: var(--bg-hover);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+        }
+
+        .comment-input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .comment-textarea {
+            padding: 12px;
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 14px;
+            resize: vertical;
+            min-height: 80px;
+            transition: border-color 0.2s;
+        }
+
+        .comment-textarea:focus {
+            outline: none;
+            border-color: var(--accent-green);
+        }
+
+        .comment-submit-btn {
+            align-self: flex-end;
+            padding: 8px 16px;
+            background-color: var(--accent-green);
+            color: var(--bg-dark);
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .comment-submit-btn:hover {
+            opacity: 0.9;
+        }
+
+        .comment-submit-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Share Button */
+        .share-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            background-color: transparent;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 13px;
+            text-decoration: none;
+        }
+
+        .share-button:hover {
+            border-color: var(--accent-green);
+            color: var(--accent-green);
+        }
+
+        /* Vote Button Active State */
+        .vote-btn.selected {
+            background-color: var(--accent-green) !important;
+            color: var(--bg-dark) !important;
+        }
+
+        /* Expiration Display */
+        .detail-expiration {
+            color: var(--warning);
+            font-size: 13px;
+            margin-top: 8px;
+        }
+
+        .expiration-countdown {
+            color: var(--error);
+            font-weight: 600;
+        }
     </style>
 </head>
 <body>
@@ -1199,10 +1467,10 @@
                 <div class="sidebar-expandable-content" id="qorum-content">
                     <strong style="color: var(--accent-green); display: block; margin-bottom: 12px;">Points System</strong>
                     <p style="margin-bottom: 12px;">Points earned from playing Pulse games can be spent to:</p>
-                    <p style="margin-bottom: 12px;">• Submit ideas (minimum 10 points)</p>
+                    <p style="margin-bottom: 12px;">• Submit ideas (minimum 100 points, subject to admin review)</p>
                     <p style="margin-bottom: 12px;">• Vote FOR or AGAINST ideas</p>
                     <p style="margin-bottom: 12px;">• More points = more voting power</p>
-                    <p style="margin-bottom: 12px;">Ideas with enough FOR votes get implemented. Points spent on voting are distributed to the winning side.</p>
+                    <p style="margin-bottom: 12px;">Submit an idea (costs points) → Admins review → If approved, community votes → Winning ideas get implemented.</p>
                 </div>
             </div>
         </div>
@@ -1233,6 +1501,7 @@
             <!-- List View -->
             <div id="list-view" class="list-view">
                 <div class="content-header">
+                    <div class="idea-cap-counter" id="idea-cap-counter">0/10 Active Ideas</div>
                     <h1 class="content-title">Ideas & QORUM</h1>
                     <p class="content-subtitle">Shape Pulse's future. Submit ideas, vote on features, and earn rewards.</p>
                 </div>
@@ -1253,6 +1522,7 @@
                         <span class="filter-label">Sort by:</span>
                         <select id="sort-by">
                             <option value="most-votes">Most Votes</option>
+                            <option value="least-votes">Least Votes</option>
                             <option value="newest">Newest</option>
                             <option value="ending-soon">Ending Soon</option>
                             <option value="most-discussed">Most Discussed</option>
@@ -1262,6 +1532,7 @@
                         <span class="filter-label">Status:</span>
                         <select id="filter-status">
                             <option value="all">All</option>
+                            <option value="pending_review">⏳ Pending Review</option>
                             <option value="active">Active</option>
                             <option value="approved">Approved</option>
                             <option value="implemented">Implemented</option>
@@ -1290,16 +1561,29 @@
                             <div class="idea-author">
                                 <div class="avatar" id="detail-avatar">A</div>
                                 <span id="detail-author">Author Name</span>
-                            </div>
+                               </div>
                         </div>
                         <div class="detail-meta-row">
                             <span id="detail-date">Created: --</span>
                             <span id="detail-status" class="badge">Active</span>
                         </div>
+                        <div class="detail-meta-row">
+                            <span id="detail-expiration" class="detail-expiration"></span>
+                        </div>
                     </div>
+                    <a id="share-button" class="share-button" target="_blank">
+                        <span>🐦</span>
+                        <span>Share</span>
+                    </a>
                 </div>
 
                 <div class="detail-body">
+                    <div id="pending-review-container" style="display: none;">
+                        <div class="pending-review-message">
+                            ⏳ This idea is awaiting admin review. Once approved, it will be activated for voting.
+                        </div>
+                    </div>
+
                     <div class="detail-section">
                         <h3 class="detail-section-title">Description</h3>
                         <p class="detail-description" id="detail-description">--</p>
@@ -1345,8 +1629,44 @@
                     </div>
 
                     <div class="detail-section">
+                        <h3 class="detail-section-title">Voters</h3>
+                        <table class="voters-table">
+                            <thead>
+                                <tr>
+                                    <th>Address</th>
+                                    <th>Vote</th>
+                                    <th>Amount</th>
+                                    <th>Time</th>
+                                </tr>
+                            </thead>
+                            <tbody id="voters-list">
+                                <tr>
+                                    <td class="voter-address">0x1a2b...9f8e</td>
+                                    <td><span class="voter-side voter-side-for">FOR</span></td>
+                                    <td>250 pts</td>
+                                    <td>2 hours ago</td>
+                                </tr>
+                                <tr>
+                                    <td class="voter-address">0x3c4d...5e6f</td>
+                                    <td><span class="voter-side voter-side-against">AGAINST</span></td>
+                                    <td>150 pts</td>
+                                    <td>1 hour ago</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div id="admin-controls-container" class="detail-section" style="display: none;">
+                        <h3 class="detail-section-title">Admin Controls</h3>
+                        <div class="admin-controls">
+                            <button class="admin-btn admin-btn-approve" id="approve-idea-btn">✓ Approve Idea</button>
+                            <button class="admin-btn admin-btn-reject" id="reject-idea-btn">✗ Reject Idea</button>
+                        </div>
+                    </div>
+
+                    <div class="detail-section">
                         <h3 class="detail-section-title">Discussion</h3>
-                        <div class="comments-section">
+                        <div class="comments-section" id="comments-section">
                             <div class="comment">
                                 <div class="comment-author">
                                     <div class="avatar" style="width: 24px; height: 24px; font-size: 10px;">JD</div>
@@ -1362,6 +1682,12 @@
                                     <span class="comment-time">1 day ago</span>
                                 </div>
                                 <p class="comment-text">I have some concerns about the implementation cost. Would love to see more details.</p>
+                            </div>
+                        </div>
+                        <div class="comment-input-area">
+                            <div class="comment-input-group">
+                                <textarea class="comment-textarea" id="comment-input" placeholder="Share your thoughts..."></textarea>
+                                <button class="comment-submit-btn" id="comment-submit-btn">Post Comment</button>
                             </div>
                         </div>
                     </div>
@@ -1405,8 +1731,21 @@
 
                 <div class="form-group">
                     <label class="form-label">Points to Stake</label>
-                    <input type="number" id="idea-points" min="10" max="1000" value="10" required>
-                    <p class="form-hint">Minimum 10 points required (anti-spam measure)</p>
+                    <input type="number" id="idea-points" min="100" max="1000" value="100" required oninput="updatePointsPreview()">
+                    <p class="form-hint">Minimum 100 points required (subject to admin review)</p>
+                    <p class="form-hint" id="points-preview" style="color: var(--accent-green); font-weight: 500;"></p>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Duration</label>
+                    <select id="idea-duration" required>
+                        <option value="">Select duration</option>
+                        <option value="3">3 Days</option>
+                        <option value="7">7 Days</option>
+                        <option value="14">14 Days</option>
+                        <option value="30">30 Days</option>
+                    </select>
+                    <p class="form-hint">How long the voting period will remain open</p>
                 </div>
 
                 <div class="form-actions">
@@ -1423,9 +1762,17 @@
         let selectedCategory = 'all';
         let selectedSort = 'most-votes';
         let selectedStatus = 'all';
+        let currentNavFilter = 'active';
         let userPoints = 0;
         let selectedIdeaId = null;
         let userTelegramId = 'user_' + Math.random().toString(36).substr(2, 9);
+        let currentUserName = 'You';
+        let userWallet = '0xFbA931640B3075f054C68F40b18aD7Ecc36cb8F6'; // Admin wallet for testing
+        let isAdmin = false;
+        let lastIdeaSubmissionTime = null;
+        const IDEA_CAP = 10;
+        const MIN_POINTS_TO_SUBMIT = 100;
+        const COOLDOWN_HOURS = 24;
 
         // API Configuration
         const API_BASE = 'https://pulse-backend-production-b2c9.up.railway.app/api';
@@ -1444,6 +1791,7 @@
                 voteAgainst: 120,
                 status: 'active',
                 createdAt: '2024-03-15',
+                expiresAt: '2024-04-15',
                 timeRemaining: '5 days 12 hours',
                 comments: 3
             },
@@ -1459,6 +1807,7 @@
                 voteAgainst: 340,
                 status: 'active',
                 createdAt: '2024-03-12',
+                expiresAt: '2024-04-12',
                 timeRemaining: '8 days 3 hours',
                 comments: 8
             },
@@ -1474,6 +1823,7 @@
                 voteAgainst: 89,
                 status: 'approved',
                 createdAt: '2024-02-28',
+                expiresAt: '2024-03-28',
                 timeRemaining: null,
                 comments: 15
             },
@@ -1489,6 +1839,7 @@
                 voteAgainst: 45,
                 status: 'implemented',
                 createdAt: '2024-02-15',
+                expiresAt: '2024-02-28',
                 timeRemaining: null,
                 comments: 4
             },
@@ -1504,6 +1855,7 @@
                 voteAgainst: 320,
                 status: 'active',
                 createdAt: '2024-03-08',
+                expiresAt: '2024-04-10',
                 timeRemaining: '12 days 6 hours',
                 comments: 6
             },
@@ -1519,6 +1871,7 @@
                 voteAgainst: 1200,
                 status: 'rejected',
                 createdAt: '2024-02-10',
+                expiresAt: '2024-02-20',
                 timeRemaining: null,
                 comments: 12
             }
@@ -1532,6 +1885,22 @@
             loadUserPoints();
             loadIdeas();
             updateStats();
+
+            // Handle URL hash on page load
+            if (window.location.hash.startsWith('#idea-')) {
+                const ideaId = parseInt(window.location.hash.split('-')[1]);
+                showDetailView(ideaId);
+            }
+
+            // Listen for hash changes
+            window.addEventListener('hashchange', () => {
+                if (window.location.hash.startsWith('#idea-')) {
+                    const ideaId = parseInt(window.location.hash.split('-')[1]);
+                    showDetailView(ideaId);
+                } else {
+                    showListView();
+                }
+            });
         }
 
         function setupEventListeners() {
@@ -1571,6 +1940,8 @@
                     e.preventDefault();
                     document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
                     item.classList.add('active');
+                    currentNavFilter = item.dataset.nav;
+                    filterAndSortIdeas();
                 });
             });
 
@@ -1593,18 +1964,49 @@
             document.getElementById('vote-for-btn').addEventListener('click', () => handleVote('for'));
             document.getElementById('vote-against-btn').addEventListener('click', () => handleVote('against'));
 
+            // Comment submission
+            document.getElementById('comment-submit-btn').addEventListener('click', handleAddComment);
+
+            // Admin controls
+            document.getElementById('approve-idea-btn').addEventListener('click', handleApproveIdea);
+            document.getElementById('reject-idea-btn').addEventListener('click', handleRejectIdea);
+
             // Close modal on outside click
             document.getElementById('submit-modal').addEventListener('click', (e) => {
                 if (e.target.id === 'submit-modal') closeSubmitModal();
             });
         }
 
+        function updatePointsPreview() {
+            const pointsInput = document.getElementById('idea-points');
+            const points = parseInt(pointsInput.value) || 0;
+            const preview = document.getElementById('points-preview');
+            if (points >= MIN_POINTS_TO_SUBMIT && points <= userPoints) {
+                preview.textContent = `Your balance: ${userPoints} pts → After: ${userPoints - points} pts`;
+                preview.style.color = 'var(--accent-green)';
+            } else if (points > userPoints) {
+                preview.textContent = `Insufficient points! You need ${points - userPoints} more.`;
+                preview.style.color = 'var(--error)';
+            } else if (points < MIN_POINTS_TO_SUBMIT) {
+                preview.textContent = `Minimum ${MIN_POINTS_TO_SUBMIT} points required`;
+                preview.style.color = 'var(--warning)';
+            }
+        }
+
         function loadUserPoints() {
             // Simulate fetching from API
             setTimeout(() => {
                 userPoints = Math.floor(Math.random() * 1000) + 50;
-                document.getElementById('user-points').textContent = userPoints.toLocaleString();
-                document.getElementById('available-points-detail').textContent = userPoints.toLocaleString();
+                syncPoints();
+
+                // Check if user is admin
+                isAdmin = userWallet === '0xFbA931640B3075f054C68F40b18aD7Ecc36cb8F6';
+
+                // Restore cooldown from localStorage
+                const lastSubmissionStr = localStorage.getItem('lastIdeaSubmission');
+                if (lastSubmissionStr) {
+                    lastIdeaSubmissionTime = parseInt(lastSubmissionStr);
+                }
             }, 300);
         }
 
@@ -1616,6 +2018,26 @@
 
         function filterAndSortIdeas() {
             let filtered = currentIdeas;
+
+            // Filter by nav selection
+            switch (currentNavFilter) {
+                case 'top':
+                    // Sort by total votes descending (most voted first)
+                    filtered = filtered.sort((a, b) => (b.voteFor + b.voteAgainst) - (a.voteFor + a.voteAgainst));
+                    break;
+                case 'mine':
+                    // Only show ideas authored by current user
+                    filtered = filtered.filter(idea => idea.author === currentUserName);
+                    break;
+                case 'votes':
+                    // Only show ideas the user has voted on
+                    filtered = filtered.filter(idea => userVotes[idea.id]);
+                    break;
+                case 'active':
+                default:
+                    // Show all ideas (default view)
+                    break;
+            }
 
             // Filter by category
             if (selectedCategory !== 'all') {
@@ -1631,6 +2053,9 @@
             switch (selectedSort) {
                 case 'most-votes':
                     filtered.sort((a, b) => (b.voteFor + b.voteAgainst) - (a.voteFor + a.voteAgainst));
+                    break;
+                case 'least-votes':
+                    filtered.sort((a, b) => (a.voteFor + a.voteAgainst) - (b.voteFor + b.voteAgainst));
                     break;
                 case 'newest':
                     filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
@@ -1700,6 +2125,9 @@
 
             if (!idea) return;
 
+            // Update URL hash
+            window.location.hash = '#idea-' + ideaId;
+
             // Update detail view
             document.getElementById('detail-title').textContent = idea.title;
             document.getElementById('detail-author').textContent = idea.author;
@@ -1708,6 +2136,22 @@
             document.getElementById('detail-date').textContent = `Created: ${formatDate(idea.createdAt)}`;
             document.getElementById('detail-status').textContent = capitalizeStatus(idea.status);
             document.getElementById('detail-status').className = `badge status-${idea.status}`;
+
+            // Update expiration info
+            if (idea.expiresAt) {
+                const daysLeft = getDaysRemaining(idea.expiresAt);
+                const expirationDiv = document.getElementById('detail-expiration');
+                if (daysLeft > 0) {
+                    expirationDiv.innerHTML = `<span class="expiration-countdown">${daysLeft} days</span> left • Expires ${formatExpirationDate(idea.expiresAt)}`;
+                } else {
+                    expirationDiv.textContent = 'This idea has expired';
+                }
+            }
+
+            // Update share button
+            const shareButton = document.getElementById('share-button');
+            const tweetText = `Vote on "${idea.title}" on Pulse!`;
+            shareButton.href = `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}&url=${encodeURIComponent(window.location.href)}`;
 
             // Update votes
             const total = idea.voteFor + idea.voteAgainst;
@@ -1724,15 +2168,63 @@
             document.getElementById('vote-against-count').textContent = idea.voteAgainst.toLocaleString();
             document.getElementById('total-points-committed').textContent = total.toLocaleString();
 
+            // Show/hide pending review message
+            const pendingContainer = document.getElementById('pending-review-container');
+            if (idea.status === 'pending_review') {
+                pendingContainer.style.display = 'block';
+            } else {
+                pendingContainer.style.display = 'none';
+            }
+
+            // Show/hide admin controls
+            const adminContainer = document.getElementById('admin-controls-container');
+            if (isAdmin && idea.status === 'pending_review') {
+                adminContainer.style.display = 'block';
+            } else {
+                adminContainer.style.display = 'none';
+            }
+
             // Update vote buttons
             const isActive = idea.status === 'active';
-            document.getElementById('vote-for-btn').disabled = !isActive;
-            document.getElementById('vote-against-btn').disabled = !isActive;
+            const userVoted = userVotes[ideaId];
+
+            const forBtn = document.getElementById('vote-for-btn');
+            const againstBtn = document.getElementById('vote-against-btn');
+
+            forBtn.disabled = !isActive;
+            againstBtn.disabled = !isActive;
             document.getElementById('vote-points-slider').disabled = !isActive;
+
+            // Update button text and styling
+            if (userVoted === 'for') {
+                forBtn.textContent = 'Add More Points (FOR)';
+                forBtn.classList.add('selected');
+                againstBtn.textContent = 'Vote AGAINST';
+                againstBtn.classList.remove('selected');
+            } else if (userVoted === 'against') {
+                againstBtn.textContent = 'Add More Points (AGAINST)';
+                againstBtn.classList.add('selected');
+                forBtn.textContent = 'Vote FOR';
+                forBtn.classList.remove('selected');
+            } else {
+                forBtn.textContent = 'Vote FOR';
+                againstBtn.textContent = 'Vote AGAINST';
+                forBtn.classList.remove('selected');
+                againstBtn.classList.remove('selected');
+            }
+
+            // Update slider label
+            const labelText = document.querySelector('.points-input-group .form-label');
+            if (userVoted) {
+                labelText.textContent = `Additional Points to Commit: <span id="points-display">10</span>`;
+            } else {
+                labelText.innerHTML = `Points to Commit: <span id="points-display">10</span>`;
+            }
 
             // Reset slider
             document.getElementById('vote-points-slider').value = 10;
             document.getElementById('vote-points-amount').textContent = 10;
+            document.getElementById('points-display').textContent = 10;
 
             // Show detail view
             document.getElementById('list-view').style.display = 'none';
@@ -1740,6 +2232,7 @@
         }
 
         function showListView() {
+            window.location.hash = '';
             document.getElementById('list-view').style.display = 'block';
             document.getElementById('detail-view').classList.remove('open');
             selectedIdeaId = null;
@@ -1761,14 +2254,28 @@
             const category = document.getElementById('idea-category').value;
             const description = document.getElementById('idea-description').value;
             const pointsStaked = parseInt(document.getElementById('idea-points').value);
+            const duration = parseInt(document.getElementById('idea-duration').value);
 
-            if (pointsStaked < 10) {
-                alert('Minimum 10 points required');
+            if (pointsStaked < MIN_POINTS_TO_SUBMIT) {
+                showToast(`Minimum ${MIN_POINTS_TO_SUBMIT} points required`, 'error');
                 return;
             }
 
             if (pointsStaked > userPoints) {
-                alert('Insufficient points. You have ' + userPoints + ' points.');
+                showToast('Insufficient points. You have ' + userPoints + ' points.', 'error');
+                return;
+            }
+
+            if (!duration) {
+                showToast('Please select a duration', 'error');
+                return;
+            }
+
+            // Check cooldown
+            const now = new Date().getTime();
+            if (lastIdeaSubmissionTime && (now - lastIdeaSubmissionTime) < (COOLDOWN_HOURS * 60 * 60 * 1000)) {
+                const hoursRemaining = Math.ceil((COOLDOWN_HOURS * 60 * 60 * 1000 - (now - lastIdeaSubmissionTime)) / (60 * 60 * 1000));
+                showToast(`You can submit another idea in ${hoursRemaining} hour(s)`, 'error');
                 return;
             }
 
@@ -1782,11 +2289,17 @@
                         description,
                         category,
                         telegramId: userTelegramId,
-                        pointsStaked
+                        pointsStaked,
+                        duration
                     })
                 }).catch(() => null);
 
-                // Simulate success
+                // Calculate expiration date (for voting, not for approval)
+                const expiresAt = new Date();
+                expiresAt.setDate(expiresAt.getDate() + duration);
+                const expiresAtStr = expiresAt.toISOString().split('T')[0];
+
+                // Create new idea with pending_review status
                 const newIdea = {
                     id: currentIdeas.length + 1,
                     title,
@@ -1795,24 +2308,31 @@
                     avatar: 'ME',
                     description,
                     fullDescription: description,
-                    voteFor: pointsStaked,
+                    voteFor: 0,
                     voteAgainst: 0,
-                    status: 'active',
+                    status: 'pending_review',
                     createdAt: new Date().toISOString().split('T')[0],
-                    timeRemaining: '7 days',
-                    comments: 0
+                    expiresAt: expiresAtStr,
+                    timeRemaining: null,
+                    comments: 0,
+                    pointsStaked: pointsStaked
                 };
 
                 currentIdeas.unshift(newIdea);
                 userPoints -= pointsStaked;
-                document.getElementById('user-points').textContent = userPoints.toLocaleString();
+                lastIdeaSubmissionTime = now;
+
+                // Save cooldown to localStorage
+                localStorage.setItem('lastIdeaSubmission', now.toString());
+
+                syncPoints();
 
                 closeSubmitModal();
                 filterAndSortIdeas();
-                alert('Idea submitted successfully!');
+                showToast('Your idea has been submitted for admin review!', 'success');
             } catch (error) {
                 console.error('Error submitting idea:', error);
-                alert('Error submitting idea. Please try again.');
+                showToast('Error submitting idea. Please try again.', 'error');
             }
         }
 
@@ -1822,7 +2342,13 @@
             const points = parseInt(document.getElementById('vote-points-slider').value);
 
             if (points > userPoints) {
-                alert('Insufficient points for this vote');
+                showToast('Insufficient points for this vote', 'error');
+                return;
+            }
+
+            // Check if user already voted on the OTHER side
+            if (userVotes[selectedIdeaId] && userVotes[selectedIdeaId] !== side) {
+                showToast(`You already voted ${userVotes[selectedIdeaId].toUpperCase()} on this idea. You can't vote the opposite way.`, 'error');
                 return;
             }
 
@@ -1848,24 +2374,66 @@
                     }
                 }
 
+                // Track user vote
+                userVotes[selectedIdeaId] = side;
+
                 userPoints -= points;
-                document.getElementById('user-points').textContent = userPoints.toLocaleString();
-                document.getElementById('available-points-detail').textContent = userPoints.toLocaleString();
+                syncPoints();
 
                 // Refresh detail view
                 showDetailView(selectedIdeaId);
-                alert(`Voted ${side.toUpperCase()} with ${points} points!`);
+                showToast(`Voted ${side.toUpperCase()} with ${points} points!`, 'success');
             } catch (error) {
                 console.error('Error voting:', error);
-                alert('Error placing vote. Please try again.');
+                showToast('Error placing vote. Please try again.', 'error');
             }
+        }
+
+        function handleApproveIdea() {
+            if (!selectedIdeaId || !isAdmin) return;
+
+            const idea = currentIdeas.find(i => i.id === selectedIdeaId);
+            if (!idea || idea.status !== 'pending_review') return;
+
+            // Set idea to active status
+            idea.status = 'active';
+
+            // Refresh the detail view
+            showDetailView(selectedIdeaId);
+            updateStats();
+            showToast('Idea approved! It is now active for voting.', 'success');
+        }
+
+        function handleRejectIdea() {
+            if (!selectedIdeaId || !isAdmin) return;
+
+            const idea = currentIdeas.find(i => i.id === selectedIdeaId);
+            if (!idea || idea.status !== 'pending_review') return;
+
+            // Set idea to rejected status
+            idea.status = 'rejected';
+
+            // Refund points to user (they would be stored in a transaction log normally)
+            if (idea.pointsStaked) {
+                userPoints += idea.pointsStaked;
+                syncPoints();
+            }
+
+            // Refresh the detail view
+            showDetailView(selectedIdeaId);
+            updateStats();
+            showToast('Idea rejected. Points have been refunded to the creator.', 'info');
         }
 
         function updateStats() {
             document.getElementById('stat-total-ideas').textContent = currentIdeas.length;
-            document.getElementById('stat-active-votes').textContent = currentIdeas.filter(i => i.status === 'active').length;
+            const activeIdeasCount = currentIdeas.filter(i => i.status === 'active').length;
+            document.getElementById('stat-active-votes').textContent = activeIdeasCount;
             const totalPoints = currentIdeas.reduce((sum, i) => sum + i.voteFor + i.voteAgainst, 0);
             document.getElementById('stat-points-dist').textContent = totalPoints.toLocaleString();
+
+            // Update idea cap counter
+            document.getElementById('idea-cap-counter').textContent = `${activeIdeasCount}/${IDEA_CAP} Active Ideas`;
         }
 
         // Utilities
@@ -1874,6 +2442,9 @@
         }
 
         function capitalizeStatus(status) {
+            if (status === 'pending_review') {
+                return '⏳ Pending Review';
+            }
             return status.charAt(0).toUpperCase() + status.slice(1);
         }
 
@@ -1887,6 +2458,86 @@
                 month: 'long',
                 day: 'numeric'
             });
+        }
+
+        // Toast notifications
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+
+            // Trigger animation
+            setTimeout(() => toast.classList.add('show'), 10);
+
+            // Auto-dismiss
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // Sync points across all displays
+        function syncPoints() {
+            document.getElementById('user-points').textContent = userPoints.toLocaleString();
+            document.getElementById('available-points-detail').textContent = userPoints.toLocaleString();
+        }
+
+        // Track user votes per idea
+        let userVotes = {};
+
+        // Format expiration date
+        function formatExpirationDate(dateStr) {
+            return new Date(dateStr).toLocaleDateString('en-US', {
+                month: 'long',
+                day: 'numeric',
+                year: 'numeric'
+            });
+        }
+
+        // Calculate days remaining
+        function getDaysRemaining(expiresAt) {
+            const expires = new Date(expiresAt);
+            const today = new Date();
+            const diff = expires - today;
+            const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
+            return Math.max(0, days);
+        }
+
+        // Handle adding comments
+        function handleAddComment() {
+            const commentInput = document.getElementById('comment-input');
+            const text = commentInput.value.trim();
+
+            if (!text) {
+                showToast('Please enter a comment', 'error');
+                return;
+            }
+
+            if (!selectedIdeaId) {
+                showToast('No idea selected', 'error');
+                return;
+            }
+
+            // Create comment element
+            const commentEl = document.createElement('div');
+            commentEl.className = 'comment';
+            commentEl.innerHTML = `
+                <div class="comment-author">
+                    <div class="avatar" style="width: 24px; height: 24px; font-size: 10px;">ME</div>
+                    <span class="comment-author-name">You</span>
+                    <span class="comment-time">Just now</span>
+                </div>
+                <p class="comment-text">${text}</p>
+            `;
+
+            // Prepend to comments section
+            const commentsSection = document.getElementById('comments-section');
+            commentsSection.insertBefore(commentEl, commentsSection.firstChild);
+
+            // Clear input
+            commentInput.value = '';
+            showToast('Comment posted!', 'success');
         }
     </script>
 </body>
