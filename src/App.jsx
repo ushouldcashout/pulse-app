@@ -586,31 +586,39 @@ const LiveFeedSidebar = ({ recentBets, points, winRate = 0, streak = 0}) => {
         </div>
       </div>
 
-      {/* DeFi Prediction Markets - Ink Ecosystem */}
-      <div className="sidebar-card" style={{ borderColor: 'rgba(168,85,247,0.15)', background: 'rgba(168,85,247,0.02)' }}>
-        <div style={{ fontSize: '10px', fontWeight: '800', color: '#c084fc', letterSpacing: '2px', marginBottom: '12px' }}>
-          PREDICT DEFI
-        </div>
-        {[
-          { q: 'Tydro ETH utilization > 80%?', tag: 'TYDRO', color: '#06b6d4', yes: 64, no: 36 },
-          { q: 'Nado 24h volume over $5M?', tag: 'NADO', color: '#a855f7', yes: 51, no: 49 },
-          { q: 'INK TVL +10% this week?', tag: 'INK', color: '#10b981', yes: 72, no: 28 }
-        ].map(function(m, i) {
-          return (
-            <div key={i} style={{ padding: '10px', borderRadius: '8px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', marginBottom: '6px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
-                <span style={{ fontSize: '8px', padding: '1px 5px', borderRadius: '4px', background: m.color + '20', color: m.color, fontWeight: '700' }}>{m.tag}</span>
-                <span style={{ fontSize: '10px', color: '#d1d5db', fontWeight: '600', lineHeight: '1.3' }}>{m.q}</span>
-              </div>
-              <div style={{ display: 'flex', gap: '4px' }}>
-                <button style={{ flex: m.yes, padding: '4px 0', borderRadius: '4px 0 0 4px', border: '1px solid rgba(16,185,129,0.2)', background: 'rgba(16,185,129,0.08)', color: '#10b981', fontSize: '9px', fontWeight: '700', cursor: 'pointer' }}>YES {m.yes}%</button>
-                <button style={{ flex: m.no, padding: '4px 0', borderRadius: '0 4px 4px 0', border: '1px solid rgba(239,68,68,0.2)', background: 'rgba(239,68,68,0.08)', color: '#ef4444', fontSize: '9px', fontWeight: '700', cursor: 'pointer' }}>NO {m.no}%</button>
-              </div>
+      {/* DeFi Predictions - LIVE */}
+      <a href="/defi-markets.html" style={{ textDecoration: 'none', display: 'block' }}>
+        <div className="sidebar-card" style={{ borderColor: 'rgba(168,85,247,0.3)', background: 'rgba(168,85,247,0.05)', cursor: 'pointer' }}>
+          <div style={{ fontSize: '10px', fontWeight: '800', color: '#a855f7', letterSpacing: '2px', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: '#a855f7', animation: 'pulse 2s infinite' }}></span>
+            PREDICT DEFI
+          </div>
+          {comingSoonMarkets.map((market, i) => (
+            <div key={i} style={{ fontSize: '10px', color: '#9ca3af', padding: '6px 0', borderBottom: i < comingSoonMarkets.length - 1 ? '1px solid rgba(255,255,255,0.03)' : 'none', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <span style={{ color: '#a855f7' }}>→</span>
+              <span>{market}</span>
             </div>
-          );
-        })}
-        <div style={{ fontSize: '8px', color: '#4b5563', textAlign: 'center', marginTop: '4px' }}>Markets resolve weekly</div>
-      </div>
+          ))}
+          <div style={{ marginTop: '10px', fontSize: '10px', fontWeight: '700', color: '#a855f7', textAlign: 'center', padding: '6px', borderRadius: '6px', border: '1px solid rgba(168,85,247,0.2)' }}>
+            View Markets →
+          </div>
+        </div>
+      </a>
+
+      {/* Ideas & Voting */}
+      <a href="/ideas.html" style={{ textDecoration: 'none', display: 'block' }}>
+        <div className="sidebar-card" style={{ borderColor: 'rgba(0,212,170,0.2)', background: 'rgba(0,212,170,0.03)', cursor: 'pointer' }}>
+          <div style={{ fontSize: '10px', fontWeight: '800', color: '#00d4aa', letterSpacing: '2px', marginBottom: '8px' }}>
+            💡 IDEAS & QORUM
+          </div>
+          <div style={{ fontSize: '10px', color: '#9ca3af', lineHeight: '1.5' }}>
+            Submit ideas, vote on features, shape Pulse's future
+          </div>
+          <div style={{ marginTop: '10px', fontSize: '10px', fontWeight: '700', color: '#00d4aa', textAlign: 'center', padding: '6px', borderRadius: '6px', border: '1px solid rgba(0,212,170,0.2)' }}>
+            Vote Now →
+          </div>
+        </div>
+      </a>
     </div>
   );
 };
