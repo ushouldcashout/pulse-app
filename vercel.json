@@ -2,8 +2,10 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "framework": "vite",
+  "cleanUrls": true,
   "rewrites": [
-    { "source": "/admin.html", "destination": "/admin.html" },
+    { "source": "/ideas", "destination": "/ideas.html" },
+    { "source": "/defi-markets", "destination": "/defi-markets.html" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
