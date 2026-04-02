@@ -53,10 +53,13 @@
         .sidebar-logo {
             font-size: 1.5rem;
             font-weight: 700;
-            background: linear-gradient(135deg, var(--accent-green), var(--accent-purple));
+            background: linear-gradient(135deg, #a855f7, #ec4899);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
         .sidebar-nav {
@@ -983,7 +986,18 @@
     <!-- Sidebar Navigation -->
     <nav class="sidebar">
         <div class="sidebar-header">
-            <div class="sidebar-logo">Pulse</div>
+            <div class="sidebar-logo">
+                <svg viewBox="0 0 40 40" fill="none" width="28" height="28" style="flex-shrink:0;">
+                    <rect width="40" height="40" rx="10" fill="#1a0533"/>
+                    <rect x="1.5" y="1.5" width="37" height="37" rx="8.5" fill="none" stroke="url(#dfBorder)" stroke-width="3"/>
+                    <path d="M8 22h6l3-10 5 18 4-14 3 6h3" stroke="url(#dfPulse)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    <defs>
+                        <linearGradient id="dfBorder" x1="0" y1="0" x2="40" y2="40"><stop stop-color="#a855f7"/><stop offset="1" stop-color="#ec4899"/></linearGradient>
+                        <linearGradient id="dfPulse" x1="8" y1="12" x2="32" y2="28"><stop stop-color="#c084fc"/><stop offset="1" stop-color="#f472b6"/></linearGradient>
+                    </defs>
+                </svg>
+                Pulse
+            </div>
         </div>
         <ul class="sidebar-nav">
             <li><a href="https://pulsebet.fun" onclick="navigateTo('markets')">Markets</a></li>
