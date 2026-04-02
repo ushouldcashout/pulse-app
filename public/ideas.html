@@ -1624,7 +1624,7 @@
             });
 
             // QORUM expandable
-            document.getElementById('qorum-btn').addEventListener('click', (e) => {
+            document.getElementById('qorum-btn')?.addEventListener('click', (e) => {
                 const content = document.getElementById('qorum-content');
                 const btn = document.getElementById('qorum-btn');
                 content.classList.toggle('open');
