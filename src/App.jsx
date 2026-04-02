@@ -180,7 +180,7 @@ createAppKit({
   metadata,
   themeMode: 'dark',
   themeVariables: {
-    '--w3m-accent': '#10b981',
+    '--w3m-accent': '#a855f7',
     '--w3m-border-radius-master': '12px'
   },
   featuredWalletIds: [
@@ -331,16 +331,21 @@ const PULSE_STYLES = `
 // ============================================
 const PulseLogo = ({ size = 34 }) => (
   <svg width={size} height={size} viewBox="0 0 40 40" fill="none">
-    <rect width="40" height="40" rx="12" fill="url(#logoGrad)" />
-    <path d="M8 22h6l3-10 5 18 4-14 3 6h3" stroke="#000" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+    <rect width="40" height="40" rx="10" fill="#1a0533" />
+    <rect x="1.5" y="1.5" width="37" height="37" rx="8.5" fill="none" stroke="url(#logoBorder)" strokeWidth="3" />
+    <path d="M8 22h6l3-10 5 18 4-14 3 6h3" stroke="url(#logoPulse)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
     <defs>
-      <linearGradient id="logoGrad" x1="0" y1="0" x2="40" y2="40">
-        <stop stopColor="#10b981" />
-        <stop offset="1" stopColor="#06b6d4" />
+      <linearGradient id="logoBorder" x1="0" y1="0" x2="40" y2="40">
+        <stop stopColor="#a855f7" />
+        <stop offset="1" stopColor="#ec4899" />
+      </linearGradient>
+      <linearGradient id="logoPulse" x1="8" y1="12" x2="32" y2="28">
+        <stop stopColor="#c084fc" />
+        <stop offset="1" stopColor="#f472b6" />
       </linearGradient>
     </defs>
   </svg>
-);
+)
 
 // ============================================
 // CUSTOM HOOKS FOR ECOSYSTEM DATA
