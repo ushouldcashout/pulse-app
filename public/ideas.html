@@ -1217,19 +1217,19 @@
 
         <nav class="sidebar-nav">
             <a href="#" class="nav-item active" data-nav="active">
-                <span>🔄</span>
+                <span>ð</span>
                 <span>Active Ideas</span>
             </a>
             <a href="#" class="nav-item" data-nav="top">
-                <span>🔥</span>
+                <span>ð¥</span>
                 <span>Top Ideas</span>
             </a>
             <a href="#" class="nav-item" data-nav="mine">
-                <span>💡</span>
+                <span>ð¡</span>
                 <span>My Ideas</span>
             </a>
             <a href="#" class="nav-item" data-nav="votes">
-                <span>🗳️</span>
+                <span>ð³ï¸</span>
                 <span>My Votes</span>
             </a>
         </nav>
@@ -1251,19 +1251,9 @@
 
         <div class="sidebar-section">
             <div class="sidebar-section-title">About</div>
-            <div class="sidebar-expandable">
-                <button class="sidebar-expandable-btn" id="qorum-btn">
-                    <span>QORUM System</span>
-                    <span>▼</span>
-                </button>
-                <div class="sidebar-expandable-content" id="qorum-content">
-                    <p>QORUM is a decentralized voting system where anyone can:</p>
-                    <p style="margin-top: 8px;">• Connect their wallet to participate</p>
-                    <p style="margin-top: 4px;">• Submit new ideas and stake points</p>
-                    <p style="margin-top: 4px;">• Vote FOR or AGAINST any idea</p>
-                    <p style="margin-top: 4px;">• Earn points by voting correctly</p>
-                    <p style="margin-top: 8px;">All voting is transparent and on-chain. Ideas undergo admin review before activation for voting.</p>
-                </div>
+            <div style="padding: 12px 0; font-size: 13px; line-height: 1.6; color: var(--text-secondary);">
+                <p>QORUM is a decentralized voting system where you can propose and vote on ideas using points earned from the main Pulse game.</p>
+                <p style="margin-top: 8px;">Points will convert to $PULSE tokens at TGE.</p>
             </div>
         </div>
 
@@ -1284,7 +1274,7 @@
                     </div>
                 </div>
                 <button id="wallet-connect-btn" class="wallet-btn">
-                    <span>🔗</span>
+                    <span>ð</span>
                     <span>Connect Wallet</span>
                 </button>
                 <button id="submit-idea-btn" class="submit-idea-btn" style="display: none;">
@@ -1336,7 +1326,7 @@
 
                 <div class="ideas-list" id="ideas-list">
                     <div class="empty-state">
-                        <div class="empty-state-icon">💭</div>
+                        <div class="empty-state-icon">ð­</div>
                         <div class="empty-state-title">Loading ideas...</div>
                         <p>Fetching ideas from the backend</p>
                     </div>
@@ -1347,7 +1337,7 @@
                 <div class="detail-container">
                     <div class="top-bar" style="margin-left: -250px; width: calc(100% + 250px);">
                         <button class="back-link" id="back-to-list">
-                            <span>←</span>
+                            <span>â</span>
                             <span>Back to Ideas</span>
                         </button>
                     </div>
@@ -1370,7 +1360,7 @@
                             </div>
                         </div>
                         <a id="share-button" class="share-button" target="_blank">
-                            <span>🐦</span>
+                            <span>ð¦</span>
                             <span>Share</span>
                         </a>
                     </div>
@@ -1378,7 +1368,7 @@
                     <div class="detail-body">
                         <div id="pending-review-container" style="display: none;">
                             <div class="pending-review-message">
-                                ⏳ This idea is awaiting admin review. Once approved, it will be activated for voting.
+                                â³ This idea is awaiting admin review. Once approved, it will be activated for voting.
                             </div>
                         </div>
 
@@ -1423,6 +1413,7 @@
                                     <span class="points-amount" id="vote-points-amount">10</span>
                                 </div>
                                 <p class="form-hint">Available: <strong id="available-points-detail" style="color: var(--accent-green);">100</strong> points</p>
+                                <p class="form-hint" style="margin-top: 8px; color: var(--accent-purple);">Points will convert to $PULSE tokens at TGE
                             </div>
                         </div>
 
@@ -1445,8 +1436,8 @@
                         <div id="admin-controls-container" class="detail-section" style="display: none;">
                             <h3 class="detail-section-title">Admin Controls</h3>
                             <div class="admin-controls">
-                                <button class="admin-btn admin-btn-approve" id="approve-idea-btn">✓ Approve Idea</button>
-                                <button class="admin-btn admin-btn-reject" id="reject-idea-btn">✗ Reject Idea</button>
+                                <button class="admin-btn admin-btn-approve" id="approve-idea-btn">â Approve Idea</button>
+                                <button class="admin-btn admin-btn-reject" id="reject-idea-btn">â Reject Idea</button>
                             </div>
                         </div>
 
@@ -1555,6 +1546,18 @@
             setupEventListeners();
             restoreWalletFromStorage();
 
+            // Auto-detect if wallet is already connected via ethereum
+            if (!userWallet && window.ethereum) {
+                try {
+                    const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+                    if (accounts && accounts.length > 0) {
+                        connectWallet(accounts[0]);
+                    }
+                } catch (error) {
+                    console.log('Could not auto-detect wallet');
+                }
+            }
+
             // Handle URL hash on page load
             if (window.location.hash.startsWith('#idea-')) {
                 const ideaId = parseInt(window.location.hash.split('-')[1]);
@@ -1652,17 +1655,26 @@
             });
         }
 
-        function openWalletModal() {
-            const input = prompt('Enter your wallet address (0x...):', userWallet || '');
-            if (input === null) return;
-
-            const trimmed = input.trim();
-            if (!isValidEthereumAddress(trimmed)) {
-                showToast('Invalid wallet address. Must start with 0x and be 42 characters.', 'error');
+        async function openWalletModal() {
+            // Check if window.ethereum is available (MetaMask, WalletConnect, etc.)
+            if (!window.ethereum) {
+                showToast('Web3 wallet not detected. Please install MetaMask or WalletConnect.', 'error');
                 return;
             }
 
-            connectWallet(trimmed);
+            try {
+                // Request account access
+                const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                if (accounts && accounts.length > 0) {
+                    connectWallet(accounts[0]);
+                }
+            } catch (error) {
+                if (error.code === 4001) {
+                    showToast('Wallet connection was rejected', 'warning');
+                } else {
+                    showToast('Error connecting wallet: ' + error.message, 'error');
+                }
+            }
         }
 
         function isValidEthereumAddress(addr) {
@@ -1712,7 +1724,7 @@
             const points = parseInt(pointsInput.value) || 0;
             const preview = document.getElementById('points-preview');
             if (points >= MIN_POINTS_TO_SUBMIT && points <= userPoints) {
-                preview.textContent = `Your balance: ${userPoints} pts → After: ${userPoints - points} pts`;
+                preview.textContent = `Your balance: ${userPoints} pts â After: ${userPoints - points} pts`;
                 preview.style.color = 'var(--accent-green)';
             } else if (points > userPoints) {
                 preview.textContent = `Insufficient points! You need ${points - userPoints} more.`;
@@ -1831,7 +1843,7 @@
             if (ideas.length === 0) {
                 list.innerHTML = `
                     <div class="empty-state">
-                        <div class="empty-state-icon">💭</div>
+                        <div class="empty-state-icon">ð­</div>
                         <div class="empty-state-title">No ideas found</div>
                         <p>Try adjusting your filters or category selection</p>
                     </div>
@@ -1859,12 +1871,12 @@
                     <div class="idea-meta">
                         <div class="idea-meta-left">
                             <div class="vote-info">
-                                <span>🗳️</span>
+                                <span>ð³ï¸</span>
                                 <span class="vote-count">${((idea.voteFor || 0) + (idea.voteAgainst || 0)).toLocaleString()} votes</span>
                             </div>
                             ${idea.expiresAt ? `
                                 <div class="time-remaining">
-                                    ⏱️ ${getDaysRemaining(idea.expiresAt)} days left
+                                    â±ï¸ ${getDaysRemaining(idea.expiresAt)} days left
                                 </div>
                             ` : ''}
                         </div>
@@ -1896,7 +1908,7 @@
                 const daysLeft = getDaysRemaining(idea.expiresAt);
                 const expirationDiv = document.getElementById('detail-expiration');
                 if (daysLeft > 0) {
-                    expirationDiv.innerHTML = `<span class="expiration-countdown">${daysLeft} days</span> left • Expires ${formatExpirationDate(idea.expiresAt)}`;
+                    expirationDiv.innerHTML = `<span class="expiration-countdown">${daysLeft} days</span> left â¢ Expires ${formatExpirationDate(idea.expiresAt)}`;
                 } else {
                     expirationDiv.textContent = 'This idea has expired';
                 }
@@ -2234,7 +2246,7 @@
 
         function capitalizeStatus(status) {
             if (status === 'pending_review') {
-                return '⏳ Pending Review';
+                return 'â³ Pending Review';
             }
             return status.charAt(0).toUpperCase() + status.slice(1);
         }
