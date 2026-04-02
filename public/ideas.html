@@ -1758,20 +1758,83 @@
 
         async function loadIdeas() {
             try {
-                const response = await fetch(`${API_BASE}/ideas`);
-                if (response.ok) {
-                    currentIdeas = await response.json();
+                // Load ideas from localStorage
+                const stored = localStorage.getItem('pulse_ideas');
+                if (stored) {
+                    currentIdeas = JSON.parse(stored);
                 } else {
-                    throw new Error('Failed to fetch ideas');
+                    // Seed with default ideas on first load
+                    currentIdeas = getDefaultIdeas();
+                    saveIdeas();
+                }
+
+                // Also restore userVotes from localStorage
+                const storedVotes = localStorage.getItem('pulse_user_votes');
+                if (storedVotes) {
+                    userVotes = JSON.parse(storedVotes);
                 }
             } catch (error) {
-                console.warn('Could not fetch ideas from API:', error.message);
-                showToast('Backend is starting up, please refresh in a moment.', 'warning');
+                console.warn('Could not load ideas:', error.message);
                 currentIdeas = [];
             }
 
             filterAndSortIdeas();
             updateStats();
+        }
+
+        function saveIdeas() {
+            localStorage.setItem('pulse_ideas', JSON.stringify(currentIdeas));
+        }
+
+        function saveUserVotes() {
+            localStorage.setItem('pulse_user_votes', JSON.stringify(userVotes));
+        }
+
+        function getDefaultIdeas() {
+            return [
+                {
+                    id: 1,
+                    title: 'Add multiplayer prediction battles',
+                    description: 'Allow 2+ players to compete head-to-head in real-time prediction rounds. Winner takes the combined pot minus a small fee.',
+                    category: 'feature',
+                    author: '0x1234...demo',
+                    pointsStaked: 500,
+                    voteFor: 1240,
+                    voteAgainst: 180,
+                    status: 'active',
+                    duration: 7,
+                    createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+                    comments: []
+                },
+                {
+                    id: 2,
+                    title: 'Weekly leaderboard prizes in ETH',
+                    description: 'Distribute a portion of the platform fees as weekly prizes to the top 10 leaderboard players.',
+                    category: 'tokenomics',
+                    author: '0x5678...demo',
+                    pointsStaked: 350,
+                    voteFor: 890,
+                    voteAgainst: 120,
+                    status: 'active',
+                    duration: 14,
+                    createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+                    comments: []
+                },
+                {
+                    id: 3,
+                    title: 'Multi-token predictions (ETH, SOL, etc)',
+                    description: 'Expand beyond BTC to allow predictions on ETH/USD, SOL/USD, and other major pairs.',
+                    category: 'feature',
+                    author: '0x9abc...demo',
+                    pointsStaked: 420,
+                    voteFor: 2100,
+                    voteAgainst: 95,
+                    status: 'active',
+                    duration: 7,
+                    createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+                    comments: []
+                }
+            ];
         }
 
         function filterAndSortIdeas() {
@@ -2095,38 +2158,37 @@
             }
 
             try {
-                const response = await fetch(`${API_BASE}/ideas`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        title,
-                        description,
-                        category,
-                        author: userWallet,
-                        pointsStaked,
-                        duration
-                    })
-                });
-
-                if (!response.ok) {
-                    throw new Error('Failed to submit idea');
-                }
-
-                const newIdea = await response.json();
+                // Create idea locally (no backend needed)
+                const newIdea = {
+                    id: Date.now(),
+                    title,
+                    description,
+                    category,
+                    author: userWallet,
+                    pointsStaked,
+                    voteFor: pointsStaked,
+                    voteAgainst: 0,
+                    status: isAdmin ? 'active' : 'pending_review',
+                    duration,
+                    createdAt: new Date().toISOString(),
+                    comments: []
+                };
 
                 // Update local state
                 currentIdeas.unshift(newIdea);
                 userPoints -= pointsStaked;
                 lastIdeaSubmissionTime = now;
 
-                // Save cooldown to localStorage
+                // Save to localStorage
+                saveIdeas();
                 localStorage.setItem('lastIdeaSubmission_' + userWallet, now.toString());
+                localStorage.setItem('pulse_points', userPoints.toString());
 
                 syncPoints();
                 closeSubmitModal();
                 filterAndSortIdeas();
                 updateStats();
-                showToast('Your idea has been submitted for admin review!', 'success');
+                showToast('Your idea has been submitted' + (isAdmin ? '!' : ' for admin review!'), 'success');
             } catch (error) {
                 console.error('Error submitting idea:', error);
                 showToast('Error submitting idea. Please try again.', 'error');
@@ -2155,21 +2217,7 @@
             }
 
             try {
-                const response = await fetch(`${API_BASE}/ideas/${selectedIdeaId}/vote`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        side,
-                        points,
-                        voter: userWallet
-                    })
-                });
-
-                if (!response.ok) {
-                    throw new Error('Failed to vote');
-                }
-
-                // Update local state
+                // Update local state directly (no backend needed)
                 const idea = currentIdeas.find(i => i.id === selectedIdeaId);
                 if (idea) {
                     if (side === 'for') {
@@ -2183,6 +2231,11 @@
                 userVotes[selectedIdeaId] = side;
 
                 userPoints -= points;
+
+                // Persist to localStorage
+                saveIdeas();
+                saveUserVotes();
+                localStorage.setItem('pulse_points', userPoints.toString());
                 syncPoints();
 
                 // Refresh detail view
@@ -2202,6 +2255,7 @@
 
             // Set idea to active status
             idea.status = 'active';
+            saveIdeas();
 
             // Refresh the detail view
             showDetailView(selectedIdeaId);
@@ -2217,6 +2271,7 @@
 
             // Set idea to rejected status
             idea.status = 'rejected';
+            saveIdeas();
 
             // Refresh the detail view
             showDetailView(selectedIdeaId);
@@ -2354,6 +2409,18 @@
                 </div>
                 <p class="comment-text">${sanitize(text)}</p>
             `;
+
+            // Also store comment in the idea data
+            const idea = currentIdeas.find(i => i.id === selectedIdeaId);
+            if (idea) {
+                if (!idea.comments) idea.comments = [];
+                idea.comments.unshift({
+                    author: userWallet,
+                    text: text,
+                    time: new Date().toISOString()
+                });
+                saveIdeas();
+            }
 
             // Prepend to comments section
             const commentsSection = document.getElementById('comments-section');
