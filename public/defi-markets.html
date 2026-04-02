@@ -75,6 +75,7 @@
             font-size: 0.95rem;
             transition: all 0.3s ease;
             border-left: 3px solid transparent;
+            cursor: pointer;
         }
 
         .sidebar-nav a:hover {
@@ -108,6 +109,12 @@
             z-index: 50;
         }
 
+        .top-bar-left {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+        }
+
         .back-link {
             color: var(--accent-green);
             text-decoration: none;
@@ -116,10 +123,34 @@
             display: flex;
             align-items: center;
             gap: 0.5rem;
+            cursor: pointer;
         }
 
         .back-link:hover {
             opacity: 0.8;
+        }
+
+        .wallet-button {
+            padding: 0.6rem 1.2rem;
+            background: linear-gradient(135deg, var(--accent-green), var(--accent-purple));
+            color: var(--bg-dark);
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .wallet-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0, 212, 170, 0.3);
+        }
+
+        .wallet-button.connected {
+            background: rgba(0, 212, 170, 0.2);
+            color: var(--accent-green);
+            border: 1px solid var(--accent-green);
         }
 
         .container {
@@ -171,11 +202,18 @@
             border-radius: 12px;
             padding: 1.5rem;
             transition: all 0.3s ease;
+            cursor: pointer;
         }
 
         .market-card:hover {
             border-color: var(--accent-green);
             box-shadow: 0 0 20px rgba(0, 212, 170, 0.1);
+        }
+
+        .market-card.expanded {
+            grid-column: 1 / -1;
+            max-width: 800px;
+            margin: 0 auto;
         }
 
         .market-header {
@@ -347,6 +385,75 @@
             color: var(--bg-dark);
         }
 
+        .view-details-btn.expanded-close {
+            background-color: var(--accent-green);
+            color: var(--bg-dark);
+        }
+
+        /* Expanded details section */
+        .expanded-details {
+            display: none;
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-color);
+            animation: slideIn 0.3s ease;
+        }
+
+        .expanded-details.active {
+            display: block;
+        }
+
+        .details-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .participants-list {
+            background-color: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+        }
+
+        .participants-list h4 {
+            color: var(--accent-green);
+            margin-bottom: 1rem;
+            font-size: 1rem;
+        }
+
+        .participant-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            border-bottom: 1px solid rgba(0, 212, 170, 0.1);
+            font-size: 0.9rem;
+        }
+
+        .participant-item:last-child {
+            border-bottom: none;
+        }
+
+        .wallet-address {
+            color: var(--accent-green);
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            text-decoration: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .wallet-address:hover {
+            opacity: 0.8;
+            text-decoration: underline;
+        }
+
+        .participant-amount {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
         /* How It Works Section */
         .how-it-works {
             background-color: var(--card-bg);
@@ -447,9 +554,13 @@
             font-weight: 600;
         }
 
-        /* Leaderboard */
-        .leaderboard-section {
-            margin-bottom: 4rem;
+        /* Portfolio/Leaderboard/Help Sections */
+        .content-section {
+            display: none;
+        }
+
+        .content-section.active {
+            display: block;
         }
 
         .leaderboard-grid {
@@ -467,12 +578,11 @@
         }
 
         .rank-badge {
-            display: inline-block;
+            display: inline-flex;
             width: 50px;
             height: 50px;
             border-radius: 50%;
             background: linear-gradient(135deg, var(--accent-green), var(--accent-purple));
-            display: flex;
             align-items: center;
             justify-content: center;
             font-weight: 700;
@@ -495,6 +605,112 @@
             font-size: 1.3rem;
             font-weight: 700;
             color: var(--accent-green);
+        }
+
+        .portfolio-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .portfolio-item {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+
+        .portfolio-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+        .portfolio-item h3 {
+            color: var(--text-primary);
+            font-size: 1.1rem;
+        }
+
+        .position-badge {
+            background-color: rgba(0, 212, 170, 0.15);
+            color: var(--accent-green);
+            padding: 0.35rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+
+        .portfolio-item-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+        }
+
+        .detail-item {
+            font-size: 0.9rem;
+        }
+
+        .detail-label {
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            margin-bottom: 0.25rem;
+        }
+
+        .detail-value {
+            color: var(--accent-green);
+            font-weight: 600;
+        }
+
+        .faq-section {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .faq-item {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .faq-item:hover {
+            border-color: var(--accent-green);
+            background-color: rgba(0, 212, 170, 0.05);
+        }
+
+        .faq-item h3 {
+            color: var(--accent-green);
+            margin-bottom: 0.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .faq-toggle {
+            font-size: 1.2rem;
+            transition: transform 0.3s ease;
+        }
+
+        .faq-toggle.open {
+            transform: rotate(180deg);
+        }
+
+        .faq-answer {
+            color: var(--text-secondary);
+            line-height: 1.6;
+            display: none;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .faq-answer.open {
+            display: block;
         }
 
         /* Modal */
@@ -691,6 +907,12 @@
                 align-items: flex-start;
             }
 
+            .top-bar-left {
+                flex-direction: column;
+                gap: 1rem;
+                width: 100%;
+            }
+
             .container {
                 padding: 1rem;
             }
@@ -721,6 +943,10 @@
             }
 
             .leaderboard-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .details-grid {
                 grid-template-columns: 1fr;
             }
         }
@@ -760,11 +986,11 @@
             <div class="sidebar-logo">Pulse</div>
         </div>
         <ul class="sidebar-nav">
-            <li><a href="https://pulsebet.fun">Markets</a></li>
-            <li><a href="https://pulsebet.fun/defi-markets.html" class="active">DeFi Predictions</a></li>
-            <li><a href="https://pulsebet.fun">Portfolio</a></li>
-            <li><a href="https://pulsebet.fun">Leaderboard</a></li>
-            <li><a href="https://pulsebet.fun">Help</a></li>
+            <li><a href="https://pulsebet.fun" onclick="navigateTo('markets')">Markets</a></li>
+            <li><a href="javascript:void(0)" class="active" onclick="navigateTo('defi')">DeFi Predictions</a></li>
+            <li><a href="javascript:void(0)" onclick="navigateTo('portfolio')">Portfolio</a></li>
+            <li><a href="javascript:void(0)" onclick="navigateTo('leaderboard')">Leaderboard</a></li>
+            <li><a href="javascript:void(0)" onclick="navigateTo('help')">Help</a></li>
         </ul>
     </nav>
 
@@ -772,296 +998,586 @@
     <main>
         <!-- Top Bar -->
         <div class="top-bar">
-            <a href="https://pulsebet.fun" class="back-link">â Back to Pulse</a>
-            <div style="font-size: 0.9rem; color: var(--text-secondary);">
-                Connected to Ink Ecosystem
+            <div class="top-bar-left">
+                <a href="https://pulsebet.fun" class="back-link">← Back to Pulse</a>
+                <div style="font-size: 0.9rem; color: var(--text-secondary);">
+                    Connected to Ink Sepolia (Testnet)
+                </div>
             </div>
+            <button class="wallet-button" id="walletBtn" onclick="connectWallet()">Connect Wallet</button>
         </div>
 
         <!-- Page Content -->
         <div class="container">
-            <!-- Header -->
-            <section class="header">
-                <h1>Predict DeFi</h1>
-                <p>Join the Ink ecosystem community predicting DeFi metrics. Place bets on real on-chain data and compete on the leaderboard.</p>
+            <!-- DeFi Markets Section -->
+            <section id="defiSection" class="content-section active">
+                <!-- Header -->
+                <section class="header">
+                    <h1>Predict DeFi</h1>
+                    <p>Join the Ink ecosystem community predicting DeFi metrics. Place bets with testnet ETH and compete on the leaderboard.</p>
+                </section>
+
+                <!-- Active Markets -->
+                <section class="markets-section">
+                    <h2 class="section-title">Active Markets</h2>
+                    <div class="markets-grid" id="marketsGrid">
+                        <!-- Market 1: Tydro ETH Utilization -->
+                        <div class="market-card" data-market-id="tydro-eth">
+                            <div class="market-header">
+                                <span class="market-tag">TYDRO</span>
+                            </div>
+                            <div class="market-question">Will Tydro lending pool ETH utilization exceed 80% by end of week?</div>
+
+                            <div class="metric-display">
+                                <div class="metric-label">Current Utilization</div>
+                                <div class="metric-value">72.4%</div>
+                                <div style="font-size: 0.8rem; color: var(--text-secondary);">Data from <a href="https://explorer-sepolia.inkonchain.com" style="color: var(--accent-green); text-decoration: none;" target="_blank">Ink Sepolia Explorer</a></div>
+                            </div>
+
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 90.5%;"></div>
+                            </div>
+
+                            <div class="market-meta">
+                                <div class="meta-item">
+                                    <div class="meta-label">Pool Size (ETH)</div>
+                                    <div class="meta-value">4.2 ETH</div>
+                                </div>
+                                <div class="meta-item">
+                                    <div class="meta-label">Participants</div>
+                                    <div class="meta-value">127</div>
+                                </div>
+                            </div>
+
+                            <div class="betting-section">
+                                <div class="odds-display">
+                                    <button class="odds-button yes" onclick="openBetModal('tydro-eth', 'YES', 65)">
+                                        <span class="odds-percentage">65%</span>
+                                        <span class="odds-label">Yes</span>
+                                    </button>
+                                    <button class="odds-button no" onclick="openBetModal('tydro-eth', 'NO', 35)">
+                                        <span class="odds-percentage">35%</span>
+                                        <span class="odds-label">No</span>
+                                    </button>
+                                </div>
+                                <div class="countdown">Ends in 4 days, 12 hours</div>
+                            </div>
+
+                            <button class="view-details-btn" onclick="toggleDetails('tydro-eth')">View Details</button>
+
+                            <div class="expanded-details" data-market-id="tydro-eth">
+                                <div class="details-grid">
+                                    <div class="participants-list">
+                                        <h4>YES Positions (65 bettors)</h4>
+                                        <div class="participant-item">
+                                            <a href="https://explorer-sepolia.inkonchain.com/address/0xA3f1d4e5b2c8f9a3e5b2c8f9a3e5b2c8f9a3e5b" class="wallet-address" target="_blank">0xA3f1...e5b2</a>
+                                            <span class="participant-amount">2.5 ETH</span>
+                                        </div>
+                                        <div class="participant-item">
+                                            <a href="https://explorer-sepolia.inkonchain.com/address/0xB4e2c3d5f1a2b8c9e2c3d5f1a2b8c9e2c3d5f1a" class="wallet-address" target="_blank">0xB4e2...d5f1</a>
+                                            <span class="participant-amount">1.8 ETH</span>
+                                        </div>
+                                        <div class="participant-item">
+                                            <a href="https://explorer-sepolia.inkonchain.com/address/0xC5d3e4f1g2h3i4j5k6l7m8n9o0p1q2r3s4t5u6v7" class="wallet-address" target="_blank">0xC5d3...m8n9</a>
+                                            <span class="participant-amount">1.2 ETH</span>
+                                        </div>
+                                    </div>
+                                    <div class="participants-list">
+                                        <h4>NO Positions (62 bettors)</h4>
+                                        <div class="participant-item">
+                                            <a href="https://explorer-sepolia.inkonchain.com/address/0xD6f4e5g3h2i1j0k9l8m7n6o5p4q3r2s1t0u9v8w7" class="wallet-address" target="_blank">0xD6f4...q3r2</a>
+                                            <span class="participant-amount">1.9 ETH</span>
+                                        </div>
+                                        <div class="participant-item">
+                                            <a href="https://explorer-sepolia.inkonchain.com/address/0xE7g5f6h4i3j2k1l0m9n8o7p6q5r4s3t2u1v0w9x8" class="wallet-address" target="_blank">0xE7g5...s3t2</a>
+                                            <span class="participant-amount">1.5 ETH</span>
+                                        </div>
+                                        <div class="participant-item">
+                                            <a href="https://explorer-sepolia.inkonchain.com/address/0xF8h6g7i5j4k3l2m1n0o9p8q7r6s5t4u3v2w1x0y9" class="wallet-address" target="_blank">0xF8h6...t4u3</a>
+                                            <span class="participant-amount">1.1 ETH</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Market 2: Nado Volume -->
+                        <div class="market-card" data-market-id="nado-vol">
+                            <div class="market-header">
+                                <span class="market-tag">NADO</span>
+                            </div>
+                            <div class="market-question">Will Nado DEX hit $50M in 24h volume?</div>
+
+                            <div class="metric-display">
+                                <div class="metric-label">Current 24h Volume</div>
+                                <div class="metric-value">$48.2M</div>
+                                <div style="font-size: 0.8rem; color: var(--text-secondary);">Updated 2 minutes ago</div>
+                            </div>
+
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 96.4%;"></div>
+                            </div>
+
+                            <div class="market-meta">
+                                <div class="meta-item">
+                                    <div class="meta-label">Pool Size (ETH)</div>
+                                    <div class="meta-value">3.8 ETH</div>
+                                </div>
+                                <div class="meta-item">
+                                    <div class="meta-label">Participants</div>
+                                    <div class="meta-value">95</div>
+                                </div>
+                            </div>
+
+                            <div class="betting-section">
+                                <div class="odds-display">
+                                    <button class="odds-button yes" onclick="openBetModal('nado-vol', 'YES', 72)">
+                                        <span class="odds-percentage">72%</span>
+                                        <span class="odds-label">Yes</span>
+                                    </button>
+                                    <button class="odds-button no" onclick="openBetModal('nado-vol', 'NO', 28)">
+                                        <span class="odds-percentage">28%</span>
+                                        <span class="odds-label">No</span>
+                                    </button>
+                                </div>
+                                <div class="countdown">Ends in 1 day, 8 hours</div>
+                            </div>
+
+                            <button class="view-details-btn" onclick="toggleDetails('nado-vol')">View Details</button>
+
+                            <div class="expanded-details" data-market-id="nado-vol">
+                                <div class="details-grid">
+                                    <div class="participants-list">
+                                        <h4>YES Positions (72 bettors)</h4>
+                                        <div class="participant-item">
+                                            <a href="https://explorer-sepolia.inkonchain.com/address/0xA1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0" class="wallet-address" target="_blank">0xA1b2...s9t0</a>
+                                            <span class="participant-amount">3.2 ETH</span>
+                                        </div>
+                                        <div class="participant-item">
+                                            <a href="https://explorer-sepolia.inkonchain.com/address/0xB2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1" class="wallet-address" target="_blank">0xB2c3...t0u1</a>
+                                            <span class="participant-amount">2.1 ETH</span>
+                                        </div>
+                                        <div class="participant-item">
+                                            <a href="https://explorer-sepolia.inkonchain.com/address/0xC3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2" class="wallet-address" target="_blank">0xC3d4...u1v2</a>
+                                            <span class="participant-amount">1.7 ETH</span>
+                                        </div>
+                                    </div>
+                                    <div class="participants-list">
+                                        <h4>NO Positions (23 bettors)</h4>
+                                        <div class="participant-item">
+                                            <a href="https://explorer-sepolia.inkonchain.com/address/0xD4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3" class="wallet-address" target="_blank">0xD4e5...v2w3</a>
+                                            <span class="participant-amount">1.4 ETH</span>
+                                        </div>
+                                        <div class="participant-item">
+                                            <a href="https://explorer-sepolia.inkonchain.com/address/0xE5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4" class="wallet-address" target="_blank">0xE5f6...w3x4</a>
+                                            <span class="participant-amount">1.3 ETH</span>
+                                        </div>
+                                        <div class="participant-item">
+                                            <a href="https://explorer-sepolia.inkonchain.com/address/0xF6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5" class="wallet-address" target="_blank">0xF6g7...x4y5</a>
+                                            <span class="participant-amount">0.9 ETH</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Market 3: INK TVL Growth -->
+                        <div class="market-card" data-market-id="ink-tvl">
+                            <div class="market-header">
+                                <span class="market-tag">INK</span>
+                            </div>
+                            <div class="market-question">Will total INK chain TVL grow 10%+ this week?</div>
+
+                            <div class="metric-display">
+                                <div class="metric-label">Current TVL / Starting TVL</div>
+                                <div class="metric-value">$284M / $267M</div>
+                                <div style="font-size: 0.8rem; color: var(--accent-green);">↑ 6.4% growth</div>
+                            </div>
+
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 64%;"></div>
+                            </div>
+
+                            <div class="market-meta">
+                                <div class="meta-item">
+                                    <div class="meta-label">Pool Size (ETH)</div>
+                                    <div class="meta-value">5.1 ETH</div>
+                                </div>
+                                <div class="meta-item">
+                                    <div class="meta-label">Participants</div>
+                                    <div class="meta-value">156</div>
+                                </div>
+                            </div>
+
+                            <div class="betting-section">
+                                <div class="odds-display">
+                                    <button class="odds-button yes" onclick="openBetModal('ink-tvl', 'YES', 58)">
+                                        <span class="odds-percentage">58%</span>
+                                        <span class="odds-label">Yes</span>
+                                    </button>
+                                    <button class="odds-button no" onclick="openBetModal('ink-tvl', 'NO', 42)">
+                                        <span class="odds-percentage">42%</span>
+                                        <span class="odds-label">No</span>
+                                    </button>
+                                </div>
+                                <div class="countdown">Ends in 5 days, 18 hours</div>
+                            </div>
+
+                            <button class="view-details-btn" onclick="toggleDetails('ink-tvl')">View Details</button>
+
+                            <div class="expanded-details" data-market-id="ink-tvl">
+                                <div class="details-grid">
+                                    <div class="participants-list">
+                                        <h4>YES Positions (58 bettors)</h4>
+                                        <div class="participant-item">
+                                            <a href="https://explorer-sepolia.inkonchain.com/address/0xA9k8l7m6n5o4p3q2r1s0t9u8v7w6x5y4z3a2b1c0" class="wallet-address" target="_blank">0xA9k8...b1c0</a>
+                                            <span class="participant-amount">4.2 ETH</span>
+                                        </div>
+                                        <div class="participant-item">
+                                            <a href="https://explorer-sepolia.inkonchain.com/address/0xB0l9m8n7o6p5q4r3s2t1u0v9w8x7y6z5a4b3c2d1" class="wallet-address" target="_blank">0xB0l9...c2d1</a>
+                                            <span class="participant-amount">2.8 ETH</span>
+                                        </div>
+                                        <div class="participant-item">
+                                            <a href="https://explorer-sepolia.inkonchain.com/address/0xC1m0n9o8p7q6r5s4t3u2v1w0x9y8z7a6b5c4d3e2" class="wallet-address" target="_blank">0xC1m0...d3e2</a>
+                                            <span class="participant-amount">1.9 ETH</span>
+                                        </div>
+                                    </div>
+                                    <div class="participants-list">
+                                        <h4>NO Positions (42 bettors)</h4>
+                                        <div class="participant-item">
+                                            <a href="https://explorer-sepolia.inkonchain.com/address/0xD2n1o0p9q8r7s6t5u4v3w2x1y0z9a8b7c6d5e4f3" class="wallet-address" target="_blank">0xD2n1...e4f3</a>
+                                            <span class="participant-amount">1.6 ETH</span>
+                                        </div>
+                                        <div class="participant-item">
+                                            <a href="https://explorer-sepolia.inkonchain.com/address/0xE3o2p1q0r9s8t7u6v5w4x3y2z1a0b9c8d7e6f5g4" class="wallet-address" target="_blank">0xE3o2...f5g4</a>
+                                            <span class="participant-amount">1.4 ETH</span>
+                                        </div>
+                                        <div class="participant-item">
+                                            <a href="https://explorer-sepolia.inkonchain.com/address/0xF4p3q2r1s0t9u8v7w6x5y4z3a2b1c0d9e8f7g6h5" class="wallet-address" target="_blank">0xF4p3...g6h5</a>
+                                            <span class="participant-amount">1.2 ETH</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- How It Works -->
+                <section class="how-it-works">
+                    <h2 class="section-title">How It Works</h2>
+                    <div class="features-grid">
+                        <div class="feature">
+                            <div class="feature-number">1</div>
+                            <div class="feature-content">
+                                <h3>Weekly Markets</h3>
+                                <p>New prediction markets launch every Monday at 00:00 UTC and resolve Sunday at 23:59 UTC.</p>
+                            </div>
+                        </div>
+                        <div class="feature">
+                            <div class="feature-number">2</div>
+                            <div class="feature-content">
+                                <h3>Place Your Bets</h3>
+                                <p>Use your testnet ETH to bet YES or NO on real DeFi metrics. Higher odds = lower probability.</p>
+                            </div>
+                        </div>
+                        <div class="feature">
+                            <div class="feature-number">3</div>
+                            <div class="feature-content">
+                                <h3>Automatic Resolution</h3>
+                                <p>Markets resolve automatically using on-chain data from verified protocol sources.</p>
+                            </div>
+                        </div>
+                        <div class="feature">
+                            <div class="feature-number">4</div>
+                            <div class="feature-content">
+                                <h3>Parimutuel Payouts</h3>
+                                <p>Win your share of the losing side pool proportional to your stake. Fair and transparent.</p>
+                            </div>
+                        </div>
+                        <div class="feature">
+                            <div class="feature-number">5</div>
+                            <div class="feature-content">
+                                <h3>House Rake</h3>
+                                <p>Pulse takes a 10% rake from winning pools to maintain operations and fund ecosystem development.</p>
+                            </div>
+                        </div>
+                        <div class="feature">
+                            <div class="feature-number">6</div>
+                            <div class="feature-content">
+                                <h3>Compete</h3>
+                                <p>Track your profit and compete against other predictors on the DeFi leaderboard.</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Market History -->
+                <section class="history-section">
+                    <h2 class="section-title">Market History</h2>
+                    <table class="history-table">
+                        <thead>
+                            <tr>
+                                <th>Market Question</th>
+                                <th>Result</th>
+                                <th>Pool Size</th>
+                                <th>Participants</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Will Lido staking reach 40% of total ETH staked?</td>
+                                <td><span class="result-yes">YES</span></td>
+                                <td>12.4 ETH</td>
+                                <td>347</td>
+                            </tr>
+                            <tr>
+                                <td>Will Aave governance token hit $200?</td>
+                                <td><span class="result-no">NO</span></td>
+                                <td>8.9 ETH</td>
+                                <td>203</td>
+                            </tr>
+                            <tr>
+                                <td>Will Uniswap V4 deploy on Mainnet in Q1 2026?</td>
+                                <td><span class="result-yes">YES</span></td>
+                                <td>15.2 ETH</td>
+                                <td>412</td>
+                            </tr>
+                            <tr>
+                                <td>Will OpenLeverage TVL exceed $500M?</td>
+                                <td><span class="result-no">NO</span></td>
+                                <td>6.7 ETH</td>
+                                <td>178</td>
+                            </tr>
+                            <tr>
+                                <td>Will Curve DAO proposal pass with 80%+ votes?</td>
+                                <td><span class="result-yes">YES</span></td>
+                                <td>10.3 ETH</td>
+                                <td>289</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </section>
             </section>
 
-            <!-- Active Markets -->
-            <section class="markets-section">
-                <h2 class="section-title">Active Markets</h2>
-                <div class="markets-grid">
-                    <!-- Market 1: Tydro ETH Utilization -->
-                    <div class="market-card">
-                        <div class="market-header">
-                            <span class="market-tag">TYDRO</span>
-                        </div>
-                        <div class="market-question">Will Tydro lending pool ETH utilization exceed 80% by end of week?</div>
+            <!-- Portfolio Section -->
+            <section id="portfolioSection" class="content-section">
+                <section class="header">
+                    <h1>Your Portfolio</h1>
+                    <p>Track your active positions and historical performance.</p>
+                </section>
 
-                        <div class="metric-display">
-                            <div class="metric-label">Current Utilization</div>
-                            <div class="metric-value">72.4%</div>
-                            <div style="font-size: 0.8rem; color: var(--text-secondary);">Data from <a href="#" style="color: var(--accent-green); text-decoration: none;">Tydro Protocol</a></div>
+                <div class="portfolio-list">
+                    <div class="portfolio-item">
+                        <div class="portfolio-item-header">
+                            <h3>Tydro ETH Utilization</h3>
+                            <span class="position-badge">YES - ACTIVE</span>
                         </div>
-
-                        <div class="progress-bar">
-                            <div class="progress-fill" style="width: 90.5%;"></div>
-                        </div>
-
-                        <div class="market-meta">
-                            <div class="meta-item">
-                                <div class="meta-label">Pool Size</div>
-                                <div class="meta-value">4.2K Points</div>
+                        <div class="portfolio-item-details">
+                            <div class="detail-item">
+                                <div class="detail-label">Your Stake</div>
+                                <div class="detail-value">2.5 ETH</div>
                             </div>
-                            <div class="meta-item">
-                                <div class="meta-label">Participants</div>
-                                <div class="meta-value">127</div>
+                            <div class="detail-item">
+                                <div class="detail-label">Potential Return</div>
+                                <div class="detail-value">+3.8 ETH</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">Market Probability</div>
+                                <div class="detail-value">65%</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">Time Remaining</div>
+                                <div class="detail-value">4 days, 12h</div>
                             </div>
                         </div>
-
-                        <div class="betting-section">
-                            <div class="odds-display">
-                                <button class="odds-button yes" onclick="openBetModal('tydro-eth', 'YES', 65)">
-                                    <span class="odds-percentage">65%</span>
-                                    <span class="odds-label">Yes</span>
-                                </button>
-                                <button class="odds-button no" onclick="openBetModal('tydro-eth', 'NO', 35)">
-                                    <span class="odds-percentage">35%</span>
-                                    <span class="odds-label">No</span>
-                                </button>
-                            </div>
-                            <div class="countdown">Ends in 4 days, 12 hours</div>
-                        </div>
-
-                        <button class="view-details-btn" onclick="toggleDetails('tydro-eth')">View Details</button>
                     </div>
 
-                    <!-- Market 2: Nado Volume -->
-                    <div class="market-card">
-                        <div class="market-header">
-                            <span class="market-tag">NADO</span>
+                    <div class="portfolio-item">
+                        <div class="portfolio-item-header">
+                            <h3>Nado DEX Volume</h3>
+                            <span class="position-badge">YES - ACTIVE</span>
                         </div>
-                        <div class="market-question">Will Nado DEX hit $50M in 24h volume?</div>
-
-                        <div class="metric-display">
-                            <div class="metric-label">Current 24h Volume</div>
-                            <div class="metric-value">$48.2M</div>
-                            <div style="font-size: 0.8rem; color: var(--text-secondary);">Updated 2 minutes ago</div>
-                        </div>
-
-                        <div class="progress-bar">
-                            <div class="progress-fill" style="width: 96.4%;"></div>
-                        </div>
-
-                        <div class="market-meta">
-                            <div class="meta-item">
-                                <div class="meta-label">Pool Size</div>
-                                <div class="meta-value">3.8K Points</div>
+                        <div class="portfolio-item-details">
+                            <div class="detail-item">
+                                <div class="detail-label">Your Stake</div>
+                                <div class="detail-value">1.8 ETH</div>
                             </div>
-                            <div class="meta-item">
-                                <div class="meta-label">Participants</div>
-                                <div class="meta-value">95</div>
+                            <div class="detail-item">
+                                <div class="detail-label">Potential Return</div>
+                                <div class="detail-value">+2.4 ETH</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">Market Probability</div>
+                                <div class="detail-value">72%</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">Time Remaining</div>
+                                <div class="detail-value">1 day, 8h</div>
                             </div>
                         </div>
-
-                        <div class="betting-section">
-                            <div class="odds-display">
-                                <button class="odds-button yes" onclick="openBetModal('nado-vol', 'YES', 72)">
-                                    <span class="odds-percentage">72%</span>
-                                    <span class="odds-label">Yes</span>
-                                </button>
-                                <button class="odds-button no" onclick="openBetModal('nado-vol', 'NO', 28)">
-                                    <span class="odds-percentage">28%</span>
-                                    <span class="odds-label">No</span>
-                                </button>
-                            </div>
-                            <div class="countdown">Ends in 1 day, 8 hours</div>
-                        </div>
-
-                        <button class="view-details-btn" onclick="toggleDetails('nado-vol')">View Details</button>
                     </div>
 
-                    <!-- Market 3: INK TVL Growth -->
-                    <div class="market-card">
-                        <div class="market-header">
-                            <span class="market-tag">INK</span>
+                    <div class="portfolio-item">
+                        <div class="portfolio-item-header">
+                            <h3>Lido Staking Market (Resolved)</h3>
+                            <span class="position-badge">YES - WON</span>
                         </div>
-                        <div class="market-question">Will total INK chain TVL grow 10%+ this week?</div>
-
-                        <div class="metric-display">
-                            <div class="metric-label">Current TVL / Starting TVL</div>
-                            <div class="metric-value">$284M / $267M</div>
-                            <div style="font-size: 0.8rem; color: var(--accent-green);">â 6.4% growth</div>
-                        </div>
-
-                        <div class="progress-bar">
-                            <div class="progress-fill" style="width: 64%;"></div>
-                        </div>
-
-                        <div class="market-meta">
-                            <div class="meta-item">
-                                <div class="meta-label">Pool Size</div>
-                                <div class="meta-value">5.1K Points</div>
+                        <div class="portfolio-item-details">
+                            <div class="detail-item">
+                                <div class="detail-label">Your Stake</div>
+                                <div class="detail-value">1.2 ETH</div>
                             </div>
-                            <div class="meta-item">
-                                <div class="meta-label">Participants</div>
-                                <div class="meta-value">156</div>
+                            <div class="detail-item">
+                                <div class="detail-label">Winnings</div>
+                                <div class="detail-value">+0.84 ETH</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">ROI</div>
+                                <div class="detail-value">+70%</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">Resolved</div>
+                                <div class="detail-value">2 weeks ago</div>
                             </div>
                         </div>
-
-                        <div class="betting-section">
-                            <div class="odds-display">
-                                <button class="odds-button yes" onclick="openBetModal('ink-tvl', 'YES', 58)">
-                                    <span class="odds-percentage">58%</span>
-                                    <span class="odds-label">Yes</span>
-                                </button>
-                                <button class="odds-button no" onclick="openBetModal('ink-tvl', 'NO', 42)">
-                                    <span class="odds-percentage">42%</span>
-                                    <span class="odds-label">No</span>
-                                </button>
-                            </div>
-                            <div class="countdown">Ends in 5 days, 18 hours</div>
-                        </div>
-
-                        <button class="view-details-btn" onclick="toggleDetails('ink-tvl')">View Details</button>
                     </div>
                 </div>
             </section>
 
-            <!-- How It Works -->
-            <section class="how-it-works">
-                <h2 class="section-title">How It Works</h2>
-                <div class="features-grid">
-                    <div class="feature">
-                        <div class="feature-number">1</div>
-                        <div class="feature-content">
-                            <h3>Weekly Markets</h3>
-                            <p>New prediction markets launch every Monday at 00:00 UTC and resolve Sunday at 23:59 UTC.</p>
-                        </div>
-                    </div>
-                    <div class="feature">
-                        <div class="feature-number">2</div>
-                        <div class="feature-content">
-                            <h3>Place Your Bets</h3>
-                            <p>Use your points to bet YES or NO on real DeFi metrics. Higher odds = lower probability.</p>
-                        </div>
-                    </div>
-                    <div class="feature">
-                        <div class="feature-number">3</div>
-                        <div class="feature-content">
-                            <h3>Automatic Resolution</h3>
-                            <p>Markets resolve automatically using on-chain data from verified protocol sources.</p>
-                        </div>
-                    </div>
-                    <div class="feature">
-                        <div class="feature-number">4</div>
-                        <div class="feature-content">
-                            <h3>Parimutuel Payouts</h3>
-                            <p>Win your share of the losing side pool proportional to your stake. Fair and transparent.</p>
-                        </div>
-                    </div>
-                    <div class="feature">
-                        <div class="feature-number">5</div>
-                        <div class="feature-content">
-                            <h3>House Rake</h3>
-                            <p>Pulse takes a 10% rake from winning pools to maintain operations and fund ecosystem development.</p>
-                        </div>
-                    </div>
-                    <div class="feature">
-                        <div class="feature-number">6</div>
-                        <div class="feature-content">
-                            <h3>Compete</h3>
-                            <p>Track your profit and compete against other predictors on the DeFi leaderboard.</p>
-                        </div>
-                    </div>
-                </div>
-            </section>
+            <!-- Leaderboard Section -->
+            <section id="leaderboardSection" class="content-section">
+                <section class="header">
+                    <h1>Top DeFi Predictors</h1>
+                    <p>Compete with the best predictors in the Ink ecosystem.</p>
+                </section>
 
-            <!-- Market History -->
-            <section class="history-section">
-                <h2 class="section-title">Market History</h2>
-                <table class="history-table">
-                    <thead>
-                        <tr>
-                            <th>Market Question</th>
-                            <th>Result</th>
-                            <th>Pool Size</th>
-                            <th>Participants</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>Will Lido staking reach 40% of total ETH staked?</td>
-                            <td><span class="result-yes">YES</span></td>
-                            <td>12.4K Points</td>
-                            <td>347</td>
-                        </tr>
-                        <tr>
-                            <td>Will Aave governance token hit $200?</td>
-                            <td><span class="result-no">NO</span></td>
-                            <td>8.9K Points</td>
-                            <td>203</td>
-                        </tr>
-                        <tr>
-                            <td>Will Uniswap V4 deploy on Mainnet in Q1 2026?</td>
-                            <td><span class="result-yes">YES</span></td>
-                            <td>15.2K Points</td>
-                            <td>412</td>
-                        </tr>
-                        <tr>
-                            <td>Will OpenLeverage TVL exceed $500M?</td>
-                            <td><span class="result-no">NO</span></td>
-                            <td>6.7K Points</td>
-                            <td>178</td>
-                        </tr>
-                        <tr>
-                            <td>Will Curve DAO proposal pass with 80%+ votes?</td>
-                            <td><span class="result-yes">YES</span></td>
-                            <td>10.3K Points</td>
-                            <td>289</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </section>
-
-            <!-- Leaderboard -->
-            <section class="leaderboard-section">
-                <h2 class="section-title">Top DeFi Predictors</h2>
                 <div class="leaderboard-grid">
                     <div class="leaderboard-item">
                         <div class="rank-badge">1</div>
                         <h3>0xAce Trading</h3>
-                        <p>DeFi Analyst â¢ 47 Markets Won</p>
-                        <div class="profit-display">+$2,847 Points</div>
+                        <p>DeFi Analyst • 47 Markets Won</p>
+                        <div class="profit-display">+12.4 ETH</div>
                     </div>
                     <div class="leaderboard-item">
                         <div class="rank-badge">2</div>
                         <h3>LiquidityHunter</h3>
-                        <p>Protocol Specialist â¢ 39 Markets Won</p>
-                        <div class="profit-display">+$2,164 Points</div>
+                        <p>Protocol Specialist • 39 Markets Won</p>
+                        <div class="profit-display">+9.2 ETH</div>
                     </div>
                     <div class="leaderboard-item">
                         <div class="rank-badge">3</div>
                         <h3>ChainDataMaven</h3>
-                        <p>Data Researcher â¢ 35 Markets Won</p>
-                        <div class="profit-display">+$1,892 Points</div>
+                        <p>Data Researcher • 35 Markets Won</p>
+                        <div class="profit-display">+8.1 ETH</div>
                     </div>
                     <div class="leaderboard-item">
                         <div class="rank-badge">4</div>
                         <h3>VolumeWhisperer</h3>
-                        <p>Trading Bot Engineer â¢ 31 Markets Won</p>
-                        <div class="profit-display">+$1,624 Points</div>
+                        <p>Trading Bot Engineer • 31 Markets Won</p>
+                        <div class="profit-display">+7.6 ETH</div>
                     </div>
                     <div class="leaderboard-item">
                         <div class="rank-badge">5</div>
                         <h3>TvlSentinel</h3>
-                        <p>Risk Manager â¢ 28 Markets Won</p>
-                        <div class="profit-display">+$1,421 Points</div>
+                        <p>Risk Manager • 28 Markets Won</p>
+                        <div class="profit-display">+6.8 ETH</div>
                     </div>
                     <div class="leaderboard-item">
                         <div class="rank-badge">6</div>
                         <h3>YieldFarmer99</h3>
-                        <p>Strategy Designer â¢ 24 Markets Won</p>
-                        <div class="profit-display">+$982 Points</div>
+                        <p>Strategy Designer • 24 Markets Won</p>
+                        <div class="profit-display">+5.2 ETH</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Help Section -->
+            <section id="helpSection" class="content-section">
+                <section class="header">
+                    <h1>Help & FAQ</h1>
+                    <p>Find answers to common questions about Pulse DeFi predictions.</p>
+                </section>
+
+                <div class="faq-section">
+                    <div class="faq-item" onclick="toggleFAQ(this)">
+                        <h3>
+                            What is Pulse DeFi Predictions?
+                            <span class="faq-toggle">▼</span>
+                        </h3>
+                        <div class="faq-answer">
+                            <p>Pulse DeFi Predictions is a decentralized prediction market platform built on the Ink ecosystem. Users can predict outcomes of DeFi metrics and events, placing testnet ETH bets on outcomes. Markets resolve automatically using on-chain data and winners share the losing pool through a parimutuel system.</p>
+                        </div>
+                    </div>
+
+                    <div class="faq-item" onclick="toggleFAQ(this)">
+                        <h3>
+                            How do I place a bet?
+                            <span class="faq-toggle">▼</span>
+                        </h3>
+                        <div class="faq-answer">
+                            <p>To place a bet: 1) Connect your wallet using the button in the top right, 2) Select a market and choose YES or NO, 3) Enter your bet amount in testnet ETH, 4) Confirm the transaction in your wallet. Your bet will be locked until the market resolves.</p>
+                        </div>
+                    </div>
+
+                    <div class="faq-item" onclick="toggleFAQ(this)">
+                        <h3>
+                            What is the parimutuel payout system?
+                            <span class="faq-toggle">▼</span>
+                        </h3>
+                        <div class="faq-answer">
+                            <p>In a parimutuel system, winners share the losing side's pool proportional to their stake. If you bet 2 ETH and win on a side with 10 ETH total bet, you get 20% of the losing side's pool (minus the 10% Pulse rake). This creates fair payouts based on prediction accuracy and stake size.</p>
+                        </div>
+                    </div>
+
+                    <div class="faq-item" onclick="toggleFAQ(this)">
+                        <h3>
+                            How often do markets resolve?
+                            <span class="faq-toggle">▼</span>
+                        </h3>
+                        <div class="faq-answer">
+                            <p>Markets vary in duration based on the event they predict. Most weekly markets launch Monday at 00:00 UTC and resolve Sunday at 23:59 UTC. Some markets resolve immediately after their triggering events. Check the countdown timer on each market card for the exact resolution time.</p>
+                        </div>
+                    </div>
+
+                    <div class="faq-item" onclick="toggleFAQ(this)">
+                        <h3>
+                            How do markets resolve automatically?
+                            <span class="faq-toggle">▼</span>
+                        </h3>
+                        <div class="faq-answer">
+                            <p>Markets use oracle feeds that pull real on-chain data from verified protocol sources. At resolution time, these oracles automatically determine the outcome based on whether the metric exceeded the threshold. No manual intervention is needed - resolution is deterministic and transparent.</p>
+                        </div>
+                    </div>
+
+                    <div class="faq-item" onclick="toggleFAQ(this)">
+                        <h3>
+                            What is testnet ETH and can I withdraw?
+                            <span class="faq-toggle">▼</span>
+                        </h3>
+                        <div class="faq-answer">
+                            <p>Testnet ETH (Sepolia ETH) is free test currency that has no real value. It's used for testing smart contracts and dApps without spending real money. You cannot convert testnet ETH to real ETH, but you can get free testnet ETH from faucets. Pulse operates on testnet to allow risk-free learning and testing.</p>
+                        </div>
+                    </div>
+
+                    <div class="faq-item" onclick="toggleFAQ(this)">
+                        <h3>
+                            How do I connect my wallet?
+                            <span class="faq-toggle">▼</span>
+                        </h3>
+                        <div class="faq-answer">
+                            <p>Click the "Connect Wallet" button in the top right. This will open a dialog to connect MetaMask, WalletConnect, or other Web3 wallets. Select your preferred wallet and follow the prompts to authorize the connection. You'll see your wallet address after connection succeeds.</p>
+                        </div>
+                    </div>
+
+                    <div class="faq-item" onclick="toggleFAQ(this)">
+                        <h3>
+                            Is there a rake or fee?
+                            <span class="faq-toggle">▼</span>
+                        </h3>
+                        <div class="faq-answer">
+                            <p>Yes, Pulse takes a 10% rake from winning pools. This means if you win, you receive 90% of your winnings, with 10% going to Pulse for operations, development, and ecosystem support. This fee structure is standard in prediction markets and ensures long-term sustainability.</p>
+                        </div>
                     </div>
                 </div>
             </section>
@@ -1078,13 +1594,13 @@
 
             <form id="betForm" onsubmit="submitBet(event)">
                 <div class="form-group">
-                    <label>Bet Amount (Points)</label>
-                    <input type="number" id="betAmount" placeholder="Enter amount" min="1" step="1" required>
+                    <label>Bet Amount (Testnet ETH)</label>
+                    <input type="number" id="betAmount" placeholder="Enter amount (0.1, 0.5, 1.0, etc.)" min="0.01" step="0.01" required>
                 </div>
 
-                <div class="form-group">
-                    <label>Telegram ID (for verification)</label>
-                    <input type="text" id="telegramId" placeholder="Your Telegram ID" required>
+                <div id="walletInfo" style="background-color: rgba(0, 212, 170, 0.1); border: 1px solid var(--accent-green); border-radius: 6px; padding: 1rem; margin-bottom: 1.5rem; font-size: 0.85rem; display: none;">
+                    <div style="color: var(--text-secondary); margin-bottom: 0.25rem;">Connected Wallet</div>
+                    <div id="connectedWalletAddress" style="color: var(--accent-green); font-family: 'Courier New', monospace; word-break: break-all;"></div>
                 </div>
 
                 <div class="modal-actions">
@@ -1102,14 +1618,115 @@
             side: null,
             odds: null
         };
+        let connectedWallet = null;
+
+        // Web3 Wallet Connection
+        async function connectWallet() {
+            if (typeof window.ethereum !== 'undefined') {
+                try {
+                    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                    connectedWallet = accounts[0];
+                    updateWalletButton();
+                    showToast(`Wallet connected: ${truncateAddress(connectedWallet)}`, 'success');
+                } catch (error) {
+                    if (error.code === 4001) {
+                        showToast('Connection cancelled', 'error');
+                    } else {
+                        showToast('Failed to connect wallet', 'error');
+                    }
+                }
+            } else {
+                showToast('Please install MetaMask or use a Web3 wallet', 'error');
+            }
+        }
+
+        function updateWalletButton() {
+            const btn = document.getElementById('walletBtn');
+            if (connectedWallet) {
+                btn.textContent = truncateAddress(connectedWallet);
+                btn.classList.add('connected');
+            } else {
+                btn.textContent = 'Connect Wallet';
+                btn.classList.remove('connected');
+            }
+        }
+
+        function truncateAddress(address) {
+            if (!address) return '';
+            return address.substring(0, 6) + '...' + address.substring(address.length - 4);
+        }
+
+        // Navigation between sections
+        function navigateTo(section) {
+            // Hide all sections
+            document.querySelectorAll('.content-section').forEach(el => {
+                el.classList.remove('active');
+            });
+
+            // Show selected section
+            const sectionMap = {
+                'defi': 'defiSection',
+                'portfolio': 'portfolioSection',
+                'leaderboard': 'leaderboardSection',
+                'help': 'helpSection'
+            };
+
+            const sectionId = sectionMap[section];
+            if (sectionId) {
+                document.getElementById(sectionId).classList.add('active');
+            }
+
+            // Update active nav link
+            document.querySelectorAll('.sidebar-nav a').forEach(el => {
+                el.classList.remove('active');
+            });
+            event.target.classList.add('active');
+        }
+
+        // Toggle market details expansion
+        function toggleDetails(marketId) {
+            const card = document.querySelector(`[data-market-id="${marketId}"]`);
+            const details = card.querySelector(`[data-market-id="${marketId}"].expanded-details`);
+            const btn = card.querySelector('.view-details-btn');
+
+            if (details.classList.contains('active')) {
+                details.classList.remove('active');
+                card.classList.remove('expanded');
+                btn.textContent = 'View Details';
+                btn.classList.remove('expanded-close');
+            } else {
+                details.classList.add('active');
+                card.classList.add('expanded');
+                btn.textContent = 'Hide Details';
+                btn.classList.add('expanded-close');
+            }
+        }
+
+        // FAQ Toggle
+        function toggleFAQ(element) {
+            const toggle = element.querySelector('.faq-toggle');
+            const answer = element.querySelector('.faq-answer');
+
+            toggle.classList.toggle('open');
+            answer.classList.toggle('open');
+        }
 
         // Open bet modal
         function openBetModal(marketId, side, odds) {
+            if (!connectedWallet) {
+                showToast('Please connect your wallet first', 'error');
+                return;
+            }
+
             currentBet = { marketId, side, odds };
             const modal = document.getElementById('betModal');
             const title = document.getElementById('modalTitle');
+            const walletInfo = document.getElementById('walletInfo');
+            const walletAddress = document.getElementById('connectedWalletAddress');
 
-            title.textContent = `Place ${side} Bet`;
+            title.textContent = `Place ${side} Bet on ${marketId}`;
+            walletInfo.style.display = 'block';
+            walletAddress.textContent = connectedWallet;
             modal.classList.add('active');
             document.getElementById('betAmount').focus();
         }
@@ -1125,11 +1742,15 @@
         async function submitBet(event) {
             event.preventDefault();
 
-            const amount = parseInt(document.getElementById('betAmount').value);
-            const telegramId = document.getElementById('telegramId').value;
+            const amount = parseFloat(document.getElementById('betAmount').value);
 
-            if (!amount || !telegramId) {
-                showToast('Please fill in all fields', 'error');
+            if (!amount || amount <= 0) {
+                showToast('Please enter a valid amount', 'error');
+                return;
+            }
+
+            if (!connectedWallet) {
+                showToast('Wallet not connected', 'error');
                 return;
             }
 
@@ -1147,7 +1768,7 @@
                     body: JSON.stringify({
                         side: currentBet.side.toLowerCase(),
                         amount: amount,
-                        telegramId: telegramId
+                        walletAddress: connectedWallet
                     })
                 });
 
@@ -1157,7 +1778,7 @@
                 }
 
                 const data = await response.json();
-                showToast(`Bet placed! Your ${currentBet.side} position: ${amount} points`, 'success');
+                showToast(`Bet placed! ${amount} ETH on ${currentBet.side}`, 'success');
                 closeBetModal();
 
             } catch (error) {
@@ -1181,12 +1802,6 @@
             }, 3000);
         }
 
-        // Toggle market details (placeholder for expansion)
-        function toggleDetails(marketId) {
-            showToast(`Viewing details for ${marketId}`, 'success');
-            // In a full implementation, this would expand the card or navigate to a detail page
-        }
-
         // Close modal when clicking outside
         window.addEventListener('click', (event) => {
             const modal = document.getElementById('betModal');
@@ -1202,8 +1817,6 @@
                 if (response.ok) {
                     const markets = await response.json();
                     console.log('Markets loaded:', markets);
-                    // Markets are already displayed statically; in a full implementation,
-                    // this would populate the cards dynamically with real-time data
                 }
             } catch (error) {
                 console.error('Error loading markets:', error);
@@ -1213,6 +1826,7 @@
         // Initialize page
         document.addEventListener('DOMContentLoaded', () => {
             loadMarkets();
+            updateWalletButton();
         });
     </script>
 </body>
