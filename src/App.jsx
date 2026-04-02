@@ -364,26 +364,26 @@ const useEcosystemData = () => {
     Promise.all([
       fetch('https://api.llama.fi/tvl/tydro').then(r => r.json()).catch(() => null),
       fetch('https://api.llama.fi/v2/chains').then(r => r.json()).catch(() => null),
-      fetch('https://api.nado.xyz/v2/stats').then(r => r.json()).catch(() => null),
+      fetch('https://api.llama.fi/tvl/nado').then(r => r.json()).catch(() => null),
     ]).then(([tydroData, inkData, nadoData]) => {
       if (tydroData && !isNaN(tydroData)) {
         setTydroTVL(parseFloat(tydroData));
       } else {
-        setTydroTVL(140000000);
+        setTydroTVL(385000000);
       }
 
       if (inkData && Array.isArray(inkData)) {
         const ink = inkData.find(c => c.name === 'Ink');
-        if (ink) setInkTVL(parseFloat(ink.tvl) || 52000000);
-        else setInkTVL(52000000);
+        if (ink) setInkTVL(parseFloat(ink.tvl) || 455000000);
+        else setInkTVL(455000000);
       } else {
-        setInkTVL(52000000);
+        setInkTVL(455000000);
       }
 
-      if (nadoData && nadoData.volume24h) {
-        setNadoVolume(parseFloat(nadoData.volume24h));
+      if (nadoData && !isNaN(nadoData)) {
+        setNadoVolume(parseFloat(nadoData));
       } else {
-        setNadoVolume(48200000);
+        setNadoVolume(58000000);
       }
 
       setLoading(false);
@@ -400,28 +400,30 @@ const useEcosystemData = () => {
 };
 
 const useNadoData = () => {
-  const [volume24h, setVolume24h] = useState(48200000);
-  const [openInterest, setOpenInterest] = useState(18700000);
+  const [nadoTVL, setNadoTVL] = useState(58000000);
+  const [nadoChain, setNadoChain] = useState('Ink');
   const [topPair, setTopPair] = useState('BTC/USD');
 
   useEffect(() => {
     const fetchNadoData = () => {
-      fetch('https://api.nado.xyz/v2/stats')
+      fetch('https://api.llama.fi/protocol/nado')
         .then(r => r.json())
         .then(data => {
-          if (data.volume24h) setVolume24h(parseFloat(data.volume24h));
-          if (data.openInterest) setOpenInterest(parseFloat(data.openInterest));
-          if (data.topPair) setTopPair(data.topPair);
+          if (data.currentChainTvls) {
+            const total = Object.values(data.currentChainTvls).reduce((s, v) => s + v, 0);
+            if (total > 0) setNadoTVL(total);
+          }
+          if (data.chains && data.chains.length > 0) setNadoChain(data.chains[0]);
         })
         .catch(() => {});
     };
 
     fetchNadoData();
-    const interval = setInterval(fetchNadoData, 30000);
+    const interval = setInterval(fetchNadoData, 60000);
     return () => clearInterval(interval);
   }, []);
 
-  return { volume24h, openInterest, topPair };
+  return { nadoTVL, nadoChain, topPair };
 };
 
 // ============================================
@@ -454,7 +456,7 @@ const EcosystemSidebar = () => {
           <span className="sidebar-stat-value">{formatUSD(inkTVL)}</span>
         </div>
         <div className="sidebar-stat">
-          <span>Nado 24h Vol</span>
+          <span>Nado TVL</span>
           <span className="sidebar-stat-value">{formatUSD(nadoVolume)}</span>
         </div>
       </div>
@@ -512,7 +514,7 @@ const EcosystemSidebar = () => {
 };
 
 const LiveFeedSidebar = ({ recentBets, points, winRate = 62 }) => {
-  const { volume24h, openInterest, topPair } = useNadoData();
+  const { nadoTVL, nadoChain, topPair } = useNadoData();
 
   const comingSoonMarkets = [
     'Will Tydro ETH utilization cross 80%?',
@@ -556,12 +558,12 @@ const LiveFeedSidebar = ({ recentBets, points, winRate = 62 }) => {
           Nado DEX
         </div>
         <div className="sidebar-stat">
-          <span>24h Volume</span>
-          <span className="sidebar-stat-value">{formatUSD(volume24h)}</span>
+          <span>TVL</span>
+          <span className="sidebar-stat-value">{formatUSD(nadoTVL)}</span>
         </div>
         <div className="sidebar-stat">
-          <span>Open Interest</span>
-          <span className="sidebar-stat-value">{formatUSD(openInterest)}</span>
+          <span>Chain</span>
+          <span className="sidebar-stat-value">{nadoChain}</span>
         </div>
         <div className="sidebar-stat">
           <span>Top Pair</span>
