@@ -4,8 +4,6 @@
   "framework": "vite",
   "cleanUrls": true,
   "rewrites": [
-    { "source": "/ideas", "destination": "/ideas.html" },
-    { "source": "/defi-markets", "destination": "/defi-markets.html" },
-    { "source": "/(.*)", "destination": "/index.html" }
+    { "source": "/((?!ideas|defi-markets).*)", "destination": "/index.html" }
   ]
 }
