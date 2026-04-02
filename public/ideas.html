@@ -1217,19 +1217,19 @@
 
         <nav class="sidebar-nav">
             <a href="#" class="nav-item active" data-nav="active">
-                <span>ð</span>
+                <span>🔄</span>
                 <span>Active Ideas</span>
             </a>
             <a href="#" class="nav-item" data-nav="top">
-                <span>ð¥</span>
+                <span>🔥</span>
                 <span>Top Ideas</span>
             </a>
             <a href="#" class="nav-item" data-nav="mine">
-                <span>ð¡</span>
+                <span>💡</span>
                 <span>My Ideas</span>
             </a>
             <a href="#" class="nav-item" data-nav="votes">
-                <span>ð³ï¸</span>
+                <span>🗳️</span>
                 <span>My Votes</span>
             </a>
         </nav>
@@ -1274,7 +1274,7 @@
                     </div>
                 </div>
                 <button id="wallet-connect-btn" class="wallet-btn">
-                    <span>ð</span>
+                    <span>🔗</span>
                     <span>Connect Wallet</span>
                 </button>
                 <button id="submit-idea-btn" class="submit-idea-btn" style="display: none;">
@@ -1326,7 +1326,7 @@
 
                 <div class="ideas-list" id="ideas-list">
                     <div class="empty-state">
-                        <div class="empty-state-icon">ð­</div>
+                        <div class="empty-state-icon">💭</div>
                         <div class="empty-state-title">Loading ideas...</div>
                         <p>Fetching ideas from the backend</p>
                     </div>
@@ -1337,7 +1337,7 @@
                 <div class="detail-container">
                     <div class="top-bar" style="margin-left: -250px; width: calc(100% + 250px);">
                         <button class="back-link" id="back-to-list">
-                            <span>â</span>
+                            <span>←</span>
                             <span>Back to Ideas</span>
                         </button>
                     </div>
@@ -1360,7 +1360,7 @@
                             </div>
                         </div>
                         <a id="share-button" class="share-button" target="_blank">
-                            <span>ð¦</span>
+                            <span>🐦</span>
                             <span>Share</span>
                         </a>
                     </div>
@@ -1368,7 +1368,7 @@
                     <div class="detail-body">
                         <div id="pending-review-container" style="display: none;">
                             <div class="pending-review-message">
-                                â³ This idea is awaiting admin review. Once approved, it will be activated for voting.
+                                ⏳ This idea is awaiting admin review. Once approved, it will be activated for voting.
                             </div>
                         </div>
 
@@ -1436,8 +1436,8 @@
                         <div id="admin-controls-container" class="detail-section" style="display: none;">
                             <h3 class="detail-section-title">Admin Controls</h3>
                             <div class="admin-controls">
-                                <button class="admin-btn admin-btn-approve" id="approve-idea-btn">â Approve Idea</button>
-                                <button class="admin-btn admin-btn-reject" id="reject-idea-btn">â Reject Idea</button>
+                                <button class="admin-btn admin-btn-approve" id="approve-idea-btn">✓ Approve Idea</button>
+                                <button class="admin-btn admin-btn-reject" id="reject-idea-btn">✗ Reject Idea</button>
                             </div>
                         </div>
 
@@ -1724,7 +1724,7 @@
             const points = parseInt(pointsInput.value) || 0;
             const preview = document.getElementById('points-preview');
             if (points >= MIN_POINTS_TO_SUBMIT && points <= userPoints) {
-                preview.textContent = `Your balance: ${userPoints} pts â After: ${userPoints - points} pts`;
+                preview.textContent = `Your balance: ${userPoints} pts → After: ${userPoints - points} pts`;
                 preview.style.color = 'var(--accent-green)';
             } else if (points > userPoints) {
                 preview.textContent = `Insufficient points! You need ${points - userPoints} more.`;
@@ -1739,15 +1739,11 @@
             if (!isWalletConnected) return;
 
             try {
-                const response = await fetch(`${API_BASE}/users/${userWallet}/points`);
-                if (response.ok) {
-                    const data = await response.json();
-                    userPoints = data.points || 0;
-                } else {
-                    userPoints = 0;
-                }
+                // Points are stored in localStorage by the main Pulse game (pulse_points)
+                const stored = localStorage.getItem('pulse_points');
+                userPoints = stored ? parseInt(stored) : 0;
             } catch (error) {
-                console.warn('Could not fetch points from API, using default:', error.message);
+                console.warn('Could not load points:', error.message);
                 userPoints = 0;
             }
 
@@ -1843,7 +1839,7 @@
             if (ideas.length === 0) {
                 list.innerHTML = `
                     <div class="empty-state">
-                        <div class="empty-state-icon">ð­</div>
+                        <div class="empty-state-icon">💭</div>
                         <div class="empty-state-title">No ideas found</div>
                         <p>Try adjusting your filters or category selection</p>
                     </div>
@@ -1871,12 +1867,12 @@
                     <div class="idea-meta">
                         <div class="idea-meta-left">
                             <div class="vote-info">
-                                <span>ð³ï¸</span>
+                                <span>🗳️</span>
                                 <span class="vote-count">${((idea.voteFor || 0) + (idea.voteAgainst || 0)).toLocaleString()} votes</span>
                             </div>
                             ${idea.expiresAt ? `
                                 <div class="time-remaining">
-                                    â±ï¸ ${getDaysRemaining(idea.expiresAt)} days left
+                                    ⏱️ ${getDaysRemaining(idea.expiresAt)} days left
                                 </div>
                             ` : ''}
                         </div>
@@ -1908,7 +1904,7 @@
                 const daysLeft = getDaysRemaining(idea.expiresAt);
                 const expirationDiv = document.getElementById('detail-expiration');
                 if (daysLeft > 0) {
-                    expirationDiv.innerHTML = `<span class="expiration-countdown">${daysLeft} days</span> left â¢ Expires ${formatExpirationDate(idea.expiresAt)}`;
+                    expirationDiv.innerHTML = `<span class="expiration-countdown">${daysLeft} days</span> left • Expires ${formatExpirationDate(idea.expiresAt)}`;
                 } else {
                     expirationDiv.textContent = 'This idea has expired';
                 }
@@ -2246,7 +2242,7 @@
 
         function capitalizeStatus(status) {
             if (status === 'pending_review') {
-                return 'â³ Pending Review';
+                return '⏳ Pending Review';
             }
             return status.charAt(0).toUpperCase() + status.slice(1);
         }
