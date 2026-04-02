@@ -374,7 +374,7 @@ const useEcosystemData = () => {
 
       if (inkData && Array.isArray(inkData)) {
         const ink = inkData.find(c => c.name === 'Ink');
-        if (ink) setInkTVL(parseFloat(ink.tvl) || 156.2);
+        if (ink) setInkTVL(parseFloat(ink.tvl) || 52000000);
         else setInkTVL(52000000);
       } else {
         setInkTVL(52000000);
@@ -393,15 +393,6 @@ const useEcosystemData = () => {
   useEffect(() => {
     fetchData();
     const interval = setInterval(fetchData, 60000);
-  var saveName = function() {
-    var n = nameInput.trim();
-    if (!n || n.length < 1 || n.length > 16) return;
-    setUsername(n);
-    setNameInput(n);
-    setEditingName(false);
-    try { localStorage.setItem('pulse_chat_name', n); } catch(e) {}
-  }
-
     return () => clearInterval(interval);
   }, [fetchData]);
 
@@ -436,7 +427,7 @@ const useNadoData = () => {
 // ============================================
 // SIDEBAR COMPONENTS
 // ============================================
-const EcosystemSidebar = ({winRate = 0, streak = 0}) => {
+const EcosystemSidebar = () => {
   const { tydroTVL, inkTVL, nadoVolume } = useEcosystemData();
 
   const mockLeaderboard = [
@@ -509,18 +500,18 @@ const EcosystemSidebar = ({winRate = 0, streak = 0}) => {
         </div>
         <div className="sidebar-stat">
           <span>Win Rate</span>
-          <span className="sidebar-stat-value">{winRate}%</span>
+          <span className="sidebar-stat-value">62%</span>
         </div>
         <div className="sidebar-stat">
           <span>Streak</span>
-          <span className="sidebar-stat-value">{streak > 0 ? "+" + streak : streak}</span>
+          <span className="sidebar-stat-value">+3</span>
         </div>
       </div>
     </div>
   );
 };
 
-const LiveFeedSidebar = ({ recentBets, points, winRate = 0, streak = 0}) => {
+const LiveFeedSidebar = ({ recentBets, points, winRate = 62 }) => {
   const { volume24h, openInterest, topPair } = useNadoData();
 
   const comingSoonMarkets = [
@@ -559,14 +550,6 @@ const LiveFeedSidebar = ({ recentBets, points, winRate = 0, streak = 0}) => {
         </div>
       </div>
 
-      {/* Your Stats */}
-      <div className="sidebar-card">
-        <div style={{ fontSize: "10px", fontWeight: "800", color: "#fbbf24", letterSpacing: "2px", marginBottom: "12px" }}>YOUR STATS</div>
-        <div className="sidebar-stat"><span>Win Rate</span><span className="sidebar-stat-value" style={{ color: "#10b981" }}>{winRate}%</span></div>
-        <div className="sidebar-stat"><span>Streak</span><span className="sidebar-stat-value" style={{ color: streak > 0 ? "#10b981" : streak < 0 ? "#ef4444" : "#6b7280" }}>{streak > 0 ? "+" + streak + " W" : streak < 0 ? streak + " L" : "0"}</span></div>
-        <div className="sidebar-stat"><span>Points</span><span className="sidebar-stat-value" style={{ color: "#fbbf24" }}>{points}</span></div>
-      </div>
-
       {/* Nado Quick Stats */}
       <div className="sidebar-card">
         <div style={{ fontSize: '10px', fontWeight: '800', color: '#a855f7', letterSpacing: '2px', marginBottom: '12px', textTransform: 'uppercase' }}>
@@ -587,7 +570,7 @@ const LiveFeedSidebar = ({ recentBets, points, winRate = 0, streak = 0}) => {
       </div>
 
       {/* DeFi Predictions - LIVE */}
-      <a href="/defi-markets.html" style={{ textDecoration: 'none', display: 'block' }}>
+      <div onClick={() => { window.location.href = '/defi-markets.html'; }} style={{ cursor: 'pointer', display: 'block' }}>
         <div className="sidebar-card" style={{ borderColor: 'rgba(168,85,247,0.3)', background: 'rgba(168,85,247,0.05)', cursor: 'pointer' }}>
           <div style={{ fontSize: '10px', fontWeight: '800', color: '#a855f7', letterSpacing: '2px', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
             <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: '#a855f7', animation: 'pulse 2s infinite' }}></span>
@@ -603,10 +586,10 @@ const LiveFeedSidebar = ({ recentBets, points, winRate = 0, streak = 0}) => {
             View Markets →
           </div>
         </div>
-      </a>
+      </div>
 
       {/* Ideas & Voting */}
-      <a href="/ideas.html" style={{ textDecoration: 'none', display: 'block' }}>
+      <div onClick={() => { window.location.href = '/ideas.html'; }} style={{ cursor: 'pointer', display: 'block' }}>
         <div className="sidebar-card" style={{ borderColor: 'rgba(0,212,170,0.2)', background: 'rgba(0,212,170,0.03)', cursor: 'pointer' }}>
           <div style={{ fontSize: '10px', fontWeight: '800', color: '#00d4aa', letterSpacing: '2px', marginBottom: '8px' }}>
             💡 IDEAS & QORUM
@@ -618,7 +601,7 @@ const LiveFeedSidebar = ({ recentBets, points, winRate = 0, streak = 0}) => {
             Vote Now →
           </div>
         </div>
-      </a>
+      </div>
     </div>
   );
 };
@@ -626,77 +609,6 @@ const LiveFeedSidebar = ({ recentBets, points, winRate = 0, streak = 0}) => {
 // ============================================
 // LANDING PAGE
 // ============================================
-
-const ChatBox = () => {
-  const [messages, setMessages] = useState([]);
-  const [input, setInput] = useState("");
-  const [editingName, setEditingName] = useState(function() { try { var n = localStorage.getItem('pulse_chat_name'); return !n || !n.trim(); } catch(e) { return true; } });
-  const [nameInput, setNameInput] = useState("");
-  const [username, setUsername] = useState(function() { try { var n = localStorage.getItem('pulse_chat_name'); if (n && n.trim()) return n.trim(); } catch(e) {} return ''; });
-  const messagesEndRef = useRef(null);
-  const wsRef = useRef(null);
-
-  useEffect(() => {
-    try { localStorage.setItem("pulse_chat_name", username); } catch(e) {}
-  }, [username]);
-
-  useEffect(() => {
-    var ws = new WebSocket("wss://pulse-backend-production-b2c9.up.railway.app");
-    wsRef.current = ws;
-    ws.onmessage = function(e) {
-      try {
-        var d = JSON.parse(e.data);
-        if (d.type === "chat") {
-          setMessages(function(prev) { return prev.concat([d.data]).slice(-50); });
-        }
-      } catch(err) {}
-    };
-    return function() { ws.close(); };
-  }, []);
-
-  useEffect(() => {
-    if (messagesEndRef.current) messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
-
-  var sendMessage = function() {
-    if (!input.trim() || !wsRef.current) return;
-    wsRef.current.send(JSON.stringify({ type: "chat", data: { user: username, text: input.trim(), ts: Date.now() } }));
-    setMessages(function(prev) { return prev.concat([{ user: username, text: input.trim(), ts: Date.now(), self: true }]).slice(-50); });
-    setInput("");
-  };
-
-  return (
-    <div className="sidebar-card" style={{ display: "flex", flexDirection: "column", height: "280px", borderColor: "rgba(59,130,246,0.15)", background: "rgba(59,130,246,0.02)" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
-          <div style={{ fontSize: "10px", fontWeight: "800", color: "#60a5fa", letterSpacing: "2px" }}>LIVE CHAT</div>
-          <div style={{ display: "flex", gap: "4px", alignItems: "center" }}>
-            {editingName ? (
-              <input value={nameInput} onChange={function(e) { setNameInput(e.target.value); }} onKeyDown={function(e) { if (e.key === "Enter") saveName(); if (e.key === "Escape") setEditingName(false); }} onBlur={saveName} autoFocus style={{ fontSize: "9px", padding: "2px 6px", borderRadius: "4px", border: "1px solid rgba(96,165,250,0.3)", background: "rgba(96,165,250,0.1)", color: "#60a5fa", outline: "none", width: "80px" }} />
-            ) : (
-              <button onClick={function() { setEditingName(true); setNameInput(username); }} style={{ background: 'none', border: 'none', color: username ? '#9ca3af' : '#fbbf24', fontSize: '10px', cursor: 'pointer', padding: '2px 6px', borderRadius: '4px', maxWidth: '80px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: username ? '400' : '700', animation: username ? 'none' : 'countdownPulse 1.5s infinite' }}>{username || 'Set nickname...'}</button>
-            )}
-          </div>
-        </div>
-      <div style={{ flex: 1, overflowY: "auto", marginBottom: "8px", fontSize: "11px" }}>
-        {messages.length === 0 && <div style={{ color: "#4b5563", textAlign: "center", marginTop: "40px" }}>No messages yet. Say gm!</div>}
-        {messages.map(function(msg, i) {
-          return <div key={i} style={{ marginBottom: "4px", wordBreak: "break-word" }}>
-            <span style={{ color: msg.self ? "#60a5fa" : "#a78bfa", fontWeight: "700", fontSize: "10px" }}>{msg.user}: </span>
-            <span style={{ color: "#d1d5db" }}>{msg.text}</span>
-          </div>;
-        })}
-        <div ref={messagesEndRef} />
-      </div>
-      <div style={{ display: "flex", gap: "4px" }}>
-        <input value={input} onChange={function(e) { setInput(e.target.value); }} onKeyDown={function(e) { if (e.key === "Enter") sendMessage(); }}
-          placeholder="Type a message..."
-          style={{ flex: 1, padding: "6px 8px", borderRadius: "6px", border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.05)", color: "#e5e7eb", fontSize: "11px", outline: "none" }} />
-        <button onClick={sendMessage} style={{ padding: "6px 10px", borderRadius: "6px", border: "none", background: "rgba(59,130,246,0.2)", color: "#60a5fa", fontSize: "11px", fontWeight: "700", cursor: "pointer" }}>Send</button>
-      </div>
-    </div>
-  );
-};
-
 const LANDING_STYLES = `
 @keyframes heroGlow {
   0%, 100% { text-shadow: 0 0 20px rgba(251,191,36,0.4), 0 0 60px rgba(251,191,36,0.1); }
@@ -781,10 +693,25 @@ const LandingPage = ({ onEnter }) => {
           PULSE
         </h1>
         <div style={{ fontSize: '13px', fontWeight: '700', letterSpacing: '4px', color: '#fbbf24', marginBottom: '20px', textTransform: 'uppercase' }}>
-          10s predictions. bet it.
+          10-SECOND CRYPTO PREDICTIONS
         </div>
         <p style={{ fontSize: '18px', color: '#9ca3af', maxWidth: '500px', margin: '0 auto 32px', lineHeight: 1.5 }}>
-          up or down? 10 seconds. not financial advice, just vibes.</p>
+          Predict if BTC goes <span style={{ color: '#10b981', fontWeight: '700' }}>UP</span> or <span style={{ color: '#ef4444', fontWeight: '700' }}>DOWN</span> in 10 seconds.
+          <br />Win ETH. Earn <span style={{ color: '#a855f7', fontWeight: '700' }}>$PULSE</span> points. Climb the leaderboard.
+        </p>
+
+        <button className="landing-btn" onClick={onEnter} style={{
+          padding: '16px 48px', fontSize: '18px', fontWeight: '800', border: 'none', borderRadius: '16px',
+          background: 'linear-gradient(135deg, #fbbf24, #f59e0b, #fbbf24)', backgroundSize: '200% 200%',
+          animation: 'gradientShift 3s ease infinite', color: '#000', cursor: 'pointer',
+          boxShadow: '0 8px 32px rgba(251,191,36,0.3)', transition: 'all 0.2s ease', position: 'relative'
+        }}>
+          🚀 Launch App
+        </button>
+
+        <div style={{ marginTop: '12px', fontSize: '11px', color: '#4b5563' }}>
+          Ink Sepolia Testnet • No real funds at risk
+        </div>
       </div>
 
       {/* LIVE STATS BAR */}
@@ -808,16 +735,16 @@ const LandingPage = ({ onEnter }) => {
         })}
       </div>
 
-      {/* how to play */}
+      {/* HOW IT WORKS */}
       <div style={{ padding: '40px 20px', maxWidth: '700px', margin: '0 auto' }}>
         <h2 style={{ textAlign: 'center', fontSize: '24px', fontWeight: '800', marginBottom: '32px' }}>
           ⚡ HOW IT WORKS
         </h2>
         <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', justifyContent: 'center' }}>
           {[
-            { step: '1', title: 'CONNECT', desc: 'connect wallet. metamask, walletconnect, whatever.', icon: '🔗', color: '#06b6d4' },
-            { step: '2', title: 'PREDICT', desc: 'BTC up or down in 10 seconds. pick a side. bet ETH.', icon: '🎯', color: '#fbbf24' },
-            { step: '3', title: 'WIN', desc: 'called it? claim ETH + earn points. simple.', icon: '💰', color: '#10b981' },
+            { step: '1', title: 'CONNECT', desc: 'Link your wallet in one tap. Works with MetaMask, WalletConnect, or Coinbase.', icon: '🔗', color: '#06b6d4' },
+            { step: '2', title: 'PREDICT', desc: 'BTC going UP or DOWN in the next 10 seconds? Pick your side and bet ETH.', icon: '🎯', color: '#fbbf24' },
+            { step: '3', title: 'WIN', desc: 'Called it right? Claim your ETH winnings + earn $PULSE points instantly.', icon: '💰', color: '#10b981' },
           ].map(function(s) {
             return (
               <div className="step-card" key={s.step} style={{
@@ -931,7 +858,7 @@ const LandingPage = ({ onEnter }) => {
           }}>𝕏 Twitter</a>
         </div>
         <div style={{ fontSize: '11px', color: '#374151' }}>
-          Built on Ink • degen energy only • © 2025 Pulse
+          Built on Ink • Powered by degen energy • © 2025 Pulse
         </div>
       </div>
     </div>
@@ -1260,11 +1187,6 @@ const PulseGame = () => {
   const isOnInk = chainId === inkSepolia.id;
 
   const [points, setPoints] = useState(0);
-  const [wins, setWins] = useState(() => { try { return parseInt(localStorage.getItem('pulse_wins')) || 0; } catch(e) { return 0; } });
-  const [streak, setStreak] = useState(0);
-  const [losses, setLosses] = useState(() => { try { return parseInt(localStorage.getItem('pulse_losses')) || 0; } catch(e) { return 0; } });
-  const [currentStreak, setCurrentStreak] = useState(() => { try { return parseInt(localStorage.getItem('pulse_streak')) || 0; } catch(e) { return 0; } });
-  const [lastBetResult, setLastBetResult] = useState(null);
   const [phase, setPhase] = useState('betting');
   const [countdown, setCountdown] = useState(20);
   const [price, setPrice] = useState(0);
@@ -1273,7 +1195,6 @@ const PulseGame = () => {
   const [pool, setPool] = useState({ up: 0, down: 0 });
   const [asset, setAsset] = useState('BTC');
   const [bet, setBet] = useState(null);
-  const [activeBetInfo, setActiveBetInfo] = useState(null);
   const [betAmount, setBetAmount] = useState(0.001);
   const [roundResult, setRoundResult] = useState(null); // 'up' | 'down' | null
   const [lastResults, setLastResults] = useState([]); // array of recent results
@@ -1290,14 +1211,10 @@ const PulseGame = () => {
   const [priceKey, setPriceKey] = useState(0); // triggers re-animation on price change
   const [priceHistory, setPriceHistory] = useState([]); // last 80 prices for chart
   const [showReferral, setShowReferral] = useState(false);
-  const [showIdeas, setShowIdeas] = useState(false);
   const [recentBets, setRecentBets] = useState([]); // social feed: [{side, amount, name}]
 
   useEffect(() => { try { const p = localStorage.getItem('pulse_points'); if (p) setPoints(parseInt(p)); } catch(e){} }, []);
   useEffect(() => { try { localStorage.setItem('pulse_points', points.toString()); } catch(e){} }, [points]);
-  useEffect(() => { try { localStorage.setItem('pulse_wins', wins.toString()); } catch(e){} }, [wins]);
-  useEffect(() => { try { localStorage.setItem('pulse_losses', losses.toString()); } catch(e){} }, [losses]);
-  useEffect(() => { try { localStorage.setItem('pulse_streak', currentStreak.toString()); } catch(e){} }, [currentStreak]);
 
   // Track transaction lifecycle
   useEffect(() => {
@@ -1327,7 +1244,7 @@ const PulseGame = () => {
       haptic('notification', 'success');
       refetchBalance();
       // Clear after 3 seconds
-      setTimeout(function() { setTxStatus(null); resetTx(); }, 3000);
+      setTimeout(function() { setTxStatus(null); setBet(null); resetTx(); }, 3000);
     } else if (isTxReverted) {
       setTxStatus('error');
       setTxErrorMsg('Transaction reverted on-chain');
@@ -1359,7 +1276,6 @@ const PulseGame = () => {
       // Clear previous bet
       if (!txStatus) { setBet(null); }
       setRoundResult(null);
-      setActiveBetInfo(null);
       setClaimRoundId(null);
       setClaimStatus(null);
     }
@@ -1368,15 +1284,6 @@ const PulseGame = () => {
       if (snapshotPrice && price) {
         var res = price > snapshotPrice ? 'up' : 'down';
         setRoundResult(res);
-      if (bet) {
-        var won = bet === res;
-        setLastBetResult(won ? 'won' : 'lost');
-        if (won) { setWins(function(w) { return w + 1; });
-          setStreak(function(s) { return s > 0 ? s + 1 : 1; }); setCurrentStreak(function(s) { return s > 0 ? s + 1 : 1; }); }
-        else { setLosses(function(l) { return l + 1; });
-          setStreak(function(s) { return s < 0 ? s - 1 : -1; }); setCurrentStreak(function(s) { return s < 0 ? s - 1 : -1; }); }
-        setTimeout(function() { setLastBetResult(null); }, 8000);
-      }
       }
     }
     prevPhaseRef.current = phase;
@@ -1458,7 +1365,6 @@ const PulseGame = () => {
 
     haptic('impact', 'medium');
     setBet(dir);
-    setActiveBetInfo({ direction: dir, amount: betAmount });
     setTxStatus('pending');
     setTxErrorMsg('');
     txTypeRef.current = 'bet';
@@ -1561,26 +1467,6 @@ const PulseGame = () => {
         )}
       </div>
 
-      {/* ===== NAV BAR ===== */}
-      {isConnected && (
-        <div style={{ display: 'flex', gap: '4px', padding: '0 14px 6px', flexShrink: 0, overflowX: 'auto', scrollbarWidth: 'none' }}>
-          {[
-            { label: 'Predict', icon: '🎯', href: null, active: true },
-            { label: 'DeFi Markets', icon: '📊', href: '/defi-markets.html' },
-            { label: 'Ideas', icon: '💡', href: '/ideas.html' },
-            { label: 'Docs', icon: '📖', href: '/agent-docs.html' },
-          ].map(function(item, i) {
-            return (
-              <button key={i} onClick={function() { if (item.href) { try { window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp.openLink(window.location.origin + item.href) : window.open(item.href, '_blank'); } catch(e) { window.open(item.href, '_blank'); } } }}
-                style={{ padding: '4px 10px', borderRadius: '10px', border: item.active ? '1px solid rgba(16,185,129,0.3)' : '1px solid rgba(255,255,255,0.06)', background: item.active ? 'rgba(16,185,129,0.1)' : 'rgba(255,255,255,0.03)', color: item.active ? '#10b981' : '#6b7280', fontSize: '11px', fontWeight: '600', cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0 }}>
-                {item.icon} {item.label}
-              </button>
-            );
-          })}
-        </div>
-      )}
-
-
       {/* ===== CONNECT PROMPT (only when not connected) ===== */}
       {!isConnected && (
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
@@ -1625,7 +1511,7 @@ const PulseGame = () => {
             {/* LEFT SIDEBAR — Only on desktop */}
             {isDesktop && (
               <div style={{ flexShrink: 0 }}>
-                <EcosystemSidebar  winRate={wins + losses > 0 ? Math.round(wins / (wins + losses) * 100) : 0} streak={currentStreak} />
+                <EcosystemSidebar />
               </div>
             )}
 
@@ -1674,20 +1560,7 @@ const PulseGame = () => {
                   <div key={priceKey} style={{ fontSize: '24px', fontWeight: '800', letterSpacing: '-1px', lineHeight: 1, animation: priceDir ? (priceDir === 'up' ? 'priceFlashGreen 0.5s ease-out' : 'priceFlashRed 0.5s ease-out') : 'none' }}>
                     {price > 0 ? '$' + price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '...'}
                   </div>
-      {activeBetInfo && (
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", padding: "6px 12px", borderRadius: "10px", background: activeBetInfo.direction === "up" ? "rgba(16,185,129,0.08)" : "rgba(239,68,68,0.08)", border: activeBetInfo.direction === "up" ? "1px solid rgba(16,185,129,0.2)" : "1px solid rgba(239,68,68,0.2)", marginBottom: "8px" }}>
-          <span style={{ fontSize: "11px", fontWeight: "700", color: activeBetInfo.direction === "up" ? "#10b981" : "#ef4444" }}>YOUR BET: {activeBetInfo.direction.toUpperCase()}</span>
-          <span style={{ fontSize: "11px", color: "#9ca3af" }}>|</span>
-          <span style={{ fontSize: "11px", fontWeight: "700", color: "#e5e7eb" }}>{activeBetInfo.amount} ETH</span>
-        </div>
-      )}
-
-                  {lastBetResult && (
-              <div style={{ padding: "8px 16px", borderRadius: "10px", fontSize: "14px", fontWeight: "800", textAlign: "center", marginBottom: "8px", animation: "pulse 1.5s ease infinite", background: lastBetResult === "won" ? "rgba(16,185,129,0.15)" : "rgba(239,68,68,0.15)", color: lastBetResult === "won" ? "#10b981" : "#ef4444", border: lastBetResult === "won" ? "1px solid rgba(16,185,129,0.3)" : "1px solid rgba(239,68,68,0.3)" }}>
-                {lastBetResult === "won" ? "YOU WON! +2x" : "LOST - Better luck next round!"}
-              </div>
-            )}
-            {snapshotPrice && phase !== 'betting' && (
+                  {snapshotPrice && phase !== 'betting' && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px' }}>
                       <span style={{ fontSize: '10px', color: '#6b7280' }}>Entry ${snapshotPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                       <span style={{ fontSize: '12px', fontWeight: '800', padding: '1px 6px', borderRadius: '6px', background: price >= snapshotPrice ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)', color: price >= snapshotPrice ? '#10b981' : '#ef4444', border: price >= snapshotPrice ? '1px solid rgba(16,185,129,0.25)' : '1px solid rgba(239,68,68,0.25)' }}>
@@ -1741,18 +1614,12 @@ const PulseGame = () => {
               {/* AMOUNT + BET BUTTONS */}
               <div style={{ padding: '4px 0 0', flexShrink: 0 }}>
                 {/* Amount selector */}
-                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px", padding: "6px 10px", borderRadius: "8px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
-                  <div style={{ textAlign: "center" }}><div style={{ fontSize: "8px", color: "#6b7280", letterSpacing: "1px" }}>POOL UP</div><div style={{ fontSize: "12px", fontWeight: "700", color: "#10b981" }}>{pool.up ? pool.up.toFixed(3) : "0"} ETH</div></div>
-                  <div style={{ textAlign: "center" }}><div style={{ fontSize: "8px", color: "#6b7280", letterSpacing: "1px" }}>TOTAL</div><div style={{ fontSize: "12px", fontWeight: "700", color: "#e5e7eb" }}>{((pool.up || 0) + (pool.down || 0)).toFixed(3)} ETH</div></div>
-                  <div style={{ textAlign: "center" }}><div style={{ fontSize: "8px", color: "#6b7280", letterSpacing: "1px" }}>POOL DOWN</div><div style={{ fontSize: "12px", fontWeight: "700", color: "#ef4444" }}>{pool.down ? pool.down.toFixed(3) : "0"} ETH</div></div>
-                </div>
                 <div style={{ display: 'flex', justifyContent: 'center', gap: '4px', marginBottom: '6px' }}>
-                  {[{eth: 0.001, label: '$2'}, {eth: 0.005, label: '$5'}, {eth: 0.01, label: '$10'}, {eth: 0.05, label: '$25'}].map(function(opt) { return (
-                  <button key={opt.eth} className="amount-btn" onClick={function() { setBetAmount(opt.eth); }}
-                    style={{ padding: '6px 10px', borderRadius: '8px', border: '1px solid', borderColor: betAmount === opt.eth ? '#3b82f6' : 'rgba(255,255,255,0.08)', background: betAmount === opt.eth ? 'rgba(59,130,246,0.15)' : 'rgba(255,255,255,0.03)', color: betAmount === opt.eth ? '#60a5fa' : '#9ca3af', fontSize: '11px', fontWeight: '700', cursor: 'pointer', transition: 'all 0.2s' }}>
-                    {opt.label}<span style={{fontSize: '8px', opacity: 0.6, display: 'block'}}>{opt.eth} ETH</span>
-                  </button>
-                ); })}}
+                  {[0.001, 0.005, 0.01, 0.05].map(amt => (
+                    <button key={amt} className="amount-btn" onClick={() => setBetAmount(amt)}
+                      style={{ padding: '5px 12px', borderRadius: '8px', border: betAmount === amt ? '1px solid rgba(16,185,129,0.4)' : '1px solid rgba(255,255,255,0.05)', background: betAmount === amt ? 'rgba(16,185,129,0.12)' : 'rgba(255,255,255,0.02)', color: betAmount === amt ? '#10b981' : '#6b7280', fontWeight: '600', fontSize: '11px', cursor: 'pointer' }}
+                    >{amt}</button>
+                  ))}
                 </div>
 
                 {/* UP / DOWN */}
@@ -1778,9 +1645,6 @@ const PulseGame = () => {
                     <span style={{ fontSize: '8px', padding: '1px 4px', borderRadius: '4px', background: 'rgba(168,85,247,0.2)', color: '#c084fc', fontWeight: '600' }}>SOON</span>
                   </div>
                 </div>
-                <button onClick={function() { setShowIdeas(!showIdeas); }} style={{ padding: '3px 10px', borderRadius: '12px', border: '1px solid rgba(168,85,247,0.12)', background: 'rgba(168,85,247,0.04)', color: '#a855f7', fontSize: '10px', fontWeight: '600', cursor: 'pointer' }}>
-                  Ideas
-                </button>
                 <button onClick={function() { setShowReferral(!showReferral); }} style={{ padding: '3px 10px', borderRadius: '12px', border: '1px solid rgba(16,185,129,0.12)', background: 'rgba(16,185,129,0.04)', color: '#10b981', fontSize: '10px', fontWeight: '600', cursor: 'pointer' }}>
                   👥 Invite
                 </button>
@@ -1799,8 +1663,7 @@ const PulseGame = () => {
             {/* RIGHT SIDEBAR — Only on desktop */}
             {isDesktop && (
               <div style={{ flexShrink: 0 }}>
-                <LiveFeedSidebar recentBets={recentBets} points={points} winRate={wins + losses > 0 ? Math.round(wins / (wins + losses) * 100) : 0} streak={currentStreak} />
-            <ChatBox />
+                <LiveFeedSidebar recentBets={recentBets} points={points} />
               </div>
             )}
           </div>
@@ -1826,53 +1689,6 @@ const PulseGame = () => {
               <button onClick={function() { window.open('https://t.me/share/url?url=' + encodeURIComponent('https://pulsebet.fun?ref=' + (address ? address.slice(0, 8) : '')) + '&text=' + encodeURIComponent('Predict BTC in 10 seconds on Pulse! Earn $PULSE points.'), '_blank'); }} style={{ flex: 1, padding: '10px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.03)', color: '#fff', fontSize: '12px', cursor: 'pointer', fontWeight: '600' }}>Telegram</button>
               <button onClick={function() { window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent('Predicting BTC price in 10 seconds on @PulseBet! Earn $PULSE points.\n\nhttps://pulsebet.fun?ref=' + (address ? address.slice(0, 8) : '')), '_blank'); }} style={{ flex: 1, padding: '10px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.03)', color: '#fff', fontSize: '12px', cursor: 'pointer', fontWeight: '600' }}>X / Twitter</button>
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* Ideas Forum Overlay */}
-      {showIdeas && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.9)', backdropFilter: 'blur(8px)', zIndex: 90, display: 'flex', flexDirection: 'column', padding: '20px', animation: 'fadeIn 0.2s ease', overflowY: 'auto' }}>
-          <div style={{ maxWidth: '500px', width: '100%', margin: '0 auto' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-              <div>
-                <div style={{ fontSize: '18px', fontWeight: '800', color: '#a855f7' }}>Ideas Forum</div>
-                <div style={{ fontSize: '11px', color: '#6b7280', marginTop: '2px' }}>Vote with your points (QORUM)</div>
-              </div>
-              <button onClick={function() { setShowIdeas(false); }} style={{ background: 'none', border: 'none', color: '#6b7280', fontSize: '20px', cursor: 'pointer' }}>X</button>
-            </div>
-            <div style={{ padding: '16px', borderRadius: '12px', background: 'rgba(168,85,247,0.06)', border: '1px solid rgba(168,85,247,0.15)', marginBottom: '16px' }}>
-              <div style={{ fontSize: '12px', color: '#c084fc', fontWeight: '700', marginBottom: '8px' }}>How QORUM Works</div>
-              <div style={{ fontSize: '11px', color: '#9ca3af', lineHeight: '1.5' }}>Spend your earned points to vote on ideas. More points = more voting power. Top ideas get built into Pulse.</div>
-            </div>
-            {[
-              { id: 1, title: 'Multi-asset predictions (ETH, SOL)', cat: 'feature', votes: 342, voters: 28 },
-              { id: 2, title: 'Tournament mode with prize pools', cat: 'feature', votes: 289, voters: 21 },
-              { id: 3, title: 'Social trading - copy top players', cat: 'feature', votes: 256, voters: 19 },
-              { id: 4, title: 'Mobile push notifications for rounds', cat: 'improvement', votes: 198, voters: 15 },
-              { id: 5, title: 'Weekly leaderboard with $PULSE rewards', cat: 'market', votes: 175, voters: 12 },
-              { id: 6, title: 'Longer timeframe markets (1h, 4h)', cat: 'market', votes: 156, voters: 11 }
-            ].map(function(idea) {
-              return (
-                <div key={idea.id} style={{ padding: '12px', borderRadius: '10px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', marginBottom: '8px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px' }}>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: '12px', fontWeight: '600', color: '#e5e7eb', marginBottom: '4px' }}>{idea.title}</div>
-                      <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                        <span style={{ fontSize: '9px', padding: '2px 6px', borderRadius: '4px', background: idea.cat === 'feature' ? 'rgba(59,130,246,0.1)' : idea.cat === 'market' ? 'rgba(168,85,247,0.1)' : 'rgba(251,191,36,0.1)', color: idea.cat === 'feature' ? '#60a5fa' : idea.cat === 'market' ? '#c084fc' : '#fbbf24', fontWeight: '600' }}>{idea.cat}</span>
-                        <span style={{ fontSize: '9px', color: '#6b7280' }}>{idea.voters} voters</span>
-                      </div>
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
-                      <button style={{ width: '28px', height: '20px', borderRadius: '4px', border: '1px solid rgba(16,185,129,0.2)', background: 'rgba(16,185,129,0.06)', color: '#10b981', fontSize: '10px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>+</button>
-                      <span style={{ fontSize: '12px', fontWeight: '800', color: '#a855f7' }}>{idea.votes}</span>
-                      <button style={{ width: '28px', height: '20px', borderRadius: '4px', border: '1px solid rgba(239,68,68,0.2)', background: 'rgba(239,68,68,0.06)', color: '#ef4444', fontSize: '10px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>-</button>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-            <div style={{ textAlign: 'center', marginTop: '12px', fontSize: '11px', color: '#4b5563' }}>Submit ideas in our Telegram group</div>
           </div>
         </div>
       )}
