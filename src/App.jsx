@@ -170,7 +170,7 @@ const wagmiAdapter = new WagmiAdapter({
   ssr: false
 });
 
-// In Telegram WebView there are no injected wallets — only WalletConnect works
+// In Telegram WebView there are no injected wallets â only WalletConnect works
 var _inTelegram = typeof window !== 'undefined' && !!(window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData);
 
 createAppKit({
@@ -479,14 +479,14 @@ const EcosystemSidebar = () => {
       {/* Mini Leaderboard */}
       <div className="sidebar-card">
         <div style={{ fontSize: '10px', fontWeight: '800', color: '#fbbf24', letterSpacing: '2px', marginBottom: '12px' }}>
-          TOP DEGENS 🏆
+          TOP DEGENS ð
         </div>
         {mockLeaderboard.map((player, i) => (
           <div key={i} className="lb-item">
             <span style={{ color: '#6b7280', minWidth: '16px' }}>#{i + 1}</span>
             <span style={{ color: '#9ca3af', flex: 1, fontFamily: 'monospace' }}>{player.address}</span>
             <span style={{ color: '#10b981', fontWeight: '700' }}>{player.points}</span>
-            <span style={{ color: '#fbbf24' }}>⚡{player.streak}</span>
+            <span style={{ color: '#fbbf24' }}>â¡{player.streak}</span>
           </div>
         ))}
       </div>
@@ -527,7 +527,7 @@ const LiveFeedSidebar = ({ recentBets, points, winRate = 62 }) => {
       {/* Live Bet Feed */}
       <div className="sidebar-card">
         <div style={{ fontSize: '10px', fontWeight: '800', color: '#ef4444', letterSpacing: '2px', marginBottom: '12px' }}>
-          LIVE BETS 🔴
+          LIVE BETS ð´
         </div>
         <div style={{ maxHeight: '200px', overflowY: 'auto', scrollbarWidth: 'thin' }}>
           {recentBets && recentBets.length > 0 ? (
@@ -538,7 +538,7 @@ const LiveFeedSidebar = ({ recentBets, points, winRate = 62 }) => {
                   borderColor: isUp ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)',
                   background: isUp ? 'rgba(16,185,129,0.03)' : 'rgba(239,68,68,0.03)',
                 }}>
-                  <span style={{ fontSize: '11px' }}>{isUp ? '🟢' : '🔴'}</span>
+                  <span style={{ fontSize: '11px' }}>{isUp ? 'ð¢' : 'ð´'}</span>
                   <span style={{ color: '#9ca3af', fontFamily: 'monospace', flex: 1 }}>{bet.name?.slice(0, 8) || '0x???'}</span>
                   <span style={{ color: isUp ? '#10b981' : '#ef4444', fontWeight: '700', fontSize: '9px' }}>
                     {bet.amount} {isUp ? 'UP' : 'DN'}
@@ -580,12 +580,12 @@ const LiveFeedSidebar = ({ recentBets, points, winRate = 62 }) => {
           </div>
           {comingSoonMarkets.map((market, i) => (
             <div key={i} style={{ fontSize: '10px', color: '#9ca3af', padding: '6px 0', borderBottom: i < comingSoonMarkets.length - 1 ? '1px solid rgba(255,255,255,0.03)' : 'none', display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <span style={{ color: '#a855f7' }}>→</span>
+              <span style={{ color: '#a855f7' }}>â</span>
               <span>{market}</span>
             </div>
           ))}
           <div style={{ marginTop: '10px', fontSize: '10px', fontWeight: '700', color: '#a855f7', textAlign: 'center', padding: '6px', borderRadius: '6px', border: '1px solid rgba(168,85,247,0.2)' }}>
-            View Markets →
+            View Markets â
           </div>
         </div>
       </div>
@@ -594,13 +594,13 @@ const LiveFeedSidebar = ({ recentBets, points, winRate = 62 }) => {
       <div onClick={() => { window.location.href = '/ideas.html'; }} style={{ cursor: 'pointer', display: 'block' }}>
         <div className="sidebar-card" style={{ borderColor: 'rgba(0,212,170,0.2)', background: 'rgba(0,212,170,0.03)', cursor: 'pointer' }}>
           <div style={{ fontSize: '10px', fontWeight: '800', color: '#00d4aa', letterSpacing: '2px', marginBottom: '8px' }}>
-            💡 IDEAS & QORUM
+            ð¡ IDEAS & QORUM
           </div>
           <div style={{ fontSize: '10px', color: '#9ca3af', lineHeight: '1.5' }}>
             Submit ideas, vote on features, shape Pulse's future
           </div>
           <div style={{ marginTop: '10px', fontSize: '10px', fontWeight: '700', color: '#00d4aa', textAlign: 'center', padding: '6px', borderRadius: '6px', border: '1px solid rgba(0,212,170,0.2)' }}>
-            Vote Now →
+            Vote Now â
           </div>
         </div>
       </div>
@@ -644,11 +644,11 @@ const LANDING_STYLES = `
 `;
 
 const FAKE_LEADERBOARD = [
-  { rank: 1, name: '0xDegen...f4a2', pts: 48210, wins: 312, emoji: '👑' },
-  { rank: 2, name: '0xAlpha...9c01', pts: 39870, wins: 267, emoji: '🔥' },
-  { rank: 3, name: '0xChad...7b33', pts: 31450, wins: 198, emoji: '⚡' },
-  { rank: 4, name: '0xApe...2d88', pts: 24100, wins: 156, emoji: '🦍' },
-  { rank: 5, name: '0xSer...e1f0', pts: 19840, wins: 131, emoji: '💎' },
+  { rank: 1, name: '0xDegen...f4a2', pts: 48210, wins: 312, emoji: 'ð' },
+  { rank: 2, name: '0xAlpha...9c01', pts: 39870, wins: 267, emoji: 'ð¥' },
+  { rank: 3, name: '0xChad...7b33', pts: 31450, wins: 198, emoji: 'â¡' },
+  { rank: 4, name: '0xApe...2d88', pts: 24100, wins: 156, emoji: 'ð¦' },
+  { rank: 5, name: '0xSer...e1f0', pts: 19840, wins: 131, emoji: 'ð' },
 ];
 
 const LandingPage = ({ onEnter }) => {
@@ -674,10 +674,10 @@ const LandingPage = ({ onEnter }) => {
       <div style={{ background: 'rgba(251,191,36,0.06)', borderBottom: '1px solid rgba(251,191,36,0.1)', padding: '6px 0', overflow: 'hidden', whiteSpace: 'nowrap' }}>
         <div style={{ display: 'inline-block', animation: 'tickerScroll 20s linear infinite' }}>
           <span style={{ fontSize: '11px', color: '#fbbf24', fontFamily: 'monospace', letterSpacing: '1px' }}>
-            {'  🟢 LIVE  •  BTC $66,420  •  R#' + totalRounds + '  •  ' + livePlayers + ' PLAYERS ONLINE  •  ' + totalVolume + ' ETH VOLUME  •  $PULSE AIRDROP SOON  •  '}
+            {'  ð¢ LIVE  â¢  BTC $66,420  â¢  R#' + totalRounds + '  â¢  ' + livePlayers + ' PLAYERS ONLINE  â¢  ' + totalVolume + ' ETH VOLUME  â¢  $PULSE AIRDROP SOON  â¢  '}
           </span>
           <span style={{ fontSize: '11px', color: '#fbbf24', fontFamily: 'monospace', letterSpacing: '1px' }}>
-            {'  🟢 LIVE  •  BTC $66,420  •  R#' + totalRounds + '  •  ' + livePlayers + ' PLAYERS ONLINE  •  ' + totalVolume + ' ETH VOLUME  •  $PULSE AIRDROP SOON  •  '}
+            {'  ð¢ LIVE  â¢  BTC $66,420  â¢  R#' + totalRounds + '  â¢  ' + livePlayers + ' PLAYERS ONLINE  â¢  ' + totalVolume + ' ETH VOLUME  â¢  $PULSE AIRDROP SOON  â¢  '}
           </span>
         </div>
       </div>
@@ -708,20 +708,20 @@ const LandingPage = ({ onEnter }) => {
           animation: 'gradientShift 3s ease infinite', color: '#000', cursor: 'pointer',
           boxShadow: '0 8px 32px rgba(251,191,36,0.3)', transition: 'all 0.2s ease', position: 'relative'
         }}>
-          🚀 Launch App
+          ð Launch App
         </button>
 
         <div style={{ marginTop: '12px', fontSize: '11px', color: '#4b5563' }}>
-          Ink Sepolia Testnet • No real funds at risk
+          Ink Sepolia Testnet â¢ No real funds at risk
         </div>
       </div>
 
       {/* LIVE STATS BAR */}
       <div style={{ display: 'flex', justifyContent: 'center', gap: '24px', padding: '20px', flexWrap: 'wrap' }}>
         {[
-          { label: 'PLAYERS LIVE', value: livePlayers, color: '#10b981', icon: '🟢' },
-          { label: 'TOTAL VOLUME', value: totalVolume + ' ETH', color: '#06b6d4', icon: '💎' },
-          { label: 'ROUNDS PLAYED', value: totalRounds.toLocaleString(), color: '#fbbf24', icon: '🔥' },
+          { label: 'PLAYERS LIVE', value: livePlayers, color: '#10b981', icon: 'ð¢' },
+          { label: 'TOTAL VOLUME', value: totalVolume + ' ETH', color: '#06b6d4', icon: 'ð' },
+          { label: 'ROUNDS PLAYED', value: totalRounds.toLocaleString(), color: '#fbbf24', icon: 'ð¥' },
         ].map(function(s) {
           return (
             <div key={s.label} style={{
@@ -740,13 +740,13 @@ const LandingPage = ({ onEnter }) => {
       {/* HOW IT WORKS */}
       <div style={{ padding: '40px 20px', maxWidth: '700px', margin: '0 auto' }}>
         <h2 style={{ textAlign: 'center', fontSize: '24px', fontWeight: '800', marginBottom: '32px' }}>
-          ⚡ HOW IT WORKS
+          â¡ HOW IT WORKS
         </h2>
         <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', justifyContent: 'center' }}>
           {[
-            { step: '1', title: 'CONNECT', desc: 'Link your wallet in one tap. Works with MetaMask, WalletConnect, or Coinbase.', icon: '🔗', color: '#06b6d4' },
-            { step: '2', title: 'PREDICT', desc: 'BTC going UP or DOWN in the next 10 seconds? Pick your side and bet ETH.', icon: '🎯', color: '#fbbf24' },
-            { step: '3', title: 'WIN', desc: 'Called it right? Claim your ETH winnings + earn $PULSE points instantly.', icon: '💰', color: '#10b981' },
+            { step: '1', title: 'CONNECT', desc: 'Link your wallet in one tap. Works with MetaMask, WalletConnect, or Coinbase.', icon: 'ð', color: '#06b6d4' },
+            { step: '2', title: 'PREDICT', desc: 'BTC going UP or DOWN in the next 10 seconds? Pick your side and bet ETH.', icon: 'ð¯', color: '#fbbf24' },
+            { step: '3', title: 'WIN', desc: 'Called it right? Claim your ETH winnings + earn $PULSE points instantly.', icon: 'ð°', color: '#10b981' },
           ].map(function(s) {
             return (
               <div className="step-card" key={s.step} style={{
@@ -773,7 +773,7 @@ const LandingPage = ({ onEnter }) => {
           background: 'linear-gradient(135deg, rgba(168,85,247,0.08), rgba(251,191,36,0.08))',
           border: '1px solid rgba(168,85,247,0.15)'
         }}>
-          <div style={{ fontSize: '40px', marginBottom: '12px' }}>🪙</div>
+          <div style={{ fontSize: '40px', marginBottom: '12px' }}>ðª</div>
           <div style={{ fontSize: '28px', fontWeight: '900', background: 'linear-gradient(135deg, #a855f7, #fbbf24)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
             $PULSE
           </div>
@@ -795,7 +795,7 @@ const LandingPage = ({ onEnter }) => {
       {/* LEADERBOARD */}
       <div style={{ padding: '40px 20px', maxWidth: '600px', margin: '0 auto' }}>
         <h2 style={{ textAlign: 'center', fontSize: '24px', fontWeight: '800', marginBottom: '8px' }}>
-          🏆 LEADERBOARD
+          ð LEADERBOARD
         </h2>
         <div style={{ textAlign: 'center', fontSize: '12px', color: '#6b7280', marginBottom: '24px' }}>Top players by $PULSE points</div>
 
@@ -840,7 +840,7 @@ const LandingPage = ({ onEnter }) => {
             borderRadius: '12px', background: 'rgba(251,191,36,0.08)', color: '#fbbf24',
             cursor: 'pointer', transition: 'all 0.2s ease'
           }}>
-            Join the leaderboard →
+            Join the leaderboard â
           </button>
         </div>
       </div>
@@ -852,15 +852,15 @@ const LandingPage = ({ onEnter }) => {
             padding: '10px 20px', borderRadius: '12px', background: 'rgba(255,255,255,0.04)',
             border: '1px solid rgba(255,255,255,0.08)', color: '#fff', textDecoration: 'none',
             fontSize: '13px', fontWeight: '600', transition: 'all 0.2s ease'
-          }}>📱 Telegram</a>
+          }}>ð± Telegram</a>
           <a href="https://twitter.com/PulseBet" target="_blank" rel="noopener noreferrer" style={{
             padding: '10px 20px', borderRadius: '12px', background: 'rgba(255,255,255,0.04)',
             border: '1px solid rgba(255,255,255,0.08)', color: '#fff', textDecoration: 'none',
             fontSize: '13px', fontWeight: '600', transition: 'all 0.2s ease'
-          }}>𝕏 Twitter</a>
+          }}>ð Twitter</a>
         </div>
         <div style={{ fontSize: '11px', color: '#374151' }}>
-          Built on Ink • Powered by degen energy • © 2025 Pulse
+          Built on Ink â¢ Powered by degen energy â¢ Â© 2025 Pulse
         </div>
       </div>
     </div>
@@ -868,7 +868,7 @@ const LandingPage = ({ onEnter }) => {
 };
 
 // ============================================
-// PRICE CHART (Canvas) — Pro version with axes
+// PRICE CHART (Canvas) â Pro version with axes
 // ============================================
 const PriceChart = ({ prices, lockPrice, phase, roundResult }) => {
   const canvasRef = useRef(null);
@@ -1198,6 +1198,7 @@ const PulseGame = () => {
   const [asset, setAsset] = useState('BTC');
   const [bet, setBet] = useState(null);
   const [betAmount, setBetAmount] = useState(0.001);
+  const BET_LABELS = { 0.001: '$2', 0.005: '$5', 0.01: '$25', 0.05: '$50' };
   const [roundResult, setRoundResult] = useState(null); // 'up' | 'down' | null
   const [lastResults, setLastResults] = useState([]); // array of recent results
   const [txStatus, setTxStatus] = useState(null); // null | 'pending' | 'confirming' | 'confirmed' | 'error'
@@ -1271,7 +1272,7 @@ const PulseGame = () => {
   // Reset bet when new round starts + track round history
   useEffect(() => {
     if (phase === 'betting' && prevPhaseRef.current !== 'betting') {
-      // New round started — save previous result to history
+      // New round started â save previous result to history
       if (roundResult) {
         setLastResults(function(prev) { return [roundResult].concat(prev).slice(0, 10); });
       }
@@ -1282,7 +1283,7 @@ const PulseGame = () => {
       setClaimStatus(null);
     }
     if (phase === 'results' || phase === 'resolving') {
-      // Round resolved — determine result
+      // Round resolved â determine result
       if (snapshotPrice && price) {
         var res = price > snapshotPrice ? 'up' : 'down';
         setRoundResult(res);
@@ -1449,6 +1450,14 @@ const PulseGame = () => {
           <span style={{ fontWeight: '700', fontSize: '15px' }}>Pulse</span>
           <span style={{ fontSize: '8px', background: 'rgba(251,191,36,0.12)', color: '#fbbf24', padding: '2px 6px', borderRadius: '8px', fontWeight: '600', letterSpacing: '1px' }}>TESTNET</span>
         </div>
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center', borderLeft: '1px solid rgba(255,255,255,0.08)', paddingLeft: '12px' }}>
+          <button onClick={() => { window.location.href = '/defi-markets.html'; }} style={{ background: 'none', border: 'none', color: '#9ca3af', fontSize: '12px', fontWeight: '600', cursor: 'pointer', transition: 'color 0.2s', padding: '4px 8px' }} onMouseEnter={(e) => e.target.style.color = '#10b981'} onMouseLeave={(e) => e.target.style.color = '#9ca3af'}>
+            DeFi Markets
+          </button>
+          <button onClick={() => { window.location.href = '/ideas.html'; }} style={{ background: 'none', border: 'none', color: '#9ca3af', fontSize: '12px', fontWeight: '600', cursor: 'pointer', transition: 'color 0.2s', padding: '4px 8px' }} onMouseEnter={(e) => e.target.style.color = '#10b981'} onMouseLeave={(e) => e.target.style.color = '#9ca3af'}>
+            Ideas
+          </button>
+        </div>
         {isConnected ? (
           <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -1459,7 +1468,7 @@ const PulseGame = () => {
               {ethBal} ETH
             </button>
             <button onClick={() => { try { disconnect(); Object.keys(localStorage).filter(function(k) { return k.startsWith('wc@') || k.startsWith('@w3m') || k.startsWith('W3M'); }).forEach(function(k) { localStorage.removeItem(k); }); } catch(e) { window.location.reload(); } }} style={{ background: 'rgba(239,68,68,0.08)', padding: '4px 8px', borderRadius: '14px', color: '#ef4444', border: '1px solid rgba(239,68,68,0.1)', cursor: 'pointer', fontSize: '10px' }}>
-              ✕
+              â
             </button>
           </div>
         ) : (
@@ -1510,14 +1519,14 @@ const PulseGame = () => {
         <>
           {/* THREE-COLUMN LAYOUT (Desktop) or SINGLE COLUMN (Mobile) */}
           <div style={{ flex: 1, minHeight: 0, display: 'flex', gap: '12px', padding: '8px 8px', overflowY: 'auto' }}>
-            {/* LEFT SIDEBAR — Only on desktop */}
+            {/* LEFT SIDEBAR â Only on desktop */}
             {isDesktop && (
               <div style={{ flexShrink: 0 }}>
                 <EcosystemSidebar />
               </div>
             )}
 
-            {/* CENTER COLUMN — Chart + Controls */}
+            {/* CENTER COLUMN â Chart + Controls */}
             <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {/* Round history strip */}
               {lastResults.length > 0 && (
@@ -1525,7 +1534,7 @@ const PulseGame = () => {
                   {lastResults.map(function(r, i) {
                     return (
                       <div key={i} style={{ width: '16px', height: '16px', borderRadius: '4px', background: r === 'up' ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)', border: r === 'up' ? '1px solid rgba(16,185,129,0.3)' : '1px solid rgba(239,68,68,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '7px', color: r === 'up' ? '#10b981' : '#ef4444', fontWeight: '700' }}>
-                        {r === 'up' ? '▲' : '▼'}
+                        {r === 'up' ? 'â²' : 'â¼'}
                       </div>
                     );
                   })}
@@ -1537,7 +1546,7 @@ const PulseGame = () => {
                 <PriceChart prices={priceHistory} lockPrice={snapshotPrice} phase={phase} roundResult={roundResult} />
               </div>
 
-              {/* SOCIAL FEED — recent bets from other players */}
+              {/* SOCIAL FEED â recent bets from other players */}
               {recentBets.length > 0 && (
                 <div style={{ padding: '0 4px', flexShrink: 0, overflow: 'hidden' }}>
                   <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch', padding: '3px 0' }}>
@@ -1545,7 +1554,7 @@ const PulseGame = () => {
                       var isUp = b.side === 'up';
                       return (
                         <div key={i} style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: '4px', padding: '3px 8px', borderRadius: '8px', background: isUp ? 'rgba(16,185,129,0.06)' : 'rgba(239,68,68,0.06)', border: isUp ? '1px solid rgba(16,185,129,0.12)' : '1px solid rgba(239,68,68,0.12)', animation: 'fadeIn 0.3s ease' }}>
-                          <span style={{ fontSize: '8px' }}>{isUp ? '🟢' : '🔴'}</span>
+                          <span style={{ fontSize: '8px' }}>{isUp ? 'ð¢' : 'ð´'}</span>
                           <span style={{ fontSize: '9px', color: '#9ca3af', fontFamily: 'monospace' }}>{b.name || '0x???'}</span>
                           <span style={{ fontSize: '9px', fontWeight: '700', color: isUp ? '#10b981' : '#ef4444' }}>{b.amount} {isUp ? 'UP' : 'DN'}</span>
                         </div>
@@ -1593,7 +1602,7 @@ const PulseGame = () => {
                     </svg>
                     <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
                       {phase === 'results' ? (
-                        <span style={{ fontSize: '18px' }}>{roundResult === 'up' ? '📈' : '📉'}</span>
+                        <span style={{ fontSize: '18px' }}>{roundResult === 'up' ? 'ð' : 'ð'}</span>
                       ) : (
                         <span style={{ fontSize: '18px', fontWeight: '800', color: phase === 'betting' ? '#10b981' : '#fbbf24', animation: countdown <= 3 && phase === 'betting' ? 'countdownPulse 0.5s infinite' : 'none' }}>{countdown}</span>
                       )}
@@ -1606,7 +1615,7 @@ const PulseGame = () => {
                     </div>
                     {bet && phase !== 'results' && phase !== 'betting' && (
                       <div style={{ fontSize: '9px', color: bet === 'up' ? '#10b981' : '#ef4444', marginTop: '1px' }}>
-                        {betAmount} on {bet.toUpperCase()}
+                        {BET_LABELS[betAmount]} on {bet.toUpperCase()}
                       </div>
                     )}
                   </div>
@@ -1620,7 +1629,7 @@ const PulseGame = () => {
                   {[0.001, 0.005, 0.01, 0.05].map(amt => (
                     <button key={amt} className="amount-btn" onClick={() => setBetAmount(amt)}
                       style={{ padding: '5px 12px', borderRadius: '8px', border: betAmount === amt ? '1px solid rgba(16,185,129,0.4)' : '1px solid rgba(255,255,255,0.05)', background: betAmount === amt ? 'rgba(16,185,129,0.12)' : 'rgba(255,255,255,0.02)', color: betAmount === amt ? '#10b981' : '#6b7280', fontWeight: '600', fontSize: '11px', cursor: 'pointer' }}
-                    >{amt}</button>
+                    >{BET_LABELS[amt]}</button>
                   ))}
                 </div>
 
@@ -1628,10 +1637,10 @@ const PulseGame = () => {
                 <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
                   <button className="pulse-btn-up" onClick={() => placeBet('up')} disabled={!bettingActive}
                     style={{ flex: 1, padding: '14px', borderRadius: '14px', border: bet === 'up' ? '2px solid #10b981' : '2px solid transparent', background: bet === 'up' ? 'rgba(16,185,129,0.12)' : 'linear-gradient(160deg, #10b981, #059669)', color: '#fff', fontSize: '16px', fontWeight: '800', cursor: bettingActive ? 'pointer' : 'not-allowed', opacity: bettingActive ? 1 : (bet === 'up' ? 0.85 : 0.25), transition: 'all 0.2s', boxShadow: bettingActive ? '0 4px 16px rgba(16,185,129,0.2)' : 'none', animation: bettingActive ? 'pulseGlow 3s infinite' : 'none' }}
-                  >📈 UP</button>
+                  >ð UP</button>
                   <button className="pulse-btn-down" onClick={() => placeBet('down')} disabled={!bettingActive}
                     style={{ flex: 1, padding: '14px', borderRadius: '14px', border: bet === 'down' ? '2px solid #ef4444' : '2px solid transparent', background: bet === 'down' ? 'rgba(239,68,68,0.12)' : 'linear-gradient(160deg, #ef4444, #dc2626)', color: '#fff', fontSize: '16px', fontWeight: '800', cursor: bettingActive ? 'pointer' : 'not-allowed', opacity: bettingActive ? 1 : (bet === 'down' ? 0.85 : 0.25), transition: 'all 0.2s', boxShadow: bettingActive ? '0 4px 16px rgba(239,68,68,0.2)' : 'none', animation: bettingActive ? 'pulseGlowRed 3s infinite' : 'none' }}
-                  >📉 DOWN</button>
+                  >ð DOWN</button>
                 </div>
               </div>
 
@@ -1648,21 +1657,35 @@ const PulseGame = () => {
                   </div>
                 </div>
                 <button onClick={function() { setShowReferral(!showReferral); }} style={{ padding: '3px 10px', borderRadius: '12px', border: '1px solid rgba(16,185,129,0.12)', background: 'rgba(16,185,129,0.04)', color: '#10b981', fontSize: '10px', fontWeight: '600', cursor: 'pointer' }}>
-                  👥 Invite
+                  ð¥ Invite
                 </button>
               </div>
 
-              {/* Claim Winnings (only during results if won) */}
-              {bet && roundResult && bet === roundResult && phase === 'results' && claimRoundId && (
-                <div style={{ padding: '0', textAlign: 'center', animation: 'slideIn 0.3s ease', flexShrink: 0 }}>
-                  <button onClick={claimWinnings} disabled={!!claimStatus}
-                    style={{ width: '100%', padding: '12px', borderRadius: '12px', border: 'none', background: claimStatus === 'confirmed' ? '#10b981' : 'linear-gradient(135deg, #fbbf24, #f59e0b)', color: '#000', fontWeight: '800', fontSize: '14px', cursor: claimStatus ? 'not-allowed' : 'pointer', boxShadow: '0 4px 16px rgba(251,191,36,0.25)' }}
-                  >{claimStatus === 'pending' ? 'Confirm in Wallet...' : claimStatus === 'confirming' ? 'Claiming...' : claimStatus === 'confirmed' ? 'Claimed!' : claimStatus === 'error' ? 'Claim Failed' : 'Claim Winnings'}</button>
+              {/* Win Result Display */}
+              {bet && roundResult && bet === roundResult && phase === 'results' && (
+                <div style={{ padding: '12px', textAlign: 'center', animation: 'slideIn 0.3s ease, glow 1.5s ease infinite', flexShrink: 0, background: 'rgba(16,185,129,0.15)', borderRadius: '12px', border: '2px solid rgba(16,185,129,0.5)' }}>
+                  <div style={{ fontSize: '48px', marginBottom: '8px' }}>&#10024;</div>
+                  <div style={{ fontSize: '32px', fontWeight: '900', color: '#10b981', marginBottom: '4px' }}>YOU WIN!</div>
+                  <div style={{ fontSize: '16px', color: '#6fddce', fontWeight: '700', marginBottom: '12px' }}>{BET_LABELS[betAmount]} &#215; 2</div>
+                  {claimRoundId && (
+                    <button onClick={claimWinnings} disabled={!!claimStatus}
+                      style={{ width: '100%', padding: '12px', borderRadius: '10px', border: 'none', background: claimStatus === 'confirmed' ? '#10b981' : 'linear-gradient(135deg, #10b981, #059669)', color: '#000', fontWeight: '800', fontSize: '14px', cursor: claimStatus ? 'not-allowed' : 'pointer', boxShadow: '0 4px 16px rgba(16,185,129,0.4)', transition: 'all 0.2s' }}
+                    >{claimStatus === 'pending' ? 'Confirm in Wallet...' : claimStatus === 'confirming' ? 'Claiming...' : claimStatus === 'confirmed' ? 'Claimed!' : claimStatus === 'error' ? 'Claim Failed' : 'Claim Winnings'}</button>
+                  )}
+                </div>
+              )}
+
+              {/* Lose Result Display */}
+              {bet && roundResult && bet !== roundResult && phase === 'results' && (
+                <div style={{ padding: '12px', textAlign: 'center', animation: 'slideIn 0.3s ease', flexShrink: 0, background: 'rgba(239,68,68,0.12)', borderRadius: '12px', border: '2px solid rgba(239,68,68,0.4)' }}>
+                  <div style={{ fontSize: '48px', marginBottom: '8px' }}>&#128546;</div>
+                  <div style={{ fontSize: '32px', fontWeight: '900', color: '#ef4444', marginBottom: '4px' }}>YOU LOST</div>
+                  <div style={{ fontSize: '14px', color: '#fca5a5', fontWeight: '600' }}>Better luck next round!</div>
                 </div>
               )}
             </div>
 
-            {/* RIGHT SIDEBAR — Only on desktop */}
+            {/* RIGHT SIDEBAR â Only on desktop */}
             {isDesktop && (
               <div style={{ flexShrink: 0 }}>
                 <LiveFeedSidebar recentBets={recentBets} points={points} />
@@ -1678,7 +1701,7 @@ const PulseGame = () => {
           <div className="glass-card" style={{ borderRadius: '20px', padding: '24px', maxWidth: '400px', width: '100%' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
               <div style={{ fontSize: '16px', fontWeight: '700' }}>Invite Friends</div>
-              <button onClick={function() { setShowReferral(false); }} style={{ background: 'none', border: 'none', color: '#6b7280', fontSize: '18px', cursor: 'pointer' }}>✕</button>
+              <button onClick={function() { setShowReferral(false); }} style={{ background: 'none', border: 'none', color: '#6b7280', fontSize: '18px', cursor: 'pointer' }}>â</button>
             </div>
             <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '12px' }}>Earn 10% bonus points for every friend who plays. Points convert to $PULSE at TGE.</div>
             <div style={{ display: 'flex', gap: '6px', marginBottom: '12px' }}>
@@ -1700,21 +1723,22 @@ const PulseGame = () => {
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.92)', backdropFilter: 'blur(8px)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 100, animation: 'fadeIn 0.2s ease' }}>
           {txStatus === 'pending' && (
             <div style={{ textAlign: 'center', animation: 'slideIn 0.3s ease' }}>
-              <div style={{ fontSize: '48px', marginBottom: '16px' }}>⏳</div>
+              <div style={{ fontSize: '48px', marginBottom: '16px' }}>â³</div>
               <div style={{ fontSize: '20px', fontWeight: '700', color: '#fbbf24' }}>Confirm in Wallet</div>
-              <div style={{ fontSize: '13px', color: '#6b7280', marginTop: '8px' }}>{betAmount} ETH on {bet ? bet.toUpperCase() : '...'}</div>
+              <div style={{ fontSize: '13px', color: '#6b7280', marginTop: '8px' }}>{BET_LABELS[betAmount]} on {bet ? bet.toUpperCase() : '...'}</div>
+                <div style={{ fontSize: '11px', color: '#6b7280', marginTop: '4px' }}>{betAmount} ETH</div>
             </div>
           )}
           {txStatus === 'confirming' && (
             <div style={{ textAlign: 'center', animation: 'slideIn 0.3s ease' }}>
-              <div style={{ fontSize: '48px', marginBottom: '16px' }}>⛓</div>
+              <div style={{ fontSize: '48px', marginBottom: '16px' }}>â</div>
               <div style={{ fontSize: '20px', fontWeight: '700', color: '#06b6d4' }}>Confirming on Ink</div>
               <div style={{ fontSize: '10px', color: '#4b5563', marginTop: '8px', fontFamily: 'monospace' }}>{txHash ? (txHash.slice(0, 10) + '...' + txHash.slice(-8)) : ''}</div>
             </div>
           )}
           {txStatus === 'confirmed' && (
             <div style={{ textAlign: 'center', animation: 'slideIn 0.3s ease' }}>
-              <div style={{ fontSize: '56px', marginBottom: '12px' }}>🎉</div>
+              <div style={{ fontSize: '56px', marginBottom: '12px' }}>ð</div>
               <div style={{ fontSize: '24px', fontWeight: '800', color: '#10b981' }}>Bet Placed!</div>
               <div style={{ fontSize: '18px', color: '#fbbf24', marginTop: '6px', fontWeight: '700' }}>+{Math.floor(betAmount * 1000)} pts</div>
               {txHash && (
@@ -1724,7 +1748,7 @@ const PulseGame = () => {
           )}
           {txStatus === 'error' && (
             <div style={{ textAlign: 'center', animation: 'slideIn 0.3s ease' }}>
-              <div style={{ fontSize: '48px', marginBottom: '16px' }}>❌</div>
+              <div style={{ fontSize: '48px', marginBottom: '16px' }}>â</div>
               <div style={{ fontSize: '18px', fontWeight: '700', color: '#ef4444' }}>{txErrorMsg}</div>
             </div>
           )}
