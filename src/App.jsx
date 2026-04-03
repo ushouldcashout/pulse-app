@@ -1509,18 +1509,16 @@ const PulseGame = () => {
           <button onClick={() => switchNetwork(inkSepolia)} style={{ padding: '12px 28px', borderRadius: '12px', border: 'none', background: '#fbbf24', color: '#000', fontWeight: '700', cursor: 'pointer' }}>Switch to Ink Sepolia</button>
         </div>
       )}
-      {isConnected && isOnInk && balance < 0.0001 && (
-        <div style={{ padding: '20px', textAlign: 'center' }}>
-          <div style={{ color: '#ef4444', fontWeight: '600', marginBottom: '8px' }}>Need Testnet ETH</div>
-          <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
-            <button onClick={() => window.open('https://inkonchain.com/faucet', '_blank')} style={{ padding: '10px 20px', borderRadius: '12px', border: 'none', background: '#ef4444', color: '#fff', fontWeight: '600', cursor: 'pointer', fontSize: '12px' }}>Get ETH</button>
-            <button onClick={() => refetchBalance()} style={{ padding: '10px 20px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.08)', background: 'transparent', color: '#6b7280', fontWeight: '600', cursor: 'pointer', fontSize: '12px' }}>Refresh</button>
+      {/* ===== MAIN GAME (connected + on Ink) ===== */}
+      {isConnected && isOnInk && (
+        <>
+        {balance < 0.0001 && (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', padding: '8px 16px', background: 'rgba(239,68,68,0.08)', borderBottom: '1px solid rgba(239,68,68,0.15)' }}>
+            <span style={{ color: '#ef4444', fontWeight: '600', fontSize: '12px' }}>Need Testnet ETH to place bets</span>
+            <button onClick={() => window.open('https://inkonchain.com/faucet', '_blank')} style={{ padding: '5px 14px', borderRadius: '8px', border: 'none', background: '#ef4444', color: '#fff', fontWeight: '600', cursor: 'pointer', fontSize: '11px' }}>Get ETH</button>
+            <button onClick={() => refetchBalance()} style={{ padding: '5px 14px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.08)', background: 'transparent', color: '#6b7280', fontWeight: '600', cursor: 'pointer', fontSize: '11px' }}>Refresh</button>
           </div>
-        </div>
-      )}
-
-      {/* ===== MAIN GAME (connected + on Ink + has balance) ===== */}
-      {isConnected && isOnInk && balance >= 0.0001 && (
+        )}
         <>
           {/* THREE-COLUMN LAYOUT (Desktop) or SINGLE COLUMN (Mobile) */}
           <div style={{ flex: 1, minHeight: 0, display: 'flex', gap: '12px', padding: '8px 8px', overflowY: 'auto' }}>
