@@ -853,11 +853,6 @@ const LandingPage = ({ onEnter }) => {
       {/* SOCIAL / FOOTER */}
       <div style={{ padding: '40px 20px 60px', textAlign: 'center' }}>
         <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', marginBottom: '24px' }}>
-          <a href="https://t.me/pulsebetfun" target="_blank" rel="noopener noreferrer" style={{
-            padding: '10px 20px', borderRadius: '12px', background: 'rgba(255,255,255,0.04)',
-            border: '1px solid rgba(255,255,255,0.08)', color: '#fff', textDecoration: 'none',
-            fontSize: '13px', fontWeight: '600', transition: 'all 0.2s ease'
-          }}>📱 Telegram</a>
           <a href="https://twitter.com/PulseBet" target="_blank" rel="noopener noreferrer" style={{
             padding: '10px 20px', borderRadius: '12px', background: 'rgba(255,255,255,0.04)',
             border: '1px solid rgba(255,255,255,0.08)', color: '#fff', textDecoration: 'none',
