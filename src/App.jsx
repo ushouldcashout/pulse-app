@@ -1519,7 +1519,6 @@ const PulseGame = () => {
             <button onClick={() => refetchBalance()} style={{ padding: '5px 14px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.08)', background: 'transparent', color: '#6b7280', fontWeight: '600', cursor: 'pointer', fontSize: '11px' }}>Refresh</button>
           </div>
         )}
-        <>
           {/* THREE-COLUMN LAYOUT (Desktop) or SINGLE COLUMN (Mobile) */}
           <div style={{ flex: 1, minHeight: 0, display: 'flex', gap: '12px', padding: '8px 8px', overflowY: 'auto' }}>
             {/* LEFT SIDEBAR — Only on desktop */}
