@@ -1218,9 +1218,15 @@ const PulseGame = () => {
   const [faucetCopied, setFaucetCopied] = useState(false);
   const [faucetUrlCopied, setFaucetUrlCopied] = useState(false);
   const [recentBets, setRecentBets] = useState([]); // social feed: [{side, amount, name}]
+  const [betHistory, setBetHistory] = useState(function() {
+    try { return JSON.parse(localStorage.getItem('pulse_bet_history') || '[]'); } catch(e) { return []; }
+  });
+  const [showHistory, setShowHistory] = useState(false);
+  const lastHistoryRoundRef = useRef(null);
 
   useEffect(() => { try { const p = localStorage.getItem('pulse_points'); if (p) setPoints(parseInt(p)); } catch(e){} }, []);
   useEffect(() => { try { localStorage.setItem('pulse_points', points.toString()); } catch(e){} }, [points]);
+  useEffect(() => { try { localStorage.setItem('pulse_bet_history', JSON.stringify(betHistory.slice(0, 100))); } catch(e){} }, [betHistory]);
 
   // Track transaction lifecycle
   useEffect(() => {
@@ -1290,6 +1296,23 @@ const PulseGame = () => {
       if (snapshotPrice && price) {
         var res = price > snapshotPrice ? 'up' : 'down';
         setRoundResult(res);
+        // Append to bet history (deduped per round) if user placed a bet
+        if (bet && roundNumber && lastHistoryRoundRef.current !== roundNumber) {
+          lastHistoryRoundRef.current = roundNumber;
+          var won = bet === res;
+          var entry = {
+            round: roundNumber,
+            side: bet,
+            amount: betAmount,
+            entryPrice: snapshotPrice,
+            exitPrice: price,
+            won: won,
+            payout: won ? betAmount * 2 : 0,
+            timestamp: Date.now(),
+            asset: asset,
+          };
+          setBetHistory(function(prev) { return [entry].concat(prev).slice(0, 100); });
+        }
       }
     }
     prevPhaseRef.current = phase;
@@ -1690,33 +1713,91 @@ const PulseGame = () => {
                     <span style={{ fontSize: '8px', padding: '1px 4px', borderRadius: '4px', background: 'rgba(168,85,247,0.2)', color: '#c084fc', fontWeight: '600' }}>SOON</span>
                   </div>
                 </div>
-                <button onClick={function() { setShowReferral(!showReferral); }} style={{ padding: '3px 10px', borderRadius: '12px', border: '1px solid rgba(16,185,129,0.12)', background: 'rgba(16,185,129,0.04)', color: '#10b981', fontSize: '10px', fontWeight: '600', cursor: 'pointer' }}>
-                  👥 Invite
-                </button>
+                <div style={{ display: 'flex', gap: '6px' }}>
+                  {(function() {
+                    var wins = betHistory.filter(function(h) { return h.won; }).length;
+                    var total = betHistory.length;
+                    return (
+                      <button onClick={function() { setShowHistory(true); haptic('impact', 'light'); }} style={{ padding: '3px 10px', borderRadius: '12px', border: '1px solid rgba(168,85,247,0.18)', background: 'rgba(168,85,247,0.06)', color: '#c084fc', fontSize: '10px', fontWeight: '600', cursor: 'pointer' }}>
+                        📊 History{total > 0 ? ' ' + wins + '/' + total : ''}
+                      </button>
+                    );
+                  })()}
+                  <button onClick={function() { setShowReferral(!showReferral); }} style={{ padding: '3px 10px', borderRadius: '12px', border: '1px solid rgba(16,185,129,0.12)', background: 'rgba(16,185,129,0.04)', color: '#10b981', fontSize: '10px', fontWeight: '600', cursor: 'pointer' }}>
+                    👥 Invite
+                  </button>
+                </div>
               </div>
 
               {/* Win Result Display */}
-              {bet && roundResult && bet === roundResult && phase === 'results' && (
-                <div style={{ padding: '12px', textAlign: 'center', animation: 'slideIn 0.3s ease, glow 1.5s ease infinite', flexShrink: 0, background: 'rgba(16,185,129,0.15)', borderRadius: '12px', border: '2px solid rgba(16,185,129,0.5)' }}>
-                  <div style={{ fontSize: '48px', marginBottom: '8px' }}>&#10024;</div>
-                  <div style={{ fontSize: '32px', fontWeight: '900', color: '#10b981', marginBottom: '4px' }}>YOU WIN!</div>
-                  <div style={{ fontSize: '16px', color: '#6fddce', fontWeight: '700', marginBottom: '12px' }}>{BET_LABELS[betAmount]} &#215; 2</div>
-                  {claimRoundId && (
-                    <button onClick={claimWinnings} disabled={!!claimStatus}
-                      style={{ width: '100%', padding: '12px', borderRadius: '10px', border: 'none', background: claimStatus === 'confirmed' ? '#10b981' : 'linear-gradient(135deg, #10b981, #059669)', color: '#000', fontWeight: '800', fontSize: '14px', cursor: claimStatus ? 'not-allowed' : 'pointer', boxShadow: '0 4px 16px rgba(16,185,129,0.4)', transition: 'all 0.2s' }}
-                    >{claimStatus === 'pending' ? 'Confirm in Wallet...' : claimStatus === 'confirming' ? 'Claiming...' : claimStatus === 'confirmed' ? 'Claimed!' : claimStatus === 'error' ? 'Claim Failed' : 'Claim Winnings'}</button>
-                  )}
-                </div>
-              )}
+              {bet && roundResult && bet === roundResult && phase === 'results' && (function() {
+                var margin = (price && snapshotPrice) ? (price - snapshotPrice) : 0;
+                var marginAbs = Math.abs(margin);
+                var sideLabel = bet === 'up' ? 'UP' : 'DOWN';
+                var sideEmoji = bet === 'up' ? '\u{1F4C8}' : '\u{1F4C9}';
+                return (
+                  <div style={{ padding: '14px', textAlign: 'center', animation: 'slideIn 0.3s ease, glow 1.5s ease infinite', flexShrink: 0, background: 'rgba(16,185,129,0.15)', borderRadius: '12px', border: '2px solid rgba(16,185,129,0.5)' }}>
+                    <div style={{ fontSize: '40px', marginBottom: '4px' }}>&#10024;</div>
+                    <div style={{ fontSize: '28px', fontWeight: '900', color: '#10b981', marginBottom: '2px' }}>YOU WON!</div>
+                    <div style={{ fontSize: '12px', color: '#6fddce', fontWeight: '700', marginBottom: '8px' }}>
+                      You bet {sideEmoji} {sideLabel} &middot; +{(betAmount).toFixed(3)} ETH profit
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center', padding: '8px', borderRadius: '8px', background: 'rgba(0,0,0,0.25)', marginBottom: claimRoundId ? '10px' : '0', fontSize: '11px' }}>
+                      <div>
+                        <div style={{ color: '#6b7280', fontSize: '9px', letterSpacing: '0.5px' }}>ENTRY</div>
+                        <div style={{ color: '#fff', fontWeight: '700' }}>${snapshotPrice ? snapshotPrice.toLocaleString(undefined, { maximumFractionDigits: 2 }) : '—'}</div>
+                      </div>
+                      <div style={{ color: '#10b981', fontSize: '14px' }}>&rarr;</div>
+                      <div>
+                        <div style={{ color: '#6b7280', fontSize: '9px', letterSpacing: '0.5px' }}>EXIT</div>
+                        <div style={{ color: '#fff', fontWeight: '700' }}>${price ? price.toLocaleString(undefined, { maximumFractionDigits: 2 }) : '—'}</div>
+                      </div>
+                      <div>
+                        <div style={{ color: '#6b7280', fontSize: '9px', letterSpacing: '0.5px' }}>BY</div>
+                        <div style={{ color: '#10b981', fontWeight: '800' }}>{margin >= 0 ? '+' : '-'}${marginAbs.toFixed(2)}</div>
+                      </div>
+                    </div>
+                    {claimRoundId && (
+                      <button onClick={claimWinnings} disabled={!!claimStatus}
+                        style={{ width: '100%', padding: '12px', borderRadius: '10px', border: 'none', background: claimStatus === 'confirmed' ? '#10b981' : 'linear-gradient(135deg, #10b981, #059669)', color: '#000', fontWeight: '800', fontSize: '14px', cursor: claimStatus ? 'not-allowed' : 'pointer', boxShadow: '0 4px 16px rgba(16,185,129,0.4)', transition: 'all 0.2s' }}
+                      >{claimStatus === 'pending' ? 'Confirm in Wallet...' : claimStatus === 'confirming' ? 'Claiming...' : claimStatus === 'confirmed' ? 'Claimed!' : claimStatus === 'error' ? 'Claim Failed' : 'Claim ' + (betAmount * 2).toFixed(3) + ' ETH'}</button>
+                    )}
+                  </div>
+                );
+              })()}
 
               {/* Lose Result Display */}
-              {bet && roundResult && bet !== roundResult && phase === 'results' && (
-                <div style={{ padding: '12px', textAlign: 'center', animation: 'slideIn 0.3s ease', flexShrink: 0, background: 'rgba(239,68,68,0.12)', borderRadius: '12px', border: '2px solid rgba(239,68,68,0.4)' }}>
-                  <div style={{ fontSize: '48px', marginBottom: '8px' }}>&#128546;</div>
-                  <div style={{ fontSize: '32px', fontWeight: '900', color: '#ef4444', marginBottom: '4px' }}>YOU LOST</div>
-                  <div style={{ fontSize: '14px', color: '#fca5a5', fontWeight: '600' }}>Better luck next round!</div>
-                </div>
-              )}
+              {bet && roundResult && bet !== roundResult && phase === 'results' && (function() {
+                var margin = (price && snapshotPrice) ? (price - snapshotPrice) : 0;
+                var marginAbs = Math.abs(margin);
+                var sideLabel = bet === 'up' ? 'UP' : 'DOWN';
+                var sideEmoji = bet === 'up' ? '\u{1F4C8}' : '\u{1F4C9}';
+                var actualLabel = roundResult === 'up' ? 'UP' : 'DOWN';
+                return (
+                  <div style={{ padding: '14px', textAlign: 'center', animation: 'slideIn 0.3s ease', flexShrink: 0, background: 'rgba(239,68,68,0.12)', borderRadius: '12px', border: '2px solid rgba(239,68,68,0.4)' }}>
+                    <div style={{ fontSize: '40px', marginBottom: '4px' }}>&#128546;</div>
+                    <div style={{ fontSize: '28px', fontWeight: '900', color: '#ef4444', marginBottom: '2px' }}>YOU LOST</div>
+                    <div style={{ fontSize: '12px', color: '#fca5a5', fontWeight: '700', marginBottom: '8px' }}>
+                      You bet {sideEmoji} {sideLabel} &middot; price went {actualLabel} &middot; -{(betAmount).toFixed(3)} ETH
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center', padding: '8px', borderRadius: '8px', background: 'rgba(0,0,0,0.25)', fontSize: '11px' }}>
+                      <div>
+                        <div style={{ color: '#6b7280', fontSize: '9px', letterSpacing: '0.5px' }}>ENTRY</div>
+                        <div style={{ color: '#fff', fontWeight: '700' }}>${snapshotPrice ? snapshotPrice.toLocaleString(undefined, { maximumFractionDigits: 2 }) : '—'}</div>
+                      </div>
+                      <div style={{ color: '#ef4444', fontSize: '14px' }}>&rarr;</div>
+                      <div>
+                        <div style={{ color: '#6b7280', fontSize: '9px', letterSpacing: '0.5px' }}>EXIT</div>
+                        <div style={{ color: '#fff', fontWeight: '700' }}>${price ? price.toLocaleString(undefined, { maximumFractionDigits: 2 }) : '—'}</div>
+                      </div>
+                      <div>
+                        <div style={{ color: '#6b7280', fontSize: '9px', letterSpacing: '0.5px' }}>BY</div>
+                        <div style={{ color: '#ef4444', fontWeight: '800' }}>{margin >= 0 ? '+' : '-'}${marginAbs.toFixed(2)}</div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
 
             {/* RIGHT SIDEBAR — Only on desktop */}
@@ -1796,6 +1877,83 @@ const PulseGame = () => {
           </div>
         </div>
       )}
+
+      {/* History overlay */}
+      {showHistory && (function() {
+        var wins = betHistory.filter(function(h) { return h.won; }).length;
+        var losses = betHistory.length - wins;
+        var winRate = betHistory.length > 0 ? Math.round((wins / betHistory.length) * 100) : 0;
+        var netPnl = betHistory.reduce(function(acc, h) { return acc + (h.won ? h.amount : -h.amount); }, 0);
+        return (
+          <div onClick={function() { setShowHistory(false); }} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)', zIndex: 90, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', animation: 'fadeIn 0.2s ease' }}>
+            <div onClick={function(e) { e.stopPropagation(); }} className="glass-card" style={{ borderRadius: '20px', padding: '20px', maxWidth: '460px', width: '100%', maxHeight: '85vh', display: 'flex', flexDirection: 'column' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexShrink: 0 }}>
+                <div style={{ fontSize: '16px', fontWeight: '700' }}>📊 Bet History</div>
+                <button onClick={function() { setShowHistory(false); }} style={{ background: 'none', border: 'none', color: '#6b7280', fontSize: '18px', cursor: 'pointer' }}>X</button>
+              </div>
+
+              {/* Summary stats */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', marginBottom: '14px', flexShrink: 0 }}>
+                <div style={{ padding: '10px', borderRadius: '10px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)', textAlign: 'center' }}>
+                  <div style={{ fontSize: '9px', color: '#6b7280', letterSpacing: '0.5px', marginBottom: '2px' }}>RECORD</div>
+                  <div style={{ fontSize: '14px', fontWeight: '800', color: '#fff' }}><span style={{ color: '#10b981' }}>{wins}W</span> · <span style={{ color: '#ef4444' }}>{losses}L</span></div>
+                </div>
+                <div style={{ padding: '10px', borderRadius: '10px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)', textAlign: 'center' }}>
+                  <div style={{ fontSize: '9px', color: '#6b7280', letterSpacing: '0.5px', marginBottom: '2px' }}>WIN RATE</div>
+                  <div style={{ fontSize: '14px', fontWeight: '800', color: winRate >= 50 ? '#10b981' : '#fbbf24' }}>{winRate}%</div>
+                </div>
+                <div style={{ padding: '10px', borderRadius: '10px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)', textAlign: 'center' }}>
+                  <div style={{ fontSize: '9px', color: '#6b7280', letterSpacing: '0.5px', marginBottom: '2px' }}>NET P&amp;L</div>
+                  <div style={{ fontSize: '14px', fontWeight: '800', color: netPnl >= 0 ? '#10b981' : '#ef4444' }}>{netPnl >= 0 ? '+' : ''}{netPnl.toFixed(3)}</div>
+                </div>
+              </div>
+
+              {/* Scrollable list */}
+              <div style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
+                {betHistory.length === 0 && (
+                  <div style={{ textAlign: 'center', padding: '32px 12px', color: '#6b7280', fontSize: '12px' }}>
+                    <div style={{ fontSize: '32px', marginBottom: '8px' }}>📭</div>
+                    No bets yet. Place your first bet to start your history!
+                  </div>
+                )}
+                {betHistory.map(function(h, i) {
+                  var when = new Date(h.timestamp);
+                  var timeAgo = (function() {
+                    var sec = Math.floor((Date.now() - h.timestamp) / 1000);
+                    if (sec < 60) return sec + 's ago';
+                    if (sec < 3600) return Math.floor(sec / 60) + 'm ago';
+                    if (sec < 86400) return Math.floor(sec / 3600) + 'h ago';
+                    return Math.floor(sec / 86400) + 'd ago';
+                  })();
+                  var sideEmoji = h.side === 'up' ? '📈' : '📉';
+                  var sideLabel = h.side === 'up' ? 'UP' : 'DOWN';
+                  return (
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px', borderRadius: '10px', background: h.won ? 'rgba(16,185,129,0.06)' : 'rgba(239,68,68,0.05)', border: '1px solid ' + (h.won ? 'rgba(16,185,129,0.18)' : 'rgba(239,68,68,0.15)'), marginBottom: '6px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0, flex: 1 }}>
+                        <div style={{ fontSize: '20px' }}>{h.won ? '✅' : '❌'}</div>
+                        <div style={{ minWidth: 0 }}>
+                          <div style={{ fontSize: '12px', fontWeight: '700', color: '#fff' }}>{sideEmoji} {sideLabel} · {h.amount.toFixed(3)} ETH</div>
+                          <div style={{ fontSize: '10px', color: '#6b7280', marginTop: '2px' }}>
+                            ${h.entryPrice ? h.entryPrice.toLocaleString(undefined, { maximumFractionDigits: 2 }) : '—'} → ${h.exitPrice ? h.exitPrice.toLocaleString(undefined, { maximumFractionDigits: 2 }) : '—'}
+                          </div>
+                        </div>
+                      </div>
+                      <div style={{ textAlign: 'right', flexShrink: 0, marginLeft: '8px' }}>
+                        <div style={{ fontSize: '13px', fontWeight: '800', color: h.won ? '#10b981' : '#ef4444' }}>{h.won ? '+' : '-'}{h.amount.toFixed(3)}</div>
+                        <div style={{ fontSize: '9px', color: '#4b5563', marginTop: '2px' }}>{timeAgo}</div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {betHistory.length > 0 && (
+                <button onClick={function() { if (typeof window !== 'undefined' && window.confirm && window.confirm('Clear all bet history? This cannot be undone.')) { setBetHistory([]); haptic('notification', 'warning'); } }} style={{ marginTop: '12px', padding: '8px', borderRadius: '8px', border: '1px solid rgba(239,68,68,0.2)', background: 'rgba(239,68,68,0.04)', color: '#ef4444', fontSize: '11px', fontWeight: '600', cursor: 'pointer', flexShrink: 0 }}>Clear History</button>
+              )}
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Transaction Status Overlay */}
       {txStatus && (
