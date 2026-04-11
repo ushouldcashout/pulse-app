@@ -1567,7 +1567,13 @@ const PulseGame = () => {
               {/* PRICE ROW + COUNTDOWN */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 4px 4px', flexShrink: 0 }}>
                 <div>
-                  <div style={{ fontSize: '9px', color: '#4b5563', letterSpacing: '1.5px' }}>{asset}/USD</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    <div style={{ fontSize: '9px', color: '#4b5563', letterSpacing: '1.5px' }}>{asset}/USD</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
+                      <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#10b981', animation: 'pulseGlow 1.4s ease-in-out infinite', display: 'inline-block' }} />
+                      <span style={{ fontSize: '8px', color: '#10b981', fontWeight: '700', letterSpacing: '0.5px' }}>LIVE</span>
+                    </div>
+                  </div>
                   <div key={priceKey} style={{ fontSize: '24px', fontWeight: '800', letterSpacing: '-1px', lineHeight: 1, animation: priceDir ? (priceDir === 'up' ? 'priceFlashGreen 0.5s ease-out' : 'priceFlashRed 0.5s ease-out') : 'none' }}>
                     {price > 0 ? '$' + price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '...'}
                   </div>
@@ -1620,6 +1626,34 @@ const PulseGame = () => {
                     )}
                   </div>
                 </div>
+              </div>
+
+              {/* LIVE POOL SPLIT — crowd sentiment */}
+              <div style={{ padding: '2px 4px 0', flexShrink: 0 }}>
+                {(function() {
+                  var poolUp = Number(pool && pool.up) || 0;
+                  var poolDown = Number(pool && pool.down) || 0;
+                  var totalPool = poolUp + poolDown;
+                  var upPct = totalPool > 0 ? (poolUp / totalPool * 100) : 50;
+                  var downPct = 100 - upPct;
+                  return (
+                    <>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px', fontSize: '10px' }}>
+                        <span style={{ color: '#10b981', fontWeight: '700' }}>UP {Math.round(upPct)}%</span>
+                        <span style={{ color: '#4b5563', fontWeight: '600', fontSize: '9px', letterSpacing: '1px' }}>LIVE POOL</span>
+                        <span style={{ color: '#ef4444', fontWeight: '700' }}>{Math.round(downPct)}% DOWN</span>
+                      </div>
+                      <div style={{ position: 'relative', height: '6px', borderRadius: '3px', background: 'rgba(255,255,255,0.04)', overflow: 'hidden', display: 'flex' }}>
+                        <div style={{ width: upPct + '%', background: 'linear-gradient(90deg, #10b981, rgba(16,185,129,0.7))', transition: 'width 0.5s ease' }} />
+                        <div style={{ width: downPct + '%', background: 'linear-gradient(90deg, rgba(239,68,68,0.7), #ef4444)', transition: 'width 0.5s ease' }} />
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '3px', fontSize: '9px', color: '#6b7280' }}>
+                        <span>{poolUp.toFixed(3)} ETH</span>
+                        <span>{poolDown.toFixed(3)} ETH</span>
+                      </div>
+                    </>
+                  );
+                })()}
               </div>
 
               {/* AMOUNT + BET BUTTONS */}
