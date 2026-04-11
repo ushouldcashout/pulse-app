@@ -1216,6 +1216,7 @@ const PulseGame = () => {
   const [showReferral, setShowReferral] = useState(false);
   const [showFaucet, setShowFaucet] = useState(false);
   const [faucetCopied, setFaucetCopied] = useState(false);
+  const [faucetUrlCopied, setFaucetUrlCopied] = useState(false);
   const [recentBets, setRecentBets] = useState([]); // social feed: [{side, amount, name}]
 
   useEffect(() => { try { const p = localStorage.getItem('pulse_points'); if (p) setPoints(parseInt(p)); } catch(e){} }, []);
@@ -1744,9 +1745,14 @@ const PulseGame = () => {
               <button onClick={function() { if (address) { navigator.clipboard.writeText(address).catch(function() {}); setFaucetCopied(true); haptic('notification', 'success'); setTimeout(function() { setFaucetCopied(false); }, 1500); } }} style={{ padding: '10px 14px', borderRadius: '10px', border: 'none', background: faucetCopied ? '#10b981' : '#fbbf24', color: '#000', fontWeight: '700', fontSize: '11px', cursor: 'pointer', minWidth: '64px' }}>{faucetCopied ? 'Copied' : 'Copy'}</button>
             </div>
 
-            {/* Open faucet */}
-            <div style={{ fontSize: '11px', color: '#9ca3af', marginBottom: '6px' }}>2. Open the Ink Sepolia faucet and paste your address</div>
-            <button onClick={function(e) { e.stopPropagation(); try { if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.openLink === 'function') { window.Telegram.WebApp.openLink('https://inkonchain.com/faucet'); } else { window.open('https://inkonchain.com/faucet', '_blank', 'noopener,noreferrer'); } } catch(err) { try { window.open('https://inkonchain.com/faucet', '_blank', 'noopener,noreferrer'); } catch(e2) {} } haptic('impact', 'light'); }} style={{ display: 'block', width: '100%', padding: '12px', borderRadius: '12px', border: 'none', background: '#fbbf24', color: '#000', fontWeight: '700', cursor: 'pointer', fontSize: '13px', textAlign: 'center', marginBottom: '14px', boxSizing: 'border-box' }}>Open Ink Sepolia Faucet</button>
+            {/* Copy faucet URL */}
+            <div style={{ fontSize: '11px', color: '#9ca3af', marginBottom: '6px' }}>2. Copy the faucet URL and open it in your browser</div>
+            <div style={{ display: 'flex', gap: '6px', marginBottom: '14px' }}>
+              <div style={{ flex: 1, padding: '10px', borderRadius: '10px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)', fontSize: '10px', fontFamily: 'monospace', color: '#9ca3af', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                inkonchain.com/faucet
+              </div>
+              <button onClick={function(e) { e.stopPropagation(); try { navigator.clipboard.writeText('https://inkonchain.com/faucet').catch(function() {}); } catch(err) {} setFaucetUrlCopied(true); haptic('notification', 'success'); setTimeout(function() { setFaucetUrlCopied(false); }, 1500); }} style={{ padding: '10px 14px', borderRadius: '10px', border: 'none', background: faucetUrlCopied ? '#10b981' : '#fbbf24', color: '#000', fontWeight: '700', fontSize: '11px', cursor: 'pointer', minWidth: '64px' }}>{faucetUrlCopied ? 'Copied' : 'Copy'}</button>
+            </div>
 
             {/* Final step */}
             <div style={{ fontSize: '11px', color: '#9ca3af', marginBottom: '6px' }}>3. Come back here and refresh your balance</div>
