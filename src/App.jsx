@@ -1214,6 +1214,8 @@ const PulseGame = () => {
   const [priceKey, setPriceKey] = useState(0); // triggers re-animation on price change
   const [priceHistory, setPriceHistory] = useState([]); // last 80 prices for chart
   const [showReferral, setShowReferral] = useState(false);
+  const [showFaucet, setShowFaucet] = useState(false);
+  const [faucetCopied, setFaucetCopied] = useState(false);
   const [recentBets, setRecentBets] = useState([]); // social feed: [{side, amount, name}]
 
   useEffect(() => { try { const p = localStorage.getItem('pulse_points'); if (p) setPoints(parseInt(p)); } catch(e){} }, []);
@@ -1510,7 +1512,7 @@ const PulseGame = () => {
         {balance < 0.0001 && (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', padding: '8px 16px', background: 'rgba(239,68,68,0.08)', borderBottom: '1px solid rgba(239,68,68,0.15)' }}>
             <span style={{ color: '#ef4444', fontWeight: '600', fontSize: '12px' }}>Need Testnet ETH to place bets</span>
-            <button onClick={() => window.open('https://inkonchain.com/faucet', '_blank')} style={{ padding: '5px 14px', borderRadius: '8px', border: 'none', background: '#ef4444', color: '#fff', fontWeight: '600', cursor: 'pointer', fontSize: '11px' }}>Get ETH</button>
+            <button onClick={function() { setShowFaucet(true); haptic('impact', 'light'); }} style={{ padding: '5px 14px', borderRadius: '8px', border: 'none', background: '#ef4444', color: '#fff', fontWeight: '600', cursor: 'pointer', fontSize: '11px' }}>Get ETH</button>
             <button onClick={() => refetchBalance()} style={{ padding: '5px 14px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.08)', background: 'transparent', color: '#6b7280', fontWeight: '600', cursor: 'pointer', fontSize: '11px' }}>Refresh</button>
           </div>
         )}
@@ -1711,6 +1713,46 @@ const PulseGame = () => {
               <button onClick={function() { window.open('https://t.me/share/url?url=' + encodeURIComponent('https://pulsebet.fun?ref=' + (address ? address.slice(0, 8) : '')) + '&text=' + encodeURIComponent('Predict BTC in 10 seconds on Pulse! Earn $PULSE points.'), '_blank'); }} style={{ flex: 1, padding: '10px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.03)', color: '#fff', fontSize: '12px', cursor: 'pointer', fontWeight: '600' }}>Telegram</button>
               <button onClick={function() { window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent('Predicting BTC price in 10 seconds on @PulseBet! Earn $PULSE points.\n\nhttps://pulsebet.fun?ref=' + (address ? address.slice(0, 8) : '')), '_blank'); }} style={{ flex: 1, padding: '10px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.03)', color: '#fff', fontSize: '12px', cursor: 'pointer', fontWeight: '600' }}>X / Twitter</button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Faucet overlay */}
+      {showFaucet && (
+        <div onClick={function() { setShowFaucet(false); }} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)', zIndex: 90, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', animation: 'fadeIn 0.2s ease' }}>
+          <div onClick={function(e) { e.stopPropagation(); }} className="glass-card" style={{ borderRadius: '20px', padding: '24px', maxWidth: '420px', width: '100%' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <div style={{ fontSize: '16px', fontWeight: '700' }}>Get Testnet ETH</div>
+              <button onClick={function() { setShowFaucet(false); }} style={{ background: 'none', border: 'none', color: '#6b7280', fontSize: '18px', cursor: 'pointer' }}>X</button>
+            </div>
+
+            {/* Current balance */}
+            <div style={{ padding: '14px', borderRadius: '12px', background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.15)', marginBottom: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <div style={{ fontSize: '10px', color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '2px' }}>Your Balance</div>
+                <div style={{ fontSize: '18px', fontWeight: '700', color: balance < 0.0001 ? '#ef4444' : '#10b981' }}>{Number(balance).toFixed(6)} ETH</div>
+              </div>
+              <button onClick={function() { refetchBalance(); haptic('impact', 'light'); }} style={{ padding: '8px 14px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.03)', color: '#9ca3af', fontWeight: '600', cursor: 'pointer', fontSize: '11px' }}>Refresh</button>
+            </div>
+
+            {/* Address helper */}
+            <div style={{ fontSize: '11px', color: '#9ca3af', marginBottom: '6px' }}>1. Copy your wallet address</div>
+            <div style={{ display: 'flex', gap: '6px', marginBottom: '14px' }}>
+              <div style={{ flex: 1, padding: '10px', borderRadius: '10px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)', fontSize: '10px', fontFamily: 'monospace', color: '#9ca3af', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {address || ''}
+              </div>
+              <button onClick={function() { if (address) { navigator.clipboard.writeText(address).catch(function() {}); setFaucetCopied(true); haptic('notification', 'success'); setTimeout(function() { setFaucetCopied(false); }, 1500); } }} style={{ padding: '10px 14px', borderRadius: '10px', border: 'none', background: faucetCopied ? '#10b981' : '#fbbf24', color: '#000', fontWeight: '700', fontSize: '11px', cursor: 'pointer', minWidth: '64px' }}>{faucetCopied ? 'Copied' : 'Copy'}</button>
+            </div>
+
+            {/* Open faucet */}
+            <div style={{ fontSize: '11px', color: '#9ca3af', marginBottom: '6px' }}>2. Open the Ink Sepolia faucet and paste your address</div>
+            <a href="https://inkonchain.com/faucet" target="_blank" rel="noopener noreferrer" onClick={function() { try { if (window.Telegram && window.Telegram.WebApp) { window.Telegram.WebApp.openLink('https://inkonchain.com/faucet'); } } catch(e) {} }} style={{ display: 'block', width: '100%', padding: '12px', borderRadius: '12px', border: 'none', background: '#fbbf24', color: '#000', fontWeight: '700', cursor: 'pointer', fontSize: '13px', textDecoration: 'none', textAlign: 'center', marginBottom: '14px', boxSizing: 'border-box' }}>Open Ink Sepolia Faucet</a>
+
+            {/* Final step */}
+            <div style={{ fontSize: '11px', color: '#9ca3af', marginBottom: '6px' }}>3. Come back here and refresh your balance</div>
+            <button onClick={function() { refetchBalance(); haptic('impact', 'medium'); }} style={{ width: '100%', padding: '12px', borderRadius: '12px', border: '1px solid rgba(16,185,129,0.25)', background: 'rgba(16,185,129,0.08)', color: '#10b981', fontWeight: '700', cursor: 'pointer', fontSize: '13px' }}>I Got My ETH - Refresh Balance</button>
+
+            <div style={{ fontSize: '10px', color: '#6b7280', textAlign: 'center', marginTop: '14px', lineHeight: '1.5' }}>Faucet gives ~0.05 testnet ETH per request. Enough for 50+ bets. No real money involved.</div>
           </div>
         </div>
       )}
