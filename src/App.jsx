@@ -1746,7 +1746,7 @@ const PulseGame = () => {
 
             {/* Open faucet */}
             <div style={{ fontSize: '11px', color: '#9ca3af', marginBottom: '6px' }}>2. Open the Ink Sepolia faucet and paste your address</div>
-            <a href="https://inkonchain.com/faucet" target="_blank" rel="noopener noreferrer" onClick={function() { try { if (window.Telegram && window.Telegram.WebApp) { window.Telegram.WebApp.openLink('https://inkonchain.com/faucet'); } } catch(e) {} }} style={{ display: 'block', width: '100%', padding: '12px', borderRadius: '12px', border: 'none', background: '#fbbf24', color: '#000', fontWeight: '700', cursor: 'pointer', fontSize: '13px', textDecoration: 'none', textAlign: 'center', marginBottom: '14px', boxSizing: 'border-box' }}>Open Ink Sepolia Faucet</a>
+            <button onClick={function(e) { e.stopPropagation(); try { if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.openLink === 'function') { window.Telegram.WebApp.openLink('https://inkonchain.com/faucet'); } else { window.open('https://inkonchain.com/faucet', '_blank', 'noopener,noreferrer'); } } catch(err) { try { window.open('https://inkonchain.com/faucet', '_blank', 'noopener,noreferrer'); } catch(e2) {} } haptic('impact', 'light'); }} style={{ display: 'block', width: '100%', padding: '12px', borderRadius: '12px', border: 'none', background: '#fbbf24', color: '#000', fontWeight: '700', cursor: 'pointer', fontSize: '13px', textAlign: 'center', marginBottom: '14px', boxSizing: 'border-box' }}>Open Ink Sepolia Faucet</button>
 
             {/* Final step */}
             <div style={{ fontSize: '11px', color: '#9ca3af', marginBottom: '6px' }}>3. Come back here and refresh your balance</div>
