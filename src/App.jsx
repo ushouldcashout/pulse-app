@@ -1109,11 +1109,13 @@ class ErrorBoundary extends React.Component {
 // SOUND EFFECTS (Web Audio API — no external files)
 // ============================================
 var _audioCtx = null;
+var _soundEnabled = (function() { try { return localStorage.getItem('pulse_sound') !== 'off'; } catch(e) { return true; } })();
 function getAudioCtx() {
   if (!_audioCtx) { try { _audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) {} }
   return _audioCtx;
 }
 function playSound(type) {
+  if (!_soundEnabled) return;
   try {
     var ctx = getAudioCtx();
     if (!ctx) return;
@@ -1209,6 +1211,7 @@ const useMediaQuery = (query) => {
 // ============================================
 const PulseGame = function(props) {
   var gameMode = props.gameMode || 'crypto';
+  var setGameMode = props.setGameMode || function() {};
   const { isReady, haptic, isTelegram } = useTelegram();
   const isDesktop = useMediaQuery('(min-width: 901px)');
 
@@ -1260,8 +1263,8 @@ const PulseGame = function(props) {
   const [pool, setPool] = useState({ up: 0, down: 0 });
   const [asset, setAsset] = useState('BTC');
   const [bet, setBet] = useState(null);
-  const [betAmount, setBetAmount] = useState(0.001);
-  const BET_LABELS = { 0.001: '$2', 0.005: '$5', 0.01: '$25', 0.05: '$50' };
+  const [betAmount, setBetAmount] = useState(0.0025);
+  const BET_LABELS = { 0.0025: '$5', 0.005: '$10', 0.01: '$20', 0.025: '$50' };
   const [roundResult, setRoundResult] = useState(null); // 'up' | 'down' | null
   const [lastResults, setLastResults] = useState([]); // array of recent results
   const [txStatus, setTxStatus] = useState(null); // null | 'pending' | 'confirming' | 'confirmed' | 'error'
@@ -1292,12 +1295,71 @@ const PulseGame = function(props) {
   });
   const [showHistory, setShowHistory] = useState(false);
   const lastHistoryRoundRef = useRef(null);
+  const resolvedRoundRef = useRef(null); // tracks which round we already resolved — prevents recomputation
+  const [frozenExitPrice, setFrozenExitPrice] = useState(null); // frozen exit price at resolution time
   const [resultToast, setResultToast] = useState(null);
   const resultToastTimerRef = useRef(null);
   const [streak, setStreak] = useState(function() { try { return parseInt(localStorage.getItem('pulse_streak') || '0'); } catch(e) { return 0; } });
   const [bestStreak, setBestStreak] = useState(function() { try { return parseInt(localStorage.getItem('pulse_best_streak') || '0'); } catch(e) { return 0; } });
   const [showConfetti, setShowConfetti] = useState(false);
   const [showShake, setShowShake] = useState(false);
+  const [soundOn, setSoundOn] = useState(_soundEnabled);
+
+  // Social identity (X/Twitter connect)
+  const [xProfile, setXProfile] = useState(function() {
+    try { var d = localStorage.getItem('pulse_x_profile'); return d ? JSON.parse(d) : null; } catch(e) { return null; }
+  }); // { handle, avatar, name }
+  const [displayName, setDisplayName] = useState(function() {
+    try { return localStorage.getItem('pulse_display_name') || ''; } catch(e) { return ''; }
+  });
+  const [showProfileSetup, setShowProfileSetup] = useState(false);
+
+  // Listen for X OAuth callback (popup posts message back)
+  useEffect(function() {
+    function handleXCallback(event) {
+      if (event.data && event.data.type === 'pulse_x_auth') {
+        var profile = event.data.profile;
+        if (profile && profile.handle) {
+          setXProfile(profile);
+          setDisplayName('@' + profile.handle);
+          try {
+            localStorage.setItem('pulse_x_profile', JSON.stringify(profile));
+            localStorage.setItem('pulse_display_name', '@' + profile.handle);
+          } catch(e) {}
+        }
+      }
+    }
+    window.addEventListener('message', handleXCallback);
+    return function() { window.removeEventListener('message', handleXCallback); };
+  }, []);
+
+  var connectX = function() {
+    // Opens X OAuth popup — backend handles the flow and posts result back
+    var w = 500, h = 600;
+    var left = (screen.width / 2) - (w / 2);
+    var top = (screen.height / 2) - (h / 2);
+    window.open(
+      'https://api.pulsebet.fun/auth/twitter?wallet=' + (address || ''),
+      'pulse_x_auth',
+      'width=' + w + ',height=' + h + ',left=' + left + ',top=' + top
+    );
+  };
+
+  var disconnectX = function() {
+    setXProfile(null);
+    setDisplayName('');
+    try { localStorage.removeItem('pulse_x_profile'); localStorage.removeItem('pulse_display_name'); } catch(e) {}
+  };
+
+  // The name shown in bets / leaderboard
+  var playerName = displayName || (xProfile ? '@' + xProfile.handle : (address ? address.slice(0, 6) + '..' + address.slice(-4) : ''));
+
+  // Session allowance — tracks spending in current session for quick-bet mode
+  const [sessionAllowance, setSessionAllowance] = useState(0); // total ETH pre-approved
+  const [sessionSpent, setSessionSpent] = useState(0); // ETH spent this session
+  const [showQuickBetSetup, setShowQuickBetSetup] = useState(false);
+  var sessionRemaining = Math.max(0, sessionAllowance - sessionSpent);
+  var quickBetActive = sessionAllowance > 0 && sessionRemaining >= betAmount;
 
   useEffect(() => { try { const p = localStorage.getItem('pulse_points'); if (p) setPoints(parseInt(p)); } catch(e){} }, []);
   useEffect(() => { try { localStorage.setItem('pulse_points', points.toString()); } catch(e){} }, [points]);
@@ -1386,16 +1448,23 @@ const PulseGame = function(props) {
       if (roundResult) {
         setLastResults(function(prev) { return [roundResult].concat(prev).slice(0, 10); });
       }
-      // Clear previous bet
+      // Clear previous bet and frozen state
       if (!txStatus) { setBet(null); }
       setRoundResult(null);
+      setFrozenExitPrice(null);
+      resolvedRoundRef.current = null;
       setClaimRoundId(null);
       setClaimStatus(null);
     }
     if (phase === 'results' || phase === 'resolving') {
-      // Round resolved — determine result
-      if (snapshotPrice && price) {
-        var res = price > snapshotPrice ? 'up' : 'down';
+      // Round resolved — determine result ONCE per round (freeze exit price)
+      // CRITICAL: Only compute once. If we already resolved this round, skip.
+      // This prevents the result from flipping when price keeps ticking via WebSocket.
+      if (snapshotPrice && price && resolvedRoundRef.current !== roundNumber) {
+        resolvedRoundRef.current = roundNumber;
+        var exitPrice = price; // Freeze the exit price at this exact moment
+        setFrozenExitPrice(exitPrice);
+        var res = exitPrice > snapshotPrice ? 'up' : 'down';
         setRoundResult(res);
         // Append to bet history (deduped per round) if user placed a bet
         if (bet && roundNumber && lastHistoryRoundRef.current !== roundNumber) {
@@ -1406,7 +1475,7 @@ const PulseGame = function(props) {
             side: bet,
             amount: betAmount,
             entryPrice: snapshotPrice,
-            exitPrice: price,
+            exitPrice: exitPrice,
             won: won,
             payout: won ? betAmount * 2 : 0,
             timestamp: Date.now(),
@@ -1511,6 +1580,37 @@ const PulseGame = function(props) {
       .catch(function(e) { console.error('[Pulse] fetchOnChainRound error:', e); return null; });
   }, []);
 
+  // Share result card to X / Instagram / native share
+  var shareResult = function(won, side, amount, entryP, exitP, streakVal) {
+    var refCode = address ? address.slice(0, 8) : '';
+    var refUrl = 'https://pulsebet.fun?ref=' + refCode;
+    var sideStr = side === 'up' ? 'UP' : 'DOWN';
+    var pnlStr = won ? '+' + amount.toFixed(3) + ' ETH' : '-' + amount.toFixed(3) + ' ETH';
+    var margin = (exitP && entryP) ? Math.abs(exitP - entryP).toFixed(2) : '0.00';
+    var streakStr = streakVal > 1 ? ' | ' + streakVal + 'x streak \u{1F525}' : '';
+    var emoji = won ? '\u{1F389}\u{2705}' : '\u{1F614}\u{274C}';
+    var text = emoji + ' ' + (won ? 'WON' : 'LOST') + ' ' + pnlStr + ' on @PulseBet!\n\n'
+      + sideStr + ' | $' + (entryP ? entryP.toLocaleString(undefined, { maximumFractionDigits: 2 }) : '—') + ' \u2192 $' + (exitP ? exitP.toLocaleString(undefined, { maximumFractionDigits: 2 }) : '—') + ' ($' + margin + ')' + streakStr + '\n\n'
+      + 'Predict crypto & stocks in seconds \u26A1\n' + refUrl;
+    return { text: text, url: refUrl };
+  };
+
+  var shareToX = function(won, side, amount, entryP, exitP, streakVal) {
+    var s = shareResult(won, side, amount, entryP, exitP, streakVal);
+    var url = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(s.text);
+    try { if (window.Telegram && window.Telegram.WebApp) { window.Telegram.WebApp.openLink(url); } else { window.open(url, '_blank'); } } catch(e) { window.open(url, '_blank'); }
+  };
+
+  var shareNative = function(won, side, amount, entryP, exitP, streakVal) {
+    var s = shareResult(won, side, amount, entryP, exitP, streakVal);
+    if (navigator.share) {
+      navigator.share({ title: 'Pulse Bet Result', text: s.text, url: s.url }).catch(function() {});
+    } else {
+      try { navigator.clipboard.writeText(s.text); } catch(e) {}
+      haptic('notification', 'success');
+    }
+  };
+
   const placeBet = (dir) => {
     if (phase !== 'betting' || bet || txStatus) return;
     if (!isConnected) { open(); return; }
@@ -1523,6 +1623,10 @@ const PulseGame = function(props) {
     setTxStatus('pending');
     setTxErrorMsg('');
     txTypeRef.current = 'bet';
+    // Track session spending
+    if (sessionAllowance > 0) {
+      setSessionSpent(function(prev) { return prev + betAmount; });
+    }
 
     // Fetch on-chain round ID so we can claim later
     fetchOnChainRound().then(function(rid) {
@@ -1631,12 +1735,17 @@ const PulseGame = function(props) {
           <span style={{ fontWeight: '700', fontSize: '15px' }}>Pulse</span>
           <span style={{ fontSize: '8px', background: 'rgba(251,191,36,0.12)', color: '#fbbf24', padding: '2px 6px', borderRadius: '8px', fontWeight: '600', letterSpacing: '1px' }}>TESTNET</span>
         </div>
-        <div style={{ display: 'flex', gap: '12px', alignItems: 'center', borderLeft: '1px solid rgba(255,255,255,0.08)', paddingLeft: '12px' }}>
-          <button onClick={() => { window.location.href = '/defi-markets.html'; }} style={{ background: 'none', border: 'none', color: '#9ca3af', fontSize: '12px', fontWeight: '600', cursor: 'pointer', transition: 'color 0.2s', padding: '4px 8px' }} onMouseEnter={(e) => e.target.style.color = '#10b981'} onMouseLeave={(e) => e.target.style.color = '#9ca3af'}>
-            DeFi Markets
+        <div style={{ display: 'flex', alignItems: 'center', background: 'rgba(255,255,255,0.04)', borderRadius: '10px', padding: '2px', border: '1px solid rgba(255,255,255,0.06)' }}>
+          <button onClick={function() { setGameMode('crypto'); }} style={{ padding: '5px 14px', borderRadius: '8px', border: 'none', background: gameMode === 'crypto' ? 'rgba(16,185,129,0.15)' : 'transparent', color: gameMode === 'crypto' ? '#10b981' : '#6b7280', fontWeight: '700', fontSize: '11px', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '4px' }}>
+            {'\u26A1'} Crypto
           </button>
-          <button onClick={() => { window.location.href = '/ideas.html'; }} style={{ background: 'none', border: 'none', color: '#9ca3af', fontSize: '12px', fontWeight: '600', cursor: 'pointer', transition: 'color 0.2s', padding: '4px 8px' }} onMouseEnter={(e) => e.target.style.color = '#10b981'} onMouseLeave={(e) => e.target.style.color = '#9ca3af'}>
-            Ideas
+          <button onClick={function() { setGameMode('stocks'); }} style={{ padding: '5px 14px', borderRadius: '8px', border: 'none', background: gameMode === 'stocks' ? 'rgba(168,85,247,0.15)' : 'transparent', color: gameMode === 'stocks' ? '#a855f7' : '#6b7280', fontWeight: '700', fontSize: '11px', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '4px' }}>
+            {'\u{1F4C8}'} Stocks
+          </button>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <button onClick={function() { var next = !soundOn; setSoundOn(next); _soundEnabled = next; try { localStorage.setItem('pulse_sound', next ? 'on' : 'off'); } catch(e) {} }} title={soundOn ? 'Mute sounds' : 'Unmute sounds'} style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '8px', padding: '4px 8px', cursor: 'pointer', fontSize: '14px', lineHeight: '1', color: soundOn ? '#10b981' : '#4b5563', transition: 'all 0.2s' }}>
+            {soundOn ? '\u{1F50A}' : '\u{1F507}'}
           </button>
         </div>
         {isConnected ? (
@@ -1645,6 +1754,16 @@ const PulseGame = function(props) {
               <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: wsConnected ? '#10b981' : '#ef4444', animation: wsConnected ? 'breathe 2s infinite' : 'none' }}></span>
               <span style={{ fontSize: '9px', color: '#6b7280' }}>R#{roundNumber}</span>
             </div>
+            {xProfile ? (
+              <button onClick={function() { setShowProfileSetup(true); }} style={{ padding: '4px 10px', borderRadius: '14px', fontWeight: '600', color: '#1d9bf0', border: '1px solid rgba(29,155,240,0.2)', cursor: 'pointer', fontSize: '11px', background: 'rgba(29,155,240,0.08)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                {xProfile.avatar ? <img src={xProfile.avatar} style={{ width: '14px', height: '14px', borderRadius: '50%' }} /> : null}
+                <span style={{ fontWeight: '900', fontSize: '10px' }}>{'\u{1D54F}'}</span> @{xProfile.handle}
+              </button>
+            ) : (
+              <button onClick={connectX} style={{ padding: '4px 10px', borderRadius: '14px', fontWeight: '600', color: '#9ca3af', border: '1px solid rgba(255,255,255,0.08)', cursor: 'pointer', fontSize: '10px', background: 'rgba(255,255,255,0.03)', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                <span style={{ fontWeight: '900', fontSize: '11px' }}>{'\u{1D54F}'}</span> Connect
+              </button>
+            )}
             <button onClick={() => open({ view: 'Account' })} style={{ padding: '4px 10px', borderRadius: '14px', fontWeight: '600', color: '#10b981', border: '1px solid rgba(16,185,129,0.15)', cursor: 'pointer', fontSize: '11px', background: 'rgba(16,185,129,0.06)' }}>
               {ethBal} ETH
             </button>
@@ -1771,20 +1890,38 @@ const PulseGame = function(props) {
                 <PriceChart prices={priceHistory} lockPrice={snapshotPrice} phase={phase} roundResult={roundResult} />
               </div>
 
-              {/* SOCIAL FEED — recent bets from other players */}
+              {/* PLAYERS IN THIS ROUND — who bet UP vs DOWN */}
               {recentBets.length > 0 && (
-                <div style={{ padding: '0 4px', flexShrink: 0, overflow: 'hidden' }}>
-                  <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch', padding: '3px 0' }}>
-                    {recentBets.slice(0, 8).map(function(b, i) {
-                      var isUp = b.side === 'up';
-                      return (
-                        <div key={i} style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: '4px', padding: '3px 8px', borderRadius: '8px', background: isUp ? 'rgba(16,185,129,0.06)' : 'rgba(239,68,68,0.06)', border: isUp ? '1px solid rgba(16,185,129,0.12)' : '1px solid rgba(239,68,68,0.12)', animation: 'fadeIn 0.3s ease' }}>
-                          <span style={{ fontSize: '8px' }}>{isUp ? '🟢' : '🔴'}</span>
-                          <span style={{ fontSize: '9px', color: '#9ca3af', fontFamily: 'monospace' }}>{b.name || '0x???'}</span>
-                          <span style={{ fontSize: '9px', fontWeight: '700', color: isUp ? '#10b981' : '#ef4444' }}>{b.amount} {isUp ? 'UP' : 'DN'}</span>
-                        </div>
-                      );
-                    })}
+                <div style={{ padding: '4px 4px 0', flexShrink: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+                    <span style={{ fontSize: '9px', color: '#6b7280', fontWeight: '600', letterSpacing: '0.5px' }}>PLAYERS IN ROUND</span>
+                    <span style={{ fontSize: '9px', color: '#4b5563' }}>{recentBets.length} bets</span>
+                  </div>
+                  <div style={{ display: 'flex', gap: '6px' }}>
+                    {/* UP side */}
+                    <div style={{ flex: 1, padding: '6px 8px', borderRadius: '8px', background: 'rgba(16,185,129,0.05)', border: '1px solid rgba(16,185,129,0.1)' }}>
+                      <div style={{ fontSize: '8px', color: '#10b981', fontWeight: '700', marginBottom: '3px', letterSpacing: '0.5px' }}>{'\u{1F4C8}'} UP ({recentBets.filter(function(b) { return b.side === 'up'; }).length})</div>
+                      {recentBets.filter(function(b) { return b.side === 'up'; }).slice(0, 4).map(function(b, i) {
+                        return (
+                          <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '2px 0' }}>
+                            <span style={{ fontSize: '10px', color: '#d1d5db', fontWeight: '600' }}>{b.name || (b.address ? b.address.slice(0, 6) + '..' + b.address.slice(-4) : '0x???')}</span>
+                            <span style={{ fontSize: '9px', color: '#10b981', fontWeight: '700' }}>{b.amount} ETH</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    {/* DOWN side */}
+                    <div style={{ flex: 1, padding: '6px 8px', borderRadius: '8px', background: 'rgba(239,68,68,0.05)', border: '1px solid rgba(239,68,68,0.1)' }}>
+                      <div style={{ fontSize: '8px', color: '#ef4444', fontWeight: '700', marginBottom: '3px', letterSpacing: '0.5px' }}>{'\u{1F4C9}'} DOWN ({recentBets.filter(function(b) { return b.side === 'down'; }).length})</div>
+                      {recentBets.filter(function(b) { return b.side === 'down'; }).slice(0, 4).map(function(b, i) {
+                        return (
+                          <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '2px 0' }}>
+                            <span style={{ fontSize: '10px', color: '#d1d5db', fontWeight: '600' }}>{b.name || (b.address ? b.address.slice(0, 6) + '..' + b.address.slice(-4) : '0x???')}</span>
+                            <span style={{ fontSize: '9px', color: '#ef4444', fontWeight: '700' }}>{b.amount} ETH</span>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
               )}
@@ -1794,28 +1931,46 @@ const PulseGame = function(props) {
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
                     <div style={{ fontSize: '9px', color: '#4b5563', letterSpacing: '1.5px' }}>{isStocks ? stockTicker : asset}/USD</div>
+                    {(phase === 'results' || phase === 'resolving') && frozenExitPrice ? (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
+                      <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#fbbf24', display: 'inline-block' }} />
+                      <span style={{ fontSize: '8px', color: '#fbbf24', fontWeight: '700', letterSpacing: '0.5px' }}>LOCKED</span>
+                    </div>
+                    ) : (
                     <div style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
                       <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#10b981', animation: 'pulseGlow 1.4s ease-in-out infinite', display: 'inline-block' }} />
                       <span style={{ fontSize: '8px', color: '#10b981', fontWeight: '700', letterSpacing: '0.5px' }}>LIVE</span>
                     </div>
+                    )}
                   </div>
-                  <div key={priceKey} style={{ fontSize: '24px', fontWeight: '800', letterSpacing: '-1px', lineHeight: 1, animation: priceDir ? (priceDir === 'up' ? 'priceFlashGreen 0.5s ease-out' : 'priceFlashRed 0.5s ease-out') : 'none' }}>
-                    {price > 0 ? '$' + price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '...'}
-                  </div>
-                  {snapshotPrice && phase !== 'betting' && (
+                  {(function() {
+                    // During results/resolving, show frozen exit price so it matches the win/lose card
+                    var showPrice = (phase === 'results' || phase === 'resolving') && frozenExitPrice ? frozenExitPrice : price;
+                    return (
+                    <div key={priceKey} style={{ fontSize: '24px', fontWeight: '800', letterSpacing: '-1px', lineHeight: 1, animation: priceDir ? (priceDir === 'up' ? 'priceFlashGreen 0.5s ease-out' : 'priceFlashRed 0.5s ease-out') : 'none' }}>
+                      {showPrice > 0 ? '$' + showPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '...'}
+                    </div>
+                    );
+                  })()}
+                  {snapshotPrice && phase !== 'betting' && (function() {
+                    // Use frozen exit price during results/resolving to match the win/lose cards
+                    var displayPrice = (phase === 'results' || phase === 'resolving') && frozenExitPrice ? frozenExitPrice : price;
+                    var diff = displayPrice - snapshotPrice;
+                    return (
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px' }}>
                       <span style={{ fontSize: '10px', color: '#6b7280' }}>Entry ${snapshotPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                      <span style={{ fontSize: '12px', fontWeight: '800', padding: '1px 6px', borderRadius: '6px', background: price >= snapshotPrice ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)', color: price >= snapshotPrice ? '#10b981' : '#ef4444', border: price >= snapshotPrice ? '1px solid rgba(16,185,129,0.25)' : '1px solid rgba(239,68,68,0.25)' }}>
-                        {(() => { var diff = price - snapshotPrice; return (diff >= 0 ? '+$' : '-$') + Math.abs(diff).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); })()}
+                      <span style={{ fontSize: '12px', fontWeight: '800', padding: '1px 6px', borderRadius: '6px', background: diff >= 0 ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)', color: diff >= 0 ? '#10b981' : '#ef4444', border: diff >= 0 ? '1px solid rgba(16,185,129,0.25)' : '1px solid rgba(239,68,68,0.25)' }}>
+                        {(diff >= 0 ? '+$' : '-$') + Math.abs(diff).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </span>
                     </div>
-                  )}
+                    );
+                  })()}
                 </div>
 
                 {/* Compact circular countdown */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   {/* Win/Loss badge */}
-                  {bet && phase === 'results' && roundResult && (
+                  {bet && (phase === 'results' || phase === 'resolving') && roundResult && (
                     <div style={{ padding: '4px 12px', borderRadius: '10px', fontSize: '12px', fontWeight: '800', animation: 'slideIn 0.3s ease', background: bet === roundResult ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)', color: bet === roundResult ? '#10b981' : '#ef4444', border: bet === roundResult ? '1px solid rgba(16,185,129,0.3)' : '1px solid rgba(239,68,68,0.3)' }}>
                       {bet === roundResult ? 'WON' : 'LOST'}
                     </div>
@@ -1892,13 +2047,16 @@ const PulseGame = function(props) {
 
               {/* AMOUNT + BET BUTTONS */}
               <div style={{ padding: '4px 0 0', flexShrink: 0 }}>
-                {/* Amount selector */}
-                <div style={{ display: 'flex', justifyContent: 'center', gap: '4px', marginBottom: '6px' }}>
-                  {[0.001, 0.005, 0.01, 0.05].map(amt => (
+                {/* Amount selector + Quick Bet toggle */}
+                <div style={{ display: 'flex', justifyContent: 'center', gap: '4px', marginBottom: '6px', alignItems: 'center' }}>
+                  {[0.0025, 0.005, 0.01, 0.025].map(amt => (
                     <button key={amt} className="amount-btn" onClick={() => setBetAmount(amt)}
                       style={{ padding: '5px 12px', borderRadius: '8px', border: betAmount === amt ? '1px solid rgba(16,185,129,0.4)' : '1px solid rgba(255,255,255,0.05)', background: betAmount === amt ? 'rgba(16,185,129,0.12)' : 'rgba(255,255,255,0.02)', color: betAmount === amt ? '#10b981' : '#6b7280', fontWeight: '600', fontSize: '11px', cursor: 'pointer' }}
                     >{BET_LABELS[amt]}</button>
                   ))}
+                  <button onClick={function() { setShowQuickBetSetup(true); }} style={{ padding: '5px 8px', borderRadius: '8px', border: quickBetActive ? '1px solid rgba(251,191,36,0.4)' : '1px solid rgba(255,255,255,0.05)', background: quickBetActive ? 'rgba(251,191,36,0.12)' : 'rgba(255,255,255,0.02)', color: quickBetActive ? '#fbbf24' : '#6b7280', fontWeight: '700', fontSize: '10px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                    {'\u26A1'}{quickBetActive ? sessionRemaining.toFixed(2) : 'Quick'}
+                  </button>
                 </div>
 
                 {/* UP / DOWN */}
@@ -1977,6 +2135,15 @@ const PulseGame = function(props) {
                         style={{ width: '100%', padding: '12px', borderRadius: '10px', border: 'none', background: claimStatus === 'confirmed' ? '#10b981' : 'linear-gradient(135deg, #10b981, #059669)', color: '#000', fontWeight: '800', fontSize: '14px', cursor: claimStatus ? 'not-allowed' : 'pointer', boxShadow: '0 4px 16px rgba(16,185,129,0.4)', transition: 'all 0.2s' }}
                       >{claimStatus === 'pending' ? 'Confirm in Wallet...' : claimStatus === 'confirming' ? 'Claiming...' : claimStatus === 'confirmed' ? 'Claimed!' : claimStatus === 'error' ? 'Claim Failed' : 'Claim ' + (betAmount * 2).toFixed(3) + ' ETH'}</button>
                     )}
+                    {/* Share buttons */}
+                    <div style={{ display: 'flex', gap: '6px', marginTop: '10px' }}>
+                      <button onClick={function() { shareToX(true, bet, betAmount, frozenEntry, frozenExit, streak); haptic('impact', 'light'); }} style={{ flex: 1, padding: '8px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(0,0,0,0.3)', color: '#fff', fontSize: '11px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                        <span style={{ fontSize: '13px', fontWeight: '900' }}>𝕏</span> Share Win
+                      </button>
+                      <button onClick={function() { shareNative(true, bet, betAmount, frozenEntry, frozenExit, streak); }} style={{ flex: 1, padding: '8px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(0,0,0,0.3)', color: '#fff', fontSize: '11px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                        {'\u{1F4F1}'} Share
+                      </button>
+                    </div>
                   </div>
                 );
               })()}
@@ -2012,6 +2179,15 @@ const PulseGame = function(props) {
                         <div style={{ color: '#ef4444', fontWeight: '800' }}>{margin >= 0 ? '+' : '-'}${marginAbs.toFixed(2)}</div>
                       </div>
                     </div>
+                    {/* Share buttons */}
+                    <div style={{ display: 'flex', gap: '6px', marginTop: '10px' }}>
+                      <button onClick={function() { shareToX(false, bet, betAmount, frozenEntry, frozenExit, 0); haptic('impact', 'light'); }} style={{ flex: 1, padding: '8px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(0,0,0,0.3)', color: '#9ca3af', fontSize: '11px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                        <span style={{ fontSize: '13px', fontWeight: '900' }}>𝕏</span> Post
+                      </button>
+                      <button onClick={function() { shareNative(false, bet, betAmount, frozenEntry, frozenExit, 0); }} style={{ flex: 1, padding: '8px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(0,0,0,0.3)', color: '#9ca3af', fontSize: '11px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                        {'\u{1F4F1}'} Share
+                      </button>
+                    </div>
                   </div>
                 );
               })()}
@@ -2028,6 +2204,86 @@ const PulseGame = function(props) {
       )}
 
       {/* Referral overlay */}
+      {/* Quick Bet Setup overlay */}
+      {showQuickBetSetup && (
+        <div onClick={function() { setShowQuickBetSetup(false); }} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)', zIndex: 90, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', animation: 'fadeIn 0.2s ease' }}>
+          <div onClick={function(e) { e.stopPropagation(); }} className="glass-card" style={{ borderRadius: '20px', padding: '24px', maxWidth: '400px', width: '100%' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <div style={{ fontSize: '16px', fontWeight: '700' }}>{'\u26A1'} Quick Bet Mode</div>
+              <button onClick={function() { setShowQuickBetSetup(false); }} style={{ background: 'none', border: 'none', color: '#6b7280', fontSize: '18px', cursor: 'pointer' }}>{'\u2715'}</button>
+            </div>
+            <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '16px', lineHeight: '1.5' }}>Set a session spending limit so you can bet without approving each transaction. Your wallet will ask once for the full amount, then bets fire instantly.</div>
+            {sessionAllowance > 0 ? (
+              <div>
+                <div style={{ padding: '12px', borderRadius: '12px', background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)', marginBottom: '12px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                    <span style={{ fontSize: '11px', color: '#6b7280' }}>Session Limit</span>
+                    <span style={{ fontSize: '11px', fontWeight: '700', color: '#10b981' }}>{sessionAllowance.toFixed(3)} ETH</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                    <span style={{ fontSize: '11px', color: '#6b7280' }}>Spent</span>
+                    <span style={{ fontSize: '11px', fontWeight: '700', color: '#fbbf24' }}>{sessionSpent.toFixed(3)} ETH</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ fontSize: '11px', color: '#6b7280' }}>Remaining</span>
+                    <span style={{ fontSize: '11px', fontWeight: '700', color: sessionRemaining > 0 ? '#10b981' : '#ef4444' }}>{sessionRemaining.toFixed(3)} ETH</span>
+                  </div>
+                  <div style={{ height: '3px', borderRadius: '2px', background: 'rgba(255,255,255,0.06)', marginTop: '8px', overflow: 'hidden' }}>
+                    <div style={{ height: '100%', width: (sessionAllowance > 0 ? Math.min(100, (sessionSpent / sessionAllowance) * 100) : 0) + '%', background: 'linear-gradient(90deg, #10b981, #fbbf24)', borderRadius: '2px', transition: 'width 0.3s' }} />
+                  </div>
+                </div>
+                <button onClick={function() { setSessionAllowance(0); setSessionSpent(0); setShowQuickBetSetup(false); }} style={{ width: '100%', padding: '10px', borderRadius: '10px', border: '1px solid rgba(239,68,68,0.2)', background: 'rgba(239,68,68,0.06)', color: '#ef4444', fontWeight: '600', fontSize: '12px', cursor: 'pointer' }}>End Session</button>
+              </div>
+            ) : (
+              <div>
+                <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
+                  {[0.05, 0.1, 0.25, 0.5].map(function(amt) {
+                    return (
+                      <button key={amt} onClick={function() { setSessionAllowance(amt); setSessionSpent(0); setShowQuickBetSetup(false); haptic('notification', 'success'); }} style={{ flex: 1, padding: '12px 6px', borderRadius: '10px', border: '1px solid rgba(16,185,129,0.2)', background: 'rgba(16,185,129,0.06)', color: '#10b981', fontWeight: '700', fontSize: '13px', cursor: 'pointer', textAlign: 'center' }}>
+                        {amt} ETH
+                      </button>
+                    );
+                  })}
+                </div>
+                <div style={{ fontSize: '10px', color: '#4b5563', textAlign: 'center', lineHeight: '1.5' }}>Choose how much ETH to pre-approve for this session. When it runs out, you'll need to approve again. Session resets when you close the app.</div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Profile Setup overlay */}
+      {showProfileSetup && (
+        <div onClick={function() { setShowProfileSetup(false); }} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)', zIndex: 90, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', animation: 'fadeIn 0.2s ease' }}>
+          <div onClick={function(e) { e.stopPropagation(); }} className="glass-card" style={{ borderRadius: '20px', padding: '24px', maxWidth: '400px', width: '100%' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <div style={{ fontSize: '16px', fontWeight: '700' }}>Your Profile</div>
+              <button onClick={function() { setShowProfileSetup(false); }} style={{ background: 'none', border: 'none', color: '#6b7280', fontSize: '18px', cursor: 'pointer' }}>{'\u2715'}</button>
+            </div>
+            <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '16px' }}>Link your X account so other players can see who you are. Your handle appears next to your bets.</div>
+            {xProfile ? (
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px', borderRadius: '12px', background: 'rgba(29,155,240,0.08)', border: '1px solid rgba(29,155,240,0.2)', marginBottom: '12px' }}>
+                  {xProfile.avatar ? <img src={xProfile.avatar} style={{ width: '36px', height: '36px', borderRadius: '50%' }} /> : <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'rgba(29,155,240,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', fontWeight: '900' }}>{'\u{1D54F}'}</div>}
+                  <div>
+                    <div style={{ fontSize: '14px', fontWeight: '700', color: '#fff' }}>{xProfile.name || xProfile.handle}</div>
+                    <div style={{ fontSize: '12px', color: '#1d9bf0' }}>@{xProfile.handle}</div>
+                  </div>
+                </div>
+                <button onClick={disconnectX} style={{ width: '100%', padding: '10px', borderRadius: '10px', border: '1px solid rgba(239,68,68,0.2)', background: 'rgba(239,68,68,0.06)', color: '#ef4444', fontWeight: '600', fontSize: '12px', cursor: 'pointer' }}>Disconnect X Account</button>
+              </div>
+            ) : (
+              <div>
+                <button onClick={function() { connectX(); setShowProfileSetup(false); }} style={{ width: '100%', padding: '14px', borderRadius: '12px', border: 'none', background: '#1d9bf0', color: '#fff', fontWeight: '700', fontSize: '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', boxShadow: '0 4px 16px rgba(29,155,240,0.3)' }}>
+                  <span style={{ fontWeight: '900', fontSize: '16px' }}>{'\u{1D54F}'}</span> Connect X Account
+                </button>
+                <div style={{ fontSize: '10px', color: '#4b5563', textAlign: 'center', marginTop: '10px' }}>Your @handle and avatar will appear next to your bets so other players can see who they're up against.</div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {showReferral && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)', zIndex: 90, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', animation: 'fadeIn 0.2s ease' }}>
           <div className="glass-card" style={{ borderRadius: '20px', padding: '24px', maxWidth: '400px', width: '100%' }}>
@@ -2205,7 +2461,10 @@ const PulseGame = function(props) {
               {(resultToast.side === 'up' ? '\u{1F4C8} UP' : '\u{1F4C9} DOWN')} &middot; ${resultToast.entryPrice ? resultToast.entryPrice.toLocaleString(undefined, { maximumFractionDigits: 2 }) : '—'} &rarr; ${resultToast.exitPrice ? resultToast.exitPrice.toLocaleString(undefined, { maximumFractionDigits: 2 }) : '—'}
             </div>
           </div>
-          <div style={{ fontSize: '14px', opacity: 0.7, marginLeft: '4px' }}>&times;</div>
+          <button onClick={function(e) { e.stopPropagation(); shareToX(resultToast.won, resultToast.side, resultToast.amount, resultToast.entryPrice, resultToast.exitPrice, resultToast.won ? streak : 0); }} style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '8px', color: '#fff', padding: '4px 10px', fontSize: '11px', fontWeight: '800', cursor: 'pointer', flexShrink: 0, display: 'flex', alignItems: 'center', gap: '3px' }}>
+            <span style={{ fontWeight: '900' }}>𝕏</span>
+          </button>
+          <div style={{ fontSize: '14px', opacity: 0.7, marginLeft: '2px', flexShrink: 0 }}>&times;</div>
         </div>
       )}
 
@@ -2265,18 +2524,7 @@ function App() {
           {showGame ? (
             <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh', width: '100%' }}>
               <div style={{ flex: 1, minHeight: 0, overflow: 'auto', position: 'relative' }}>
-                <PulseGame key={gameMode} gameMode={gameMode} />
-              </div>
-              {/* Bottom Nav — Crypto / Stocks */}
-              <div style={{ flexShrink: 0, display: 'flex', borderTop: '1px solid rgba(255,255,255,0.06)', background: 'rgba(8,8,12,0.95)', backdropFilter: 'blur(12px)', padding: '0 0 env(safe-area-inset-bottom, 0)' }}>
-                <button onClick={function() { setGameMode('crypto'); }} style={{ flex: 1, padding: '10px 0 8px', border: 'none', background: gameMode === 'crypto' ? 'rgba(16,185,129,0.08)' : 'transparent', color: gameMode === 'crypto' ? '#10b981' : '#4b5563', fontWeight: '700', fontSize: '11px', cursor: 'pointer', borderTop: gameMode === 'crypto' ? '2px solid #10b981' : '2px solid transparent', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px', transition: 'all 0.2s' }}>
-                  <span style={{ fontSize: '16px' }}>{'\u26A1'}</span>
-                  <span>Crypto</span>
-                </button>
-                <button onClick={function() { setGameMode('stocks'); }} style={{ flex: 1, padding: '10px 0 8px', border: 'none', background: gameMode === 'stocks' ? 'rgba(168,85,247,0.08)' : 'transparent', color: gameMode === 'stocks' ? '#a855f7' : '#4b5563', fontWeight: '700', fontSize: '11px', cursor: 'pointer', borderTop: gameMode === 'stocks' ? '2px solid #a855f7' : '2px solid transparent', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px', transition: 'all 0.2s' }}>
-                  <span style={{ fontSize: '16px' }}>{'\u{1F4C8}'}</span>
-                  <span>Stocks</span>
-                </button>
+                <PulseGame key={gameMode} gameMode={gameMode} setGameMode={setGameMode} />
               </div>
             </div>
           ) : <LandingPage onEnter={function() { setShowGame(true); }} />}
