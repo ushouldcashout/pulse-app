@@ -1361,8 +1361,9 @@ const PulseGame = function(props) {
     } else if (isTxReverted) {
       setTxStatus('error');
       setTxErrorMsg('Transaction reverted on-chain');
+      setBet(null); // IMMEDIATELY clear bet — no fake win/lose for failed tx
       haptic('notification', 'error');
-      setTimeout(function() { setTxStatus(null); setBet(null); setTxErrorMsg(''); resetTx(); }, 3000);
+      setTimeout(function() { setTxStatus(null); setTxErrorMsg(''); resetTx(); }, 3000);
     }
   }, [isTxPending, isTxConfirming, isTxConfirmed, isTxReverted]);
 
@@ -1374,8 +1375,9 @@ const PulseGame = function(props) {
       else if (msg.includes('insufficient funds')) msg = 'Insufficient balance';
       setTxErrorMsg(msg);
       setTxStatus('error');
+      setBet(null); // IMMEDIATELY clear bet — failed tx means no active bet
       haptic('notification', 'error');
-      setTimeout(function() { setTxStatus(null); setBet(null); setTxErrorMsg(''); resetTx(); }, 3000);
+      setTimeout(function() { setTxStatus(null); setTxErrorMsg(''); resetTx(); }, 3000);
     }
   }, [txError]);
 
