@@ -1610,17 +1610,52 @@ const PulseGame = function(props) {
 
   var shareToX = function(won, side, amount, entryP, exitP, streakVal) {
     var s = shareResult(won, side, amount, entryP, exitP, streakVal);
-    var url = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(s.text);
-    try { if (window.Telegram && window.Telegram.WebApp) { window.Telegram.WebApp.openLink(url); } else { window.open(url, '_blank'); } } catch(e) { window.open(url, '_blank'); }
+    var url = 'https://x.com/intent/post?text=' + encodeURIComponent(s.text);
+    try {
+      if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.openLink) {
+        window.Telegram.WebApp.openLink(url);
+      } else {
+        window.open(url, '_blank', 'noopener,noreferrer');
+      }
+    } catch(e) {
+      // Last resort: navigate directly
+      window.location.href = url;
+    }
   };
 
   var shareNative = function(won, side, amount, entryP, exitP, streakVal) {
     var s = shareResult(won, side, amount, entryP, exitP, streakVal);
     if (navigator.share) {
-      navigator.share({ title: 'Pulse Bet Result', text: s.text, url: s.url }).catch(function() {});
+      navigator.share({ title: 'Pulse Bet Result', text: s.text, url: s.url }).catch(function(err) {
+        // User cancelled or share failed — fall back to clipboard
+        copyToClipboard(s.text);
+      });
     } else {
-      try { navigator.clipboard.writeText(s.text); } catch(e) {}
-      haptic('notification', 'success');
+      copyToClipboard(s.text);
+    }
+  };
+
+  var copyToClipboard = function(text) {
+    try {
+      navigator.clipboard.writeText(text).then(function() {
+        haptic('notification', 'success');
+        // Brief visual feedback via toast
+        setResultToast(function(prev) { return prev; }); // keep toast alive
+      }).catch(function() {
+        // Fallback for older browsers
+        var ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.left = '-9999px';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        haptic('notification', 'success');
+      });
+    } catch(e) {
+      // Final fallback
+      prompt('Copy this:', text);
     }
   };
 
@@ -2153,11 +2188,11 @@ const PulseGame = function(props) {
                     )}
                     {/* Share buttons */}
                     <div style={{ display: 'flex', gap: '6px', marginTop: '10px' }}>
-                      <button onClick={function() { shareToX(true, bet, betAmount, frozenEntry, frozenExit, streak); haptic('impact', 'light'); }} style={{ flex: 1, padding: '8px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(0,0,0,0.3)', color: '#fff', fontSize: '11px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
-                        <span style={{ fontSize: '13px', fontWeight: '900' }}>𝕏</span> Share Win
+                      <button onClick={function(e) { e.stopPropagation(); e.preventDefault(); shareToX(true, bet, betAmount, frozenEntry, frozenExit, streak); haptic('impact', 'light'); }} style={{ flex: 1, padding: '10px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(0,0,0,0.4)', color: '#fff', fontSize: '12px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px', WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}>
+                        <span style={{ fontSize: '14px', fontWeight: '900' }}>{'\u{1D54F}'}</span> Share on X
                       </button>
-                      <button onClick={function() { shareNative(true, bet, betAmount, frozenEntry, frozenExit, streak); }} style={{ flex: 1, padding: '8px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(0,0,0,0.3)', color: '#fff', fontSize: '11px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
-                        {'\u{1F4F1}'} Share
+                      <button onClick={function(e) { e.stopPropagation(); e.preventDefault(); shareNative(true, bet, betAmount, frozenEntry, frozenExit, streak); haptic('impact', 'light'); }} style={{ flex: 1, padding: '10px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(0,0,0,0.4)', color: '#fff', fontSize: '12px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px', WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}>
+                        {'\u{1F4CB}'} Copy
                       </button>
                     </div>
                   </div>
@@ -2197,11 +2232,11 @@ const PulseGame = function(props) {
                     </div>
                     {/* Share buttons */}
                     <div style={{ display: 'flex', gap: '6px', marginTop: '10px' }}>
-                      <button onClick={function() { shareToX(false, bet, betAmount, frozenEntry, frozenExit, 0); haptic('impact', 'light'); }} style={{ flex: 1, padding: '8px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(0,0,0,0.3)', color: '#9ca3af', fontSize: '11px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
-                        <span style={{ fontSize: '13px', fontWeight: '900' }}>𝕏</span> Post
+                      <button onClick={function(e) { e.stopPropagation(); e.preventDefault(); shareToX(false, bet, betAmount, frozenEntry, frozenExit, 0); haptic('impact', 'light'); }} style={{ flex: 1, padding: '10px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(0,0,0,0.4)', color: '#d1d5db', fontSize: '12px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px', WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}>
+                        <span style={{ fontSize: '14px', fontWeight: '900' }}>{'\u{1D54F}'}</span> Post on X
                       </button>
-                      <button onClick={function() { shareNative(false, bet, betAmount, frozenEntry, frozenExit, 0); }} style={{ flex: 1, padding: '8px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(0,0,0,0.3)', color: '#9ca3af', fontSize: '11px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
-                        {'\u{1F4F1}'} Share
+                      <button onClick={function(e) { e.stopPropagation(); e.preventDefault(); shareNative(false, bet, betAmount, frozenEntry, frozenExit, 0); haptic('impact', 'light'); }} style={{ flex: 1, padding: '10px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(0,0,0,0.4)', color: '#d1d5db', fontSize: '12px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px', WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}>
+                        {'\u{1F4CB}'} Copy
                       </button>
                     </div>
                   </div>
@@ -2465,7 +2500,6 @@ const PulseGame = function(props) {
       {/* Sticky result toast — persists across round transitions so user can't miss outcome */}
       {resultToast && (
         <div
-          onClick={function() { if (resultToastTimerRef.current) clearTimeout(resultToastTimerRef.current); setResultToast(null); }}
           style={{
             position: 'fixed',
             top: '70px',
@@ -2481,7 +2515,6 @@ const PulseGame = function(props) {
             display: 'flex',
             alignItems: 'center',
             gap: '12px',
-            cursor: 'pointer',
             animation: 'slideIn 0.4s ease',
             maxWidth: '92vw',
           }}
@@ -2498,7 +2531,7 @@ const PulseGame = function(props) {
           <button onClick={function(e) { e.stopPropagation(); shareToX(resultToast.won, resultToast.side, resultToast.amount, resultToast.entryPrice, resultToast.exitPrice, resultToast.won ? streak : 0); }} style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '8px', color: '#fff', padding: '4px 10px', fontSize: '11px', fontWeight: '800', cursor: 'pointer', flexShrink: 0, display: 'flex', alignItems: 'center', gap: '3px' }}>
             <span style={{ fontWeight: '900' }}>𝕏</span>
           </button>
-          <div style={{ fontSize: '14px', opacity: 0.7, marginLeft: '2px', flexShrink: 0 }}>&times;</div>
+          <button onClick={function(e) { e.stopPropagation(); if (resultToastTimerRef.current) clearTimeout(resultToastTimerRef.current); setResultToast(null); }} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.7)', fontSize: '16px', cursor: 'pointer', padding: '4px 2px', flexShrink: 0, lineHeight: 1, touchAction: 'manipulation' }}>&times;</button>
         </div>
       )}
 
