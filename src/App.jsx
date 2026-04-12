@@ -340,8 +340,10 @@ const PULSE_STYLES = `
 }
 .glass-card {
   background: rgba(255,255,255,0.03) !important;
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255,255,255,0.06);
+  backdrop-filter: blur(20px) saturate(1.3);
+  -webkit-backdrop-filter: blur(20px) saturate(1.3);
+  border: 1px solid rgba(255,255,255,0.08);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05);
 }
 .amount-btn { transition: all 0.15s ease !important; }
 .amount-btn:hover { transform: scale(1.08) !important; }
@@ -393,6 +395,50 @@ const PULSE_STYLES = `
   border: 1px solid rgba(255,255,255,0.03);
   margin-bottom: 6px;
   animation: fadeIn 0.3s ease;
+}
+@keyframes screenShake {
+  0%, 100% { transform: translateX(0); }
+  10% { transform: translateX(-4px); }
+  20% { transform: translateX(4px); }
+  30% { transform: translateX(-3px); }
+  40% { transform: translateX(3px); }
+  50% { transform: translateX(-2px); }
+  60% { transform: translateX(2px); }
+  70% { transform: translateX(-1px); }
+  80% { transform: translateX(1px); }
+}
+@keyframes urgentPulse {
+  0%, 100% { transform: scale(1); color: #ef4444; text-shadow: 0 0 8px rgba(239,68,68,0.5); }
+  50% { transform: scale(1.15); color: #ff0000; text-shadow: 0 0 20px rgba(239,68,68,0.9); }
+}
+@keyframes confettiDrop {
+  0% { transform: translateY(0) rotate(0deg) scale(1); opacity: 1; }
+  100% { transform: translateY(100vh) rotate(720deg) scale(0.5); opacity: 0; }
+}
+@keyframes streakFire {
+  0%, 100% { text-shadow: 0 0 4px rgba(251,191,36,0.5); }
+  50% { text-shadow: 0 0 12px rgba(251,191,36,0.9), 0 0 24px rgba(239,68,68,0.4); }
+}
+@keyframes particleFloat {
+  0% { transform: translateY(100vh) translateX(0) scale(0); opacity: 0; }
+  10% { opacity: 0.6; scale: 1; }
+  90% { opacity: 0.2; }
+  100% { transform: translateY(-10vh) translateX(40px) scale(0.5); opacity: 0; }
+}
+.glass-card-enhanced {
+  background: rgba(255,255,255,0.02) !important;
+  backdrop-filter: blur(20px) saturate(1.3);
+  -webkit-backdrop-filter: blur(20px) saturate(1.3);
+  border: 1px solid rgba(255,255,255,0.08);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05);
+}
+.game-card-glass {
+  background: rgba(255,255,255,0.015);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.04);
 }
 `;
 
@@ -1060,6 +1106,56 @@ class ErrorBoundary extends React.Component {
 }
 
 // ============================================
+// SOUND EFFECTS (Web Audio API — no external files)
+// ============================================
+var _audioCtx = null;
+function getAudioCtx() {
+  if (!_audioCtx) { try { _audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) {} }
+  return _audioCtx;
+}
+function playSound(type) {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    var osc = ctx.createOscillator();
+    var gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    gain.gain.value = 0.08;
+    if (type === 'win') {
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(523, ctx.currentTime); // C5
+      osc.frequency.setValueAtTime(659, ctx.currentTime + 0.1); // E5
+      osc.frequency.setValueAtTime(784, ctx.currentTime + 0.2); // G5
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.5);
+    } else if (type === 'lose') {
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(300, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(100, ctx.currentTime + 0.3);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.3);
+    } else if (type === 'tick') {
+      osc.type = 'sine';
+      osc.frequency.value = 880;
+      gain.gain.value = 0.04;
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.05);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.05);
+    } else if (type === 'bet') {
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(440, ctx.currentTime);
+      osc.frequency.setValueAtTime(554, ctx.currentTime + 0.05);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.15);
+    }
+  } catch(e) {}
+}
+
+// ============================================
 // TELEGRAM SDK
 // ============================================
 const useTelegram = () => {
@@ -1196,12 +1292,18 @@ const PulseGame = function(props) {
   });
   const [showHistory, setShowHistory] = useState(false);
   const lastHistoryRoundRef = useRef(null);
-  const [resultToast, setResultToast] = useState(null); // { won, side, amount, entryPrice, exitPrice }
+  const [resultToast, setResultToast] = useState(null);
   const resultToastTimerRef = useRef(null);
+  const [streak, setStreak] = useState(function() { try { return parseInt(localStorage.getItem('pulse_streak') || '0'); } catch(e) { return 0; } });
+  const [bestStreak, setBestStreak] = useState(function() { try { return parseInt(localStorage.getItem('pulse_best_streak') || '0'); } catch(e) { return 0; } });
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [showShake, setShowShake] = useState(false);
 
   useEffect(() => { try { const p = localStorage.getItem('pulse_points'); if (p) setPoints(parseInt(p)); } catch(e){} }, []);
   useEffect(() => { try { localStorage.setItem('pulse_points', points.toString()); } catch(e){} }, [points]);
   useEffect(() => { try { localStorage.setItem('pulse_bet_history', JSON.stringify(betHistory.slice(0, 100))); } catch(e){} }, [betHistory]);
+  useEffect(function() { try { localStorage.setItem('pulse_streak', streak.toString()); } catch(e) {} }, [streak]);
+  useEffect(function() { try { localStorage.setItem('pulse_best_streak', bestStreak.toString()); } catch(e) {} }, [bestStreak]);
 
   // Stocks: poll market status every 30s
   useEffect(function() {
@@ -1311,6 +1413,22 @@ const PulseGame = function(props) {
             asset: asset,
           };
           setBetHistory(function(prev) { return [entry].concat(prev).slice(0, 100); });
+          // Update streak + effects
+          if (won) {
+            setStreak(function(s) {
+              var next = s + 1;
+              setBestStreak(function(b) { return next > b ? next : b; });
+              return next;
+            });
+            setShowConfetti(true);
+            playSound('win');
+            setTimeout(function() { setShowConfetti(false); }, 3000);
+          } else {
+            setStreak(0);
+            setShowShake(true);
+            playSound('lose');
+            setTimeout(function() { setShowShake(false); }, 500);
+          }
           // Sticky result toast — persists into next round so user can't miss it
           if (resultToastTimerRef.current) clearTimeout(resultToastTimerRef.current);
           setResultToast(entry);
@@ -1348,7 +1466,10 @@ const PulseGame = function(props) {
                 setPriceHistory(function(prev) { return prev.concat([g.currentPrice]).slice(-80); });
               }
               if (g.phase) setPhase(g.phase);
-              if (g.countdown !== undefined) setCountdown(g.countdown);
+              if (g.countdown !== undefined) {
+                setCountdown(g.countdown);
+                if (g.phase === 'betting' && g.countdown <= 5 && g.countdown > 0) playSound('tick');
+              }
               if (g.snapshotPrice) setSnapshotPrice(g.snapshotPrice);
               if (g.roundNumber) setRoundNumber(g.roundNumber);
               if (g.pool) setPool(g.pool);
@@ -1397,6 +1518,7 @@ const PulseGame = function(props) {
     if (betAmount > balance) { alert('Insufficient balance'); return; }
 
     haptic('impact', 'medium');
+    playSound('bet');
     setBet(dir);
     setTxStatus('pending');
     setTxErrorMsg('');
@@ -1470,8 +1592,37 @@ const PulseGame = function(props) {
   const ringC = 2 * Math.PI * ringR;
 
   return (
-    <div style={{ height: '100%', maxHeight: '100%', overflow: 'auto', background: 'radial-gradient(ellipse at 50% 0%, #060f0b 0%, #000 70%)', color: '#fff', fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ height: '100%', maxHeight: '100%', overflow: 'auto', background: 'radial-gradient(ellipse at 50% 0%, #060f0b 0%, #000 70%)', color: '#fff', fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif', display: 'flex', flexDirection: 'column', animation: showShake ? 'screenShake 0.5s ease' : 'none', position: 'relative' }}>
       <style>{PULSE_STYLES}</style>
+
+      {/* Animated particle background */}
+      <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 0, overflow: 'hidden' }}>
+        {[0,1,2,3,4,5,6,7].map(function(i) {
+          var left = (i * 13 + 5) % 100;
+          var delay = i * 2.5;
+          var dur = 15 + (i % 3) * 5;
+          var size = 2 + (i % 3);
+          return (
+            <div key={i} style={{ position: 'absolute', left: left + '%', bottom: '-10px', width: size + 'px', height: size + 'px', borderRadius: '50%', background: i % 2 === 0 ? 'rgba(16,185,129,0.3)' : 'rgba(168,85,247,0.3)', animation: 'particleFloat ' + dur + 's ease-in-out infinite', animationDelay: delay + 's' }} />
+          );
+        })}
+      </div>
+
+      {/* Confetti overlay on win */}
+      {showConfetti && (
+        <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 85, overflow: 'hidden' }}>
+          {Array.from({ length: 30 }).map(function(_, i) {
+            var colors = ['#10b981', '#fbbf24', '#a855f7', '#06b6d4', '#ec4899', '#ef4444'];
+            var left = Math.random() * 100;
+            var delay = Math.random() * 0.8;
+            var dur = 1.5 + Math.random() * 2;
+            var size = 4 + Math.random() * 8;
+            return (
+              <div key={i} style={{ position: 'absolute', left: left + '%', top: '-10px', width: size + 'px', height: size + 'px', borderRadius: Math.random() > 0.5 ? '50%' : '2px', background: colors[i % colors.length], animation: 'confettiDrop ' + dur + 's ease-in forwards', animationDelay: delay + 's', opacity: 0 }} />
+            );
+          })}
+        </div>
+      )}
 
       {/* ===== HEADER BAR ===== */}
       <div style={{ padding: '10px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
@@ -1616,7 +1767,7 @@ const PulseGame = function(props) {
               )}
 
               {/* Chart */}
-              <div style={{ flex: 1, minHeight: '180px', borderRadius: '14px', overflow: 'hidden', background: 'rgba(255,255,255,0.015)', border: '1px solid rgba(255,255,255,0.04)' }}>
+              <div className="game-card-glass" style={{ flex: 1, minHeight: '180px', overflow: 'hidden' }}>
                 <PriceChart prices={priceHistory} lockPrice={snapshotPrice} phase={phase} roundResult={roundResult} />
               </div>
 
@@ -1670,24 +1821,33 @@ const PulseGame = function(props) {
                     </div>
                   )}
 
-                  <div style={{ position: 'relative', width: '54px', height: '54px' }}>
-                    <svg width="54" height="54" style={{ transform: 'rotate(-90deg)' }}>
-                      <circle cx="27" cy="27" r={ringR} fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth="3" />
-                      <circle cx="27" cy="27" r={ringR} fill="none"
-                        stroke={phase === 'betting' ? '#10b981' : phase === 'results' ? (roundResult === 'up' ? '#10b981' : '#ef4444') : '#fbbf24'}
-                        strokeWidth="3" strokeLinecap="round"
-                        strokeDasharray={ringC} strokeDashoffset={ringC * (1 - countdownPct)}
-                        style={{ transition: 'stroke-dashoffset 1s linear, stroke 0.3s' }}
-                      />
-                    </svg>
-                    <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                      {phase === 'results' ? (
-                        <span style={{ fontSize: '18px' }}>{roundResult === 'up' ? '📈' : '📉'}</span>
-                      ) : (
-                        <span style={{ fontSize: '18px', fontWeight: '800', color: phase === 'betting' ? '#10b981' : '#fbbf24', animation: countdown <= 3 && phase === 'betting' ? 'countdownPulse 0.5s infinite' : 'none' }}>{countdown}</span>
-                      )}
-                    </div>
-                  </div>
+                  {(function() {
+                    var isUrgent = countdown <= 5 && phase === 'betting';
+                    var isCritical = countdown <= 3 && phase === 'betting';
+                    var ringSize = isUrgent ? 64 : 54;
+                    var ringSizeR = (ringSize / 2) - 3;
+                    var ringSizeC = 2 * Math.PI * ringSizeR;
+                    return (
+                      <div style={{ position: 'relative', width: ringSize + 'px', height: ringSize + 'px', transition: 'width 0.3s, height 0.3s' }}>
+                        <svg width={ringSize} height={ringSize} style={{ transform: 'rotate(-90deg)' }}>
+                          <circle cx={ringSize/2} cy={ringSize/2} r={ringSizeR} fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth={isUrgent ? 4 : 3} />
+                          <circle cx={ringSize/2} cy={ringSize/2} r={ringSizeR} fill="none"
+                            stroke={isCritical ? '#ef4444' : isUrgent ? '#fbbf24' : phase === 'betting' ? '#10b981' : phase === 'results' ? (roundResult === 'up' ? '#10b981' : '#ef4444') : '#fbbf24'}
+                            strokeWidth={isUrgent ? 4 : 3} strokeLinecap="round"
+                            strokeDasharray={ringSizeC} strokeDashoffset={ringSizeC * (1 - countdownPct)}
+                            style={{ transition: 'stroke-dashoffset 1s linear, stroke 0.3s', filter: isCritical ? 'drop-shadow(0 0 6px rgba(239,68,68,0.6))' : isUrgent ? 'drop-shadow(0 0 4px rgba(251,191,36,0.4))' : 'none' }}
+                          />
+                        </svg>
+                        <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                          {phase === 'results' ? (
+                            <span style={{ fontSize: '20px' }}>{roundResult === 'up' ? '\u{1F4C8}' : '\u{1F4C9}'}</span>
+                          ) : (
+                            <span style={{ fontSize: isCritical ? '24px' : isUrgent ? '22px' : '18px', fontWeight: '900', color: isCritical ? '#ef4444' : isUrgent ? '#fbbf24' : phase === 'betting' ? '#10b981' : '#fbbf24', animation: isCritical ? 'urgentPulse 0.5s infinite' : isUrgent ? 'countdownPulse 0.7s infinite' : 'none', transition: 'font-size 0.3s' }}>{countdown}</span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })()}
 
                   <div style={{ textAlign: 'right' }}>
                     <div style={{ fontSize: '9px', letterSpacing: '1px', fontWeight: '700', color: phase === 'betting' ? '#10b981' : phase === 'results' ? (roundResult === 'up' ? '#10b981' : '#ef4444') : '#fbbf24' }}>
@@ -1754,15 +1914,17 @@ const PulseGame = function(props) {
 
               {/* BOTTOM BAR: Points + $PULSE + Referral */}
               <div style={{ padding: '0', flexShrink: 0, display: 'flex', gap: '6px', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <div style={{ padding: '3px 10px', borderRadius: '12px', background: 'rgba(251,191,36,0.08)', border: '1px solid rgba(251,191,36,0.12)' }}>
                     <span style={{ color: '#fbbf24', fontSize: '12px', fontWeight: '700' }}>{points}</span>
                     <span style={{ color: '#92702a', fontSize: '9px', marginLeft: '3px' }}>PTS</span>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '3px 8px', borderRadius: '12px', background: 'rgba(168,85,247,0.06)', border: '1px solid rgba(168,85,247,0.1)' }}>
-                    <span style={{ fontSize: '10px', fontWeight: '700', color: '#a855f7' }}>$PULSE</span>
-                    <span style={{ fontSize: '8px', padding: '1px 4px', borderRadius: '4px', background: 'rgba(168,85,247,0.2)', color: '#c084fc', fontWeight: '600' }}>SOON</span>
-                  </div>
+                  {streak > 0 && (
+                    <div style={{ padding: '3px 8px', borderRadius: '12px', background: streak >= 5 ? 'rgba(239,68,68,0.12)' : 'rgba(251,191,36,0.08)', border: '1px solid ' + (streak >= 5 ? 'rgba(239,68,68,0.2)' : 'rgba(251,191,36,0.12)'), animation: streak >= 3 ? 'streakFire 1.2s ease-in-out infinite' : 'none' }}>
+                      <span style={{ fontSize: '11px' }}>{streak >= 10 ? '\u{1F525}\u{1F525}' : streak >= 5 ? '\u{1F525}' : '\u{26A1}'}</span>
+                      <span style={{ color: streak >= 5 ? '#ef4444' : '#fbbf24', fontSize: '11px', fontWeight: '800', marginLeft: '2px' }}>{streak}x</span>
+                    </div>
+                  )}
                 </div>
                 <div style={{ display: 'flex', gap: '6px' }}>
                   {(function() {
