@@ -1223,6 +1223,8 @@ const PulseGame = () => {
   });
   const [showHistory, setShowHistory] = useState(false);
   const lastHistoryRoundRef = useRef(null);
+  const [resultToast, setResultToast] = useState(null); // { won, side, amount, entryPrice, exitPrice }
+  const resultToastTimerRef = useRef(null);
 
   useEffect(() => { try { const p = localStorage.getItem('pulse_points'); if (p) setPoints(parseInt(p)); } catch(e){} }, []);
   useEffect(() => { try { localStorage.setItem('pulse_points', points.toString()); } catch(e){} }, [points]);
@@ -1255,8 +1257,8 @@ const PulseGame = () => {
       setPoints(function(p) { return p + Math.floor(betAmount * 1000); });
       haptic('notification', 'success');
       refetchBalance();
-      // Clear after 3 seconds
-      setTimeout(function() { setTxStatus(null); setBet(null); resetTx(); }, 3000);
+      // Clear tx overlay after 3s but KEEP bet so win/lose UI can match against roundResult
+      setTimeout(function() { setTxStatus(null); resetTx(); }, 3000);
     } else if (isTxReverted) {
       setTxStatus('error');
       setTxErrorMsg('Transaction reverted on-chain');
@@ -1312,6 +1314,11 @@ const PulseGame = () => {
             asset: asset,
           };
           setBetHistory(function(prev) { return [entry].concat(prev).slice(0, 100); });
+          // Sticky result toast — persists into next round so user can't miss it
+          if (resultToastTimerRef.current) clearTimeout(resultToastTimerRef.current);
+          setResultToast(entry);
+          haptic('notification', won ? 'success' : 'error');
+          resultToastTimerRef.current = setTimeout(function() { setResultToast(null); }, 12000);
         }
       }
     }
@@ -1730,7 +1737,7 @@ const PulseGame = () => {
               </div>
 
               {/* Win Result Display */}
-              {bet && roundResult && bet === roundResult && phase === 'results' && (function() {
+              {bet && roundResult && bet === roundResult && (phase === 'results' || phase === 'resolving') && (function() {
                 var margin = (price && snapshotPrice) ? (price - snapshotPrice) : 0;
                 var marginAbs = Math.abs(margin);
                 var sideLabel = bet === 'up' ? 'UP' : 'DOWN';
@@ -1767,7 +1774,7 @@ const PulseGame = () => {
               })()}
 
               {/* Lose Result Display */}
-              {bet && roundResult && bet !== roundResult && phase === 'results' && (function() {
+              {bet && roundResult && bet !== roundResult && (phase === 'results' || phase === 'resolving') && (function() {
                 var margin = (price && snapshotPrice) ? (price - snapshotPrice) : 0;
                 var marginAbs = Math.abs(margin);
                 var sideLabel = bet === 'up' ? 'UP' : 'DOWN';
@@ -1954,6 +1961,43 @@ const PulseGame = () => {
           </div>
         );
       })()}
+
+      {/* Sticky result toast — persists across round transitions so user can't miss outcome */}
+      {resultToast && (
+        <div
+          onClick={function() { if (resultToastTimerRef.current) clearTimeout(resultToastTimerRef.current); setResultToast(null); }}
+          style={{
+            position: 'fixed',
+            top: '70px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 95,
+            padding: '12px 18px',
+            borderRadius: '14px',
+            background: resultToast.won ? 'linear-gradient(135deg, rgba(16,185,129,0.95), rgba(5,150,105,0.95))' : 'linear-gradient(135deg, rgba(239,68,68,0.95), rgba(185,28,28,0.95))',
+            border: '2px solid ' + (resultToast.won ? 'rgba(110,231,183,0.8)' : 'rgba(252,165,165,0.8)'),
+            boxShadow: '0 8px 32px ' + (resultToast.won ? 'rgba(16,185,129,0.4)' : 'rgba(239,68,68,0.4)'),
+            color: '#fff',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            cursor: 'pointer',
+            animation: 'slideIn 0.4s ease',
+            maxWidth: '92vw',
+          }}
+        >
+          <div style={{ fontSize: '28px', lineHeight: '1' }}>{resultToast.won ? '\u{1F389}' : '\u{1F614}'}</div>
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontSize: '14px', fontWeight: '900', letterSpacing: '0.5px', lineHeight: '1.1' }}>
+              {resultToast.won ? 'YOU WON' : 'YOU LOST'} &middot; {resultToast.won ? '+' : '-'}{resultToast.amount.toFixed(3)} ETH
+            </div>
+            <div style={{ fontSize: '10px', opacity: 0.9, marginTop: '3px', fontWeight: '600' }}>
+              {(resultToast.side === 'up' ? '\u{1F4C8} UP' : '\u{1F4C9} DOWN')} &middot; ${resultToast.entryPrice ? resultToast.entryPrice.toLocaleString(undefined, { maximumFractionDigits: 2 }) : '—'} &rarr; ${resultToast.exitPrice ? resultToast.exitPrice.toLocaleString(undefined, { maximumFractionDigits: 2 }) : '—'}
+            </div>
+          </div>
+          <div style={{ fontSize: '14px', opacity: 0.7, marginLeft: '4px' }}>&times;</div>
+        </div>
+      )}
 
       {/* Transaction Status Overlay */}
       {txStatus && (
