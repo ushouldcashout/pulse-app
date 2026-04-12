@@ -1943,8 +1943,10 @@ const PulseGame = function(props) {
               </div>
 
               {/* Win Result Display */}
-              {bet && roundResult && bet === roundResult && (phase === 'results' || phase === 'resolving') && (function() {
-                var margin = (price && snapshotPrice) ? (price - snapshotPrice) : 0;
+              {bet && roundResult && bet === roundResult && (phase === 'results' || phase === 'resolving') && resultToast && (function() {
+                var frozenEntry = resultToast.entryPrice;
+                var frozenExit = resultToast.exitPrice;
+                var margin = (frozenExit && frozenEntry) ? (frozenExit - frozenEntry) : 0;
                 var marginAbs = Math.abs(margin);
                 var sideLabel = bet === 'up' ? 'UP' : 'DOWN';
                 var sideEmoji = bet === 'up' ? '\u{1F4C8}' : '\u{1F4C9}';
@@ -1958,12 +1960,12 @@ const PulseGame = function(props) {
                     <div style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center', padding: '8px', borderRadius: '8px', background: 'rgba(0,0,0,0.25)', marginBottom: claimRoundId ? '10px' : '0', fontSize: '11px' }}>
                       <div>
                         <div style={{ color: '#6b7280', fontSize: '9px', letterSpacing: '0.5px' }}>ENTRY</div>
-                        <div style={{ color: '#fff', fontWeight: '700' }}>${snapshotPrice ? snapshotPrice.toLocaleString(undefined, { maximumFractionDigits: 2 }) : '—'}</div>
+                        <div style={{ color: '#fff', fontWeight: '700' }}>${frozenEntry ? frozenEntry.toLocaleString(undefined, { maximumFractionDigits: 2 }) : '—'}</div>
                       </div>
                       <div style={{ color: '#10b981', fontSize: '14px' }}>&rarr;</div>
                       <div>
                         <div style={{ color: '#6b7280', fontSize: '9px', letterSpacing: '0.5px' }}>EXIT</div>
-                        <div style={{ color: '#fff', fontWeight: '700' }}>${price ? price.toLocaleString(undefined, { maximumFractionDigits: 2 }) : '—'}</div>
+                        <div style={{ color: '#fff', fontWeight: '700' }}>${frozenExit ? frozenExit.toLocaleString(undefined, { maximumFractionDigits: 2 }) : '—'}</div>
                       </div>
                       <div>
                         <div style={{ color: '#6b7280', fontSize: '9px', letterSpacing: '0.5px' }}>BY</div>
@@ -1980,8 +1982,10 @@ const PulseGame = function(props) {
               })()}
 
               {/* Lose Result Display */}
-              {bet && roundResult && bet !== roundResult && (phase === 'results' || phase === 'resolving') && (function() {
-                var margin = (price && snapshotPrice) ? (price - snapshotPrice) : 0;
+              {bet && roundResult && bet !== roundResult && (phase === 'results' || phase === 'resolving') && resultToast && (function() {
+                var frozenEntry = resultToast.entryPrice;
+                var frozenExit = resultToast.exitPrice;
+                var margin = (frozenExit && frozenEntry) ? (frozenExit - frozenEntry) : 0;
                 var marginAbs = Math.abs(margin);
                 var sideLabel = bet === 'up' ? 'UP' : 'DOWN';
                 var sideEmoji = bet === 'up' ? '\u{1F4C8}' : '\u{1F4C9}';
@@ -1996,12 +2000,12 @@ const PulseGame = function(props) {
                     <div style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center', padding: '8px', borderRadius: '8px', background: 'rgba(0,0,0,0.25)', fontSize: '11px' }}>
                       <div>
                         <div style={{ color: '#6b7280', fontSize: '9px', letterSpacing: '0.5px' }}>ENTRY</div>
-                        <div style={{ color: '#fff', fontWeight: '700' }}>${snapshotPrice ? snapshotPrice.toLocaleString(undefined, { maximumFractionDigits: 2 }) : '—'}</div>
+                        <div style={{ color: '#fff', fontWeight: '700' }}>${frozenEntry ? frozenEntry.toLocaleString(undefined, { maximumFractionDigits: 2 }) : '—'}</div>
                       </div>
                       <div style={{ color: '#ef4444', fontSize: '14px' }}>&rarr;</div>
                       <div>
                         <div style={{ color: '#6b7280', fontSize: '9px', letterSpacing: '0.5px' }}>EXIT</div>
-                        <div style={{ color: '#fff', fontWeight: '700' }}>${price ? price.toLocaleString(undefined, { maximumFractionDigits: 2 }) : '—'}</div>
+                        <div style={{ color: '#fff', fontWeight: '700' }}>${frozenExit ? frozenExit.toLocaleString(undefined, { maximumFractionDigits: 2 }) : '—'}</div>
                       </div>
                       <div>
                         <div style={{ color: '#6b7280', fontSize: '9px', letterSpacing: '0.5px' }}>BY</div>
