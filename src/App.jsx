@@ -763,7 +763,7 @@ const LandingPage = ({ onEnter }) => {
           {[
             { step: '1', title: 'CONNECT', desc: 'Link your wallet in one tap. Works with MetaMask, WalletConnect, or Coinbase.', icon: '🔗', color: '#06b6d4' },
             { step: '2', title: 'PREDICT', desc: 'BTC going UP or DOWN in the next 10 seconds? Pick your side and bet ETH.', icon: '🎯', color: '#fbbf24' },
-            { step: '3', title: 'WIN', desc: 'Called it right? Claim your ETH winnings + earn $PULSE points instantly.', icon: '💰', color: '#10b981' },
+            { step: '3', title: 'WIN', desc: 'Called it right? ETH winnings auto-deposit to your wallet + earn $PULSE points instantly.', icon: '💰', color: '#10b981' },
           ].map(function(s) {
             return (
               <div className="step-card" key={s.step} style={{
@@ -1334,15 +1334,8 @@ const PulseGame = function(props) {
   }, []);
 
   var connectX = function() {
-    // Opens X OAuth popup — backend handles the flow and posts result back
-    var w = 500, h = 600;
-    var left = (screen.width / 2) - (w / 2);
-    var top = (screen.height / 2) - (h / 2);
-    window.open(
-      'https://api.pulsebet.fun/auth/twitter?wallet=' + (address || ''),
-      'pulse_x_auth',
-      'width=' + w + ',height=' + h + ',left=' + left + ',top=' + top
-    );
+    // X OAuth not deployed yet — open profile setup overlay instead
+    setShowProfileSetup(true);
   };
 
   var disconnectX = function() {
@@ -1492,6 +1485,26 @@ const PulseGame = function(props) {
             setShowConfetti(true);
             playSound('win');
             setTimeout(function() { setShowConfetti(false); }, 3000);
+            // AUTO-CLAIM: fire claim tx automatically so winnings go straight to wallet
+            if (claimRoundId && !claimStatus) {
+              setTimeout(function() {
+                console.log('[Pulse] Auto-claiming winnings for round', claimRoundId);
+                txTypeRef.current = 'claim';
+                setClaimStatus('pending');
+                try {
+                  var claimData = encodeFunctionData({
+                    abi: PULSE_ABI,
+                    functionName: 'claim',
+                    args: [BigInt(claimRoundId)],
+                  });
+                  sendTransaction({ to: CONTRACT_ADDRESS, data: claimData });
+                } catch(claimErr) {
+                  console.error('[Pulse] Auto-claim error:', claimErr);
+                  setClaimStatus('error');
+                  setTimeout(function() { setClaimStatus(null); }, 3000);
+                }
+              }, 1500); // small delay so user sees the WIN card first
+            }
           } else {
             setStreak(0);
             setShowShake(true);
@@ -1760,8 +1773,8 @@ const PulseGame = function(props) {
                 <span style={{ fontWeight: '900', fontSize: '10px' }}>{'\u{1D54F}'}</span> @{xProfile.handle}
               </button>
             ) : (
-              <button onClick={connectX} style={{ padding: '4px 10px', borderRadius: '14px', fontWeight: '600', color: '#9ca3af', border: '1px solid rgba(255,255,255,0.08)', cursor: 'pointer', fontSize: '10px', background: 'rgba(255,255,255,0.03)', display: 'flex', alignItems: 'center', gap: '3px' }}>
-                <span style={{ fontWeight: '900', fontSize: '11px' }}>{'\u{1D54F}'}</span> Connect
+              <button onClick={function() { setShowProfileSetup(true); }} style={{ padding: '4px 10px', borderRadius: '14px', fontWeight: '600', color: displayName ? '#10b981' : '#9ca3af', border: '1px solid ' + (displayName ? 'rgba(16,185,129,0.2)' : 'rgba(255,255,255,0.08)'), cursor: 'pointer', fontSize: '10px', background: displayName ? 'rgba(16,185,129,0.06)' : 'rgba(255,255,255,0.03)', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                {displayName ? displayName : '\u{1F464} Set Name'}
               </button>
             )}
             <button onClick={() => open({ view: 'Account' })} style={{ padding: '4px 10px', borderRadius: '14px', fontWeight: '600', color: '#10b981', border: '1px solid rgba(16,185,129,0.15)', cursor: 'pointer', fontSize: '11px', background: 'rgba(16,185,129,0.06)' }}>
@@ -2130,10 +2143,13 @@ const PulseGame = function(props) {
                         <div style={{ color: '#10b981', fontWeight: '800' }}>{margin >= 0 ? '+' : '-'}${marginAbs.toFixed(2)}</div>
                       </div>
                     </div>
-                    {claimRoundId && (
-                      <button onClick={claimWinnings} disabled={!!claimStatus}
-                        style={{ width: '100%', padding: '12px', borderRadius: '10px', border: 'none', background: claimStatus === 'confirmed' ? '#10b981' : 'linear-gradient(135deg, #10b981, #059669)', color: '#000', fontWeight: '800', fontSize: '14px', cursor: claimStatus ? 'not-allowed' : 'pointer', boxShadow: '0 4px 16px rgba(16,185,129,0.4)', transition: 'all 0.2s' }}
-                      >{claimStatus === 'pending' ? 'Confirm in Wallet...' : claimStatus === 'confirming' ? 'Claiming...' : claimStatus === 'confirmed' ? 'Claimed!' : claimStatus === 'error' ? 'Claim Failed' : 'Claim ' + (betAmount * 2).toFixed(3) + ' ETH'}</button>
+                    {claimStatus && (
+                      <div style={{ width: '100%', padding: '10px', borderRadius: '10px', background: claimStatus === 'confirmed' ? 'rgba(16,185,129,0.12)' : 'rgba(251,191,36,0.08)', textAlign: 'center', fontSize: '12px', fontWeight: '700', color: claimStatus === 'confirmed' ? '#10b981' : claimStatus === 'error' ? '#ef4444' : '#fbbf24', border: '1px solid ' + (claimStatus === 'confirmed' ? 'rgba(16,185,129,0.3)' : 'rgba(251,191,36,0.2)') }}>
+                        {claimStatus === 'pending' ? '\u23F3 Claiming to wallet...' : claimStatus === 'confirming' ? '\u26D3 Confirming claim...' : claimStatus === 'confirmed' ? '\u2705 ' + (betAmount * 2).toFixed(3) + ' ETH sent to wallet!' : claimStatus === 'error' ? '\u274C Claim failed — tap to retry' : ''}
+                      </div>
+                    )}
+                    {claimRoundId && !claimStatus && (
+                      <div style={{ width: '100%', padding: '8px', textAlign: 'center', fontSize: '10px', color: '#6b7280', fontStyle: 'italic' }}>Auto-claiming to your wallet...</div>
                     )}
                     {/* Share buttons */}
                     <div style={{ display: 'flex', gap: '6px', marginTop: '10px' }}>
@@ -2260,7 +2276,23 @@ const PulseGame = function(props) {
               <div style={{ fontSize: '16px', fontWeight: '700' }}>Your Profile</div>
               <button onClick={function() { setShowProfileSetup(false); }} style={{ background: 'none', border: 'none', color: '#6b7280', fontSize: '18px', cursor: 'pointer' }}>{'\u2715'}</button>
             </div>
-            <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '16px' }}>Link your X account so other players can see who you are. Your handle appears next to your bets.</div>
+            <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '16px' }}>Set your display name so other players can see who you are. Your name appears next to your bets.</div>
+            {/* Custom display name input */}
+            <div style={{ marginBottom: '16px' }}>
+              <div style={{ fontSize: '10px', color: '#6b7280', marginBottom: '4px', fontWeight: '600' }}>DISPLAY NAME</div>
+              <div style={{ display: 'flex', gap: '6px' }}>
+                <input
+                  type="text"
+                  value={displayName}
+                  onChange={function(e) { setDisplayName(e.target.value); }}
+                  placeholder={address ? address.slice(0, 6) + '..' + address.slice(-4) : 'Enter name...'}
+                  maxLength={20}
+                  style={{ flex: 1, padding: '10px 12px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.04)', color: '#fff', fontSize: '14px', fontWeight: '600', outline: 'none' }}
+                />
+                <button onClick={function() { try { localStorage.setItem('pulse_display_name', displayName); } catch(e) {} setShowProfileSetup(false); haptic('notification', 'success'); }} style={{ padding: '10px 16px', borderRadius: '10px', border: 'none', background: 'linear-gradient(135deg, #10b981, #059669)', color: '#fff', fontWeight: '700', fontSize: '12px', cursor: 'pointer' }}>Save</button>
+              </div>
+            </div>
+            {/* X connect section */}
             {xProfile ? (
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px', borderRadius: '12px', background: 'rgba(29,155,240,0.08)', border: '1px solid rgba(29,155,240,0.2)', marginBottom: '12px' }}>
@@ -2273,11 +2305,13 @@ const PulseGame = function(props) {
                 <button onClick={disconnectX} style={{ width: '100%', padding: '10px', borderRadius: '10px', border: '1px solid rgba(239,68,68,0.2)', background: 'rgba(239,68,68,0.06)', color: '#ef4444', fontWeight: '600', fontSize: '12px', cursor: 'pointer' }}>Disconnect X Account</button>
               </div>
             ) : (
-              <div>
-                <button onClick={function() { connectX(); setShowProfileSetup(false); }} style={{ width: '100%', padding: '14px', borderRadius: '12px', border: 'none', background: '#1d9bf0', color: '#fff', fontWeight: '700', fontSize: '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', boxShadow: '0 4px 16px rgba(29,155,240,0.3)' }}>
-                  <span style={{ fontWeight: '900', fontSize: '16px' }}>{'\u{1D54F}'}</span> Connect X Account
-                </button>
-                <div style={{ fontSize: '10px', color: '#4b5563', textAlign: 'center', marginTop: '10px' }}>Your @handle and avatar will appear next to your bets so other players can see who they're up against.</div>
+              <div style={{ padding: '12px', borderRadius: '12px', background: 'rgba(29,155,240,0.04)', border: '1px solid rgba(29,155,240,0.1)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                  <span style={{ fontWeight: '900', fontSize: '14px' }}>{'\u{1D54F}'}</span>
+                  <span style={{ fontSize: '12px', fontWeight: '700', color: '#fff' }}>Connect X Account</span>
+                  <span style={{ fontSize: '8px', padding: '2px 6px', borderRadius: '6px', background: 'rgba(251,191,36,0.12)', color: '#fbbf24', fontWeight: '600' }}>SOON</span>
+                </div>
+                <div style={{ fontSize: '10px', color: '#4b5563' }}>Link your @handle and avatar. Auto-fills your display name and lets friends find you.</div>
               </div>
             )}
           </div>
