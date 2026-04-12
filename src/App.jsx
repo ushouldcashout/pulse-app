@@ -418,96 +418,10 @@ const PulseLogo = ({ size = 34 }) => (
 )
 
 // ============================================
-// CUSTOM HOOKS FOR ECOSYSTEM DATA
-// ============================================
-const formatUSD = (num) => {
-  if (num == null || isNaN(num)) return '...';
-  if (num >= 1e9) return '$' + (num / 1e9).toFixed(2) + 'B';
-  if (num >= 1e6) return '$' + (num / 1e6).toFixed(2) + 'M';
-  if (num >= 1e3) return '$' + num.toLocaleString('en-US', { maximumFractionDigits: 0 });
-  return '$' + num.toFixed(2);
-};
-
-const useEcosystemData = () => {
-  const [tydroTVL, setTydroTVL] = useState(null);
-  const [inkTVL, setInkTVL] = useState(null);
-  const [nadoVolume, setNadoVolume] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  const fetchData = useCallback(() => {
-    setLoading(true);
-    Promise.all([
-      fetch('https://api.llama.fi/tvl/tydro').then(r => r.json()).catch(() => null),
-      fetch('https://api.llama.fi/v2/chains').then(r => r.json()).catch(() => null),
-      fetch('https://api.llama.fi/tvl/nado').then(r => r.json()).catch(() => null),
-    ]).then(([tydroData, inkData, nadoData]) => {
-      if (tydroData && !isNaN(tydroData)) {
-        setTydroTVL(parseFloat(tydroData));
-      } else {
-        setTydroTVL(385000000);
-      }
-
-      if (inkData && Array.isArray(inkData)) {
-        const ink = inkData.find(c => c.name === 'Ink');
-        if (ink) setInkTVL(parseFloat(ink.tvl) || 455000000);
-        else setInkTVL(455000000);
-      } else {
-        setInkTVL(455000000);
-      }
-
-      if (nadoData && !isNaN(nadoData)) {
-        setNadoVolume(parseFloat(nadoData));
-      } else {
-        setNadoVolume(58000000);
-      }
-
-      setLoading(false);
-    });
-  }, []);
-
-  useEffect(() => {
-    fetchData();
-    const interval = setInterval(fetchData, 60000);
-    return () => clearInterval(interval);
-  }, [fetchData]);
-
-  return { tydroTVL, inkTVL, nadoVolume, loading };
-};
-
-const useNadoData = () => {
-  const [nadoTVL, setNadoTVL] = useState(58000000);
-  const [nadoChain, setNadoChain] = useState('Ink');
-  const [topPair, setTopPair] = useState('BTC/USD');
-
-  useEffect(() => {
-    const fetchNadoData = () => {
-      fetch('https://api.llama.fi/protocol/nado')
-        .then(r => r.json())
-        .then(data => {
-          if (data.currentChainTvls) {
-            const total = Object.values(data.currentChainTvls).reduce((s, v) => s + v, 0);
-            if (total > 0) setNadoTVL(total);
-          }
-          if (data.chains && data.chains.length > 0) setNadoChain(data.chains[0]);
-        })
-        .catch(() => {});
-    };
-
-    fetchNadoData();
-    const interval = setInterval(fetchNadoData, 60000);
-    return () => clearInterval(interval);
-  }, []);
-
-  return { nadoTVL, nadoChain, topPair };
-};
-
-// ============================================
 // SIDEBAR COMPONENTS
 // ============================================
 const EcosystemSidebar = () => {
-  const { tydroTVL, inkTVL, nadoVolume } = useEcosystemData();
-
-  const mockLeaderboard = [
+  var mockLeaderboard = [
     { address: '0xA3f1...8c2d', points: 12450, streak: 7 },
     { address: '0xB7e2...4f91', points: 9830, streak: 5 },
     { address: '0x9d4c...1a73', points: 8210, streak: 3 },
@@ -515,106 +429,96 @@ const EcosystemSidebar = () => {
     { address: '0x2c1a...9d47', points: 5120, streak: 2 },
   ];
 
+  // Market overview tickers
+  var marketOverview = [
+    { symbol: 'BTC', price: '83,642', change: '+1.2%', up: true },
+    { symbol: 'ETH', price: '1,582', change: '-0.8%', up: false },
+    { symbol: 'SOL', price: '123.45', change: '+3.1%', up: true },
+    { symbol: 'INK', price: '0.042', change: '+12.4%', up: true },
+  ];
+
   return (
     <div style={{ width: '240px', overflowY: 'auto', paddingRight: '8px', scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.1) transparent' }}>
-      {/* Ink Ecosystem Stats */}
+      {/* Market Overview */}
       <div className="sidebar-card">
-        <div style={{ fontSize: '10px', fontWeight: '800', color: '#10b981', letterSpacing: '2px', marginBottom: '12px', textTransform: 'uppercase' }}>
-          INK ECOSYSTEM
+        <div style={{ fontSize: '10px', fontWeight: '800', color: '#10b981', letterSpacing: '2px', marginBottom: '12px' }}>
+          MARKET OVERVIEW
         </div>
-        <div className="sidebar-stat">
-          <span>Tydro TVL</span>
-          <span className="sidebar-stat-value">{formatUSD(tydroTVL)}</span>
-        </div>
-        <div className="sidebar-stat">
-          <span>Ink TVL</span>
-          <span className="sidebar-stat-value">{formatUSD(inkTVL)}</span>
-        </div>
-        <div className="sidebar-stat">
-          <span>Nado TVL</span>
-          <span className="sidebar-stat-value">{formatUSD(nadoVolume)}</span>
-        </div>
-      </div>
-
-      {/* Tydro Rates */}
-      <div className="sidebar-card">
-        <div style={{ fontSize: '10px', fontWeight: '800', color: '#06b6d4', letterSpacing: '2px', marginBottom: '12px', textTransform: 'uppercase' }}>
-          Tydro Rates
-        </div>
-        <div className="sidebar-stat">
-          <span>ETH Supply APY</span>
-          <span className="sidebar-stat-value">8.2%</span>
-        </div>
-        <div className="sidebar-stat">
-          <span>ETH Borrow APY</span>
-          <span className="sidebar-stat-value">12.5%</span>
-        </div>
+        {marketOverview.map(function(t, i) {
+          return (
+            <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '5px 0', borderBottom: i < marketOverview.length - 1 ? '1px solid rgba(255,255,255,0.03)' : 'none' }}>
+              <span style={{ fontSize: '11px', fontWeight: '700', color: '#fff' }}>{t.symbol}</span>
+              <div style={{ textAlign: 'right' }}>
+                <span style={{ fontSize: '11px', color: '#9ca3af', marginRight: '6px' }}>${t.price}</span>
+                <span style={{ fontSize: '9px', fontWeight: '700', color: t.up ? '#10b981' : '#ef4444' }}>{t.change}</span>
+              </div>
+            </div>
+          );
+        })}
       </div>
 
       {/* Mini Leaderboard */}
       <div className="sidebar-card">
         <div style={{ fontSize: '10px', fontWeight: '800', color: '#fbbf24', letterSpacing: '2px', marginBottom: '12px' }}>
-          TOP DEGENS 🏆
+          TOP DEGENS {'\u{1F3C6}'}
         </div>
-        {mockLeaderboard.map((player, i) => (
-          <div key={i} className="lb-item">
-            <span style={{ color: '#6b7280', minWidth: '16px' }}>#{i + 1}</span>
-            <span style={{ color: '#9ca3af', flex: 1, fontFamily: 'monospace' }}>{player.address}</span>
-            <span style={{ color: '#10b981', fontWeight: '700' }}>{player.points}</span>
-            <span style={{ color: '#fbbf24' }}>⚡{player.streak}</span>
-          </div>
-        ))}
+        {mockLeaderboard.map(function(player, i) {
+          return (
+            <div key={i} className="lb-item">
+              <span style={{ color: i === 0 ? '#fbbf24' : i === 1 ? '#c0c0c0' : i === 2 ? '#cd7f32' : '#6b7280', minWidth: '16px', fontWeight: '700' }}>#{i + 1}</span>
+              <span style={{ color: '#9ca3af', flex: 1, fontFamily: 'monospace', fontSize: '10px' }}>{player.address}</span>
+              <span style={{ color: '#10b981', fontWeight: '700', fontSize: '10px' }}>{player.points.toLocaleString()}</span>
+              <span style={{ color: '#fbbf24', fontSize: '10px' }}>{'\u26A1'}{player.streak}</span>
+            </div>
+          );
+        })}
       </div>
 
-      {/* Your Stats (placeholder - would use actual state) */}
-      <div className="sidebar-card">
-        <div style={{ fontSize: '10px', fontWeight: '800', color: '#10b981', letterSpacing: '2px', marginBottom: '12px', textTransform: 'uppercase' }}>
-          Your Stats
+      {/* How It Works */}
+      <div className="sidebar-card" style={{ borderColor: 'rgba(16,185,129,0.15)', background: 'rgba(16,185,129,0.03)' }}>
+        <div style={{ fontSize: '10px', fontWeight: '800', color: '#10b981', letterSpacing: '2px', marginBottom: '10px' }}>
+          HOW IT WORKS
         </div>
-        <div className="sidebar-stat">
-          <span>Points</span>
-          <span className="sidebar-stat-value">---</span>
-        </div>
-        <div className="sidebar-stat">
-          <span>Win Rate</span>
-          <span className="sidebar-stat-value">62%</span>
-        </div>
-        <div className="sidebar-stat">
-          <span>Streak</span>
-          <span className="sidebar-stat-value">+3</span>
+        <div style={{ fontSize: '10px', color: '#9ca3af', lineHeight: '1.6' }}>
+          <div style={{ marginBottom: '6px' }}>{'\u26A1'} <span style={{ color: '#fff', fontWeight: '600' }}>Crypto</span> — 10s rounds, 24/7</div>
+          <div style={{ marginBottom: '6px' }}>{'\u{1F4C8}'} <span style={{ color: '#fff', fontWeight: '600' }}>Stocks</span> — 30s rounds, market hours</div>
+          <div style={{ marginBottom: '6px' }}>{'\u{1F3AF}'} Predict UP or DOWN, win 2x</div>
+          <div>{'\u{1F4B0}'} Earn points toward $PULSE airdrop</div>
         </div>
       </div>
     </div>
   );
 };
 
-const LiveFeedSidebar = ({ recentBets, points, winRate = 62 }) => {
-  const { nadoTVL, nadoChain, topPair } = useNadoData();
-
-  const comingSoonMarkets = [
-    'Will Tydro ETH utilization cross 80%?',
-    'Nado 24h volume over $5M?',
-    'INK TVL +10% this week?',
+const LiveFeedSidebar = ({ recentBets, points }) => {
+  // Mock stock closing prices (replace with real Pyth/Chainlink feed)
+  var stockPrices = [
+    { symbol: 'TSLA', price: 248.42, change: +2.87, pct: +1.17 },
+    { symbol: 'NVDA', price: 131.28, change: -1.54, pct: -1.16 },
+    { symbol: 'COIN', price: 221.63, change: +5.12, pct: +2.36 },
+    { symbol: 'MSTR', price: 378.90, change: +8.44, pct: +2.28 },
+    { symbol: 'SPY', price: 543.16, change: -0.83, pct: -0.15 },
   ];
 
   return (
     <div style={{ width: '260px', overflowY: 'auto', paddingLeft: '8px', scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.1) transparent' }}>
       {/* Live Bet Feed */}
       <div className="sidebar-card">
-        <div style={{ fontSize: '10px', fontWeight: '800', color: '#ef4444', letterSpacing: '2px', marginBottom: '12px' }}>
-          LIVE BETS 🔴
+        <div style={{ fontSize: '10px', fontWeight: '800', color: '#ef4444', letterSpacing: '2px', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: '#ef4444', animation: 'pulseGlowRed 1.4s ease-in-out infinite' }}></span>
+          LIVE BETS
         </div>
-        <div style={{ maxHeight: '200px', overflowY: 'auto', scrollbarWidth: 'thin' }}>
+        <div style={{ maxHeight: '180px', overflowY: 'auto', scrollbarWidth: 'thin' }}>
           {recentBets && recentBets.length > 0 ? (
-            recentBets.slice(0, 15).map((bet, i) => {
-              const isUp = bet.side === 'up';
+            recentBets.slice(0, 12).map(function(bet, i) {
+              var isUp = bet.side === 'up';
               return (
                 <div key={i} className="live-bet-item" style={{
                   borderColor: isUp ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)',
                   background: isUp ? 'rgba(16,185,129,0.03)' : 'rgba(239,68,68,0.03)',
                 }}>
-                  <span style={{ fontSize: '11px' }}>{isUp ? '🟢' : '🔴'}</span>
-                  <span style={{ color: '#9ca3af', fontFamily: 'monospace', flex: 1 }}>{bet.name?.slice(0, 8) || '0x???'}</span>
+                  <span style={{ fontSize: '11px' }}>{isUp ? '\u{1F7E2}' : '\u{1F534}'}</span>
+                  <span style={{ color: '#9ca3af', fontFamily: 'monospace', flex: 1 }}>{bet.name ? bet.name.slice(0, 8) : '0x???'}</span>
                   <span style={{ color: isUp ? '#10b981' : '#ef4444', fontWeight: '700', fontSize: '9px' }}>
                     {bet.amount} {isUp ? 'UP' : 'DN'}
                   </span>
@@ -627,56 +531,48 @@ const LiveFeedSidebar = ({ recentBets, points, winRate = 62 }) => {
         </div>
       </div>
 
-      {/* Nado Quick Stats */}
+      {/* Stock Market Ticker — Last Close */}
       <div className="sidebar-card">
-        <div style={{ fontSize: '10px', fontWeight: '800', color: '#a855f7', letterSpacing: '2px', marginBottom: '12px', textTransform: 'uppercase' }}>
-          Nado DEX
+        <div style={{ fontSize: '10px', fontWeight: '800', color: '#a855f7', letterSpacing: '2px', marginBottom: '12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <span>MARKET PRICES</span>
+          <span style={{ fontSize: '8px', color: '#6b7280', fontWeight: '600', letterSpacing: '0.5px' }}>Last Close</span>
         </div>
-        <div className="sidebar-stat">
-          <span>TVL</span>
-          <span className="sidebar-stat-value">{formatUSD(nadoTVL)}</span>
-        </div>
-        <div className="sidebar-stat">
-          <span>Chain</span>
-          <span className="sidebar-stat-value">{nadoChain}</span>
-        </div>
-        <div className="sidebar-stat">
-          <span>Top Pair</span>
-          <span className="sidebar-stat-value">{topPair}</span>
-        </div>
-      </div>
-
-      {/* DeFi Predictions - LIVE */}
-      <div onClick={() => { window.location.href = '/defi-markets.html'; }} style={{ cursor: 'pointer', display: 'block' }}>
-        <div className="sidebar-card" style={{ borderColor: 'rgba(168,85,247,0.3)', background: 'rgba(168,85,247,0.05)', cursor: 'pointer' }}>
-          <div style={{ fontSize: '10px', fontWeight: '800', color: '#a855f7', letterSpacing: '2px', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: '#a855f7', animation: 'pulse 2s infinite' }}></span>
-            PREDICT DEFI
-          </div>
-          {comingSoonMarkets.map((market, i) => (
-            <div key={i} style={{ fontSize: '10px', color: '#9ca3af', padding: '6px 0', borderBottom: i < comingSoonMarkets.length - 1 ? '1px solid rgba(255,255,255,0.03)' : 'none', display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <span style={{ color: '#a855f7' }}>→</span>
-              <span>{market}</span>
+        {stockPrices.map(function(s, i) {
+          var up = s.change >= 0;
+          return (
+            <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 0', borderBottom: i < stockPrices.length - 1 ? '1px solid rgba(255,255,255,0.03)' : 'none' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ fontSize: '11px', fontWeight: '700', color: '#fff', minWidth: '36px' }}>{s.symbol}</span>
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                <div style={{ fontSize: '11px', fontWeight: '700', color: '#fff' }}>${s.price.toFixed(2)}</div>
+                <div style={{ fontSize: '9px', fontWeight: '600', color: up ? '#10b981' : '#ef4444' }}>
+                  {up ? '+' : ''}{s.change.toFixed(2)} ({up ? '+' : ''}{s.pct.toFixed(2)}%)
+                </div>
+              </div>
             </div>
-          ))}
-          <div style={{ marginTop: '10px', fontSize: '10px', fontWeight: '700', color: '#a855f7', textAlign: 'center', padding: '6px', borderRadius: '6px', border: '1px solid rgba(168,85,247,0.2)' }}>
-            View Markets →
-          </div>
+          );
+        })}
+        <div style={{ marginTop: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', fontSize: '8px', color: '#4b5563' }}>
+          <span>Powered by</span>
+          <span style={{ color: '#a855f7', fontWeight: '700' }}>Pyth</span>
+          <span>+</span>
+          <span style={{ color: '#375bd2', fontWeight: '700' }}>Chainlink</span>
         </div>
       </div>
 
-      {/* Ideas & Voting */}
-      <div onClick={() => { window.location.href = '/ideas.html'; }} style={{ cursor: 'pointer', display: 'block' }}>
-        <div className="sidebar-card" style={{ borderColor: 'rgba(0,212,170,0.2)', background: 'rgba(0,212,170,0.03)', cursor: 'pointer' }}>
-          <div style={{ fontSize: '10px', fontWeight: '800', color: '#00d4aa', letterSpacing: '2px', marginBottom: '8px' }}>
-            💡 IDEAS & QORUM
-          </div>
-          <div style={{ fontSize: '10px', color: '#9ca3af', lineHeight: '1.5' }}>
-            Submit ideas, vote on features, shape Pulse's future
-          </div>
-          <div style={{ marginTop: '10px', fontSize: '10px', fontWeight: '700', color: '#00d4aa', textAlign: 'center', padding: '6px', borderRadius: '6px', border: '1px solid rgba(0,212,170,0.2)' }}>
-            Vote Now →
-          </div>
+      {/* Your Session Stats */}
+      <div className="sidebar-card">
+        <div style={{ fontSize: '10px', fontWeight: '800', color: '#fbbf24', letterSpacing: '2px', marginBottom: '12px' }}>
+          YOUR SESSION
+        </div>
+        <div className="sidebar-stat">
+          <span>Points</span>
+          <span className="sidebar-stat-value">{points || 0}</span>
+        </div>
+        <div className="sidebar-stat">
+          <span>$PULSE</span>
+          <span className="sidebar-stat-value" style={{ color: '#a855f7' }}>Coming Soon</span>
         </div>
       </div>
     </div>
@@ -1574,7 +1470,7 @@ const PulseGame = function(props) {
   const ringC = 2 * Math.PI * ringR;
 
   return (
-    <div style={{ height: '100vh', maxHeight: '100vh', overflow: 'auto', background: 'radial-gradient(ellipse at 50% 0%, #060f0b 0%, #000 70%)', color: '#fff', fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ height: '100%', maxHeight: '100%', overflow: 'auto', background: 'radial-gradient(ellipse at 50% 0%, #060f0b 0%, #000 70%)', color: '#fff', fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif', display: 'flex', flexDirection: 'column' }}>
       <style>{PULSE_STYLES}</style>
 
       {/* ===== HEADER BAR ===== */}
@@ -1705,7 +1601,7 @@ const PulseGame = function(props) {
             )}
 
             {/* CENTER COLUMN — Chart + Controls */}
-            <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '8px', paddingBottom: '12px' }}>
               {/* Round history strip */}
               {lastResults.length > 0 && (
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '2px', padding: '4px 0', flexShrink: 0 }}>
@@ -2202,7 +2098,7 @@ function App() {
         <QueryClientProvider client={queryClient}>
           {showGame ? (
             <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh', width: '100%' }}>
-              <div style={{ flex: 1, minHeight: 0, overflow: 'hidden', position: 'relative' }}>
+              <div style={{ flex: 1, minHeight: 0, overflow: 'auto', position: 'relative' }}>
                 <PulseGame key={gameMode} gameMode={gameMode} />
               </div>
               {/* Bottom Nav — Crypto / Stocks */}
