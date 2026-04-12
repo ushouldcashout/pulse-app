@@ -207,6 +207,76 @@ const queryClient = new QueryClient();
 const WS_URL = 'wss://pulse-backend-production-b2c9.up.railway.app';
 
 // ============================================
+// STOCKS CONFIG
+// ============================================
+const STOCK_TICKERS = [
+  { symbol: 'TSLA', name: 'Tesla', color: '#e31937' },
+  { symbol: 'NVDA', name: 'Nvidia', color: '#76b900' },
+  { symbol: 'COIN', name: 'Coinbase', color: '#0052ff' },
+  { symbol: 'MSTR', name: 'Strategy', color: '#d9222a' },
+  { symbol: 'PLTR', name: 'Palantir', color: '#101010' },
+  { symbol: 'AMD', name: 'AMD', color: '#ed1c24' },
+  { symbol: 'HOOD', name: 'Robinhood', color: '#00c805' },
+  { symbol: 'GME', name: 'GameStop', color: '#ff0000' },
+  { symbol: 'AMC', name: 'AMC', color: '#ff1f1f' },
+  { symbol: 'SPY', name: 'S&P 500', color: '#4a90d9' },
+  { symbol: 'QQQ', name: 'Nasdaq 100', color: '#0092cf' },
+];
+
+function getMarketStatus() {
+  var now = new Date();
+  // Convert to ET
+  var etStr = now.toLocaleString('en-US', { timeZone: 'America/New_York' });
+  var et = new Date(etStr);
+  var day = et.getDay(); // 0=Sun, 6=Sat
+  var h = et.getHours();
+  var m = et.getMinutes();
+  var mins = h * 60 + m;
+
+  if (day === 0 || day === 6) {
+    // Calculate mins until Monday 9:30
+    var daysToMon = day === 0 ? 1 : 2;
+    var minsUntil = daysToMon * 24 * 60 + (9 * 60 + 30 - mins);
+    var hUntil = Math.floor(minsUntil / 60);
+    var mUntil = minsUntil % 60;
+    return { open: false, status: 'weekend', label: 'Opens Mon ' + hUntil + 'h ' + mUntil + 'm', event: null, etTime: h + ':' + (m < 10 ? '0' : '') + m + ' ET' };
+  }
+
+  var open930 = 9 * 60 + 30;
+  var close1600 = 16 * 60;
+  var lunchStart = 11 * 60 + 30;
+  var lunchEnd = 13 * 60 + 30;
+  var powerHourStart = 15 * 60;
+  var openBellEnd = 10 * 60;
+  var etTime = h + ':' + (m < 10 ? '0' : '') + m + ' ET';
+
+  if (mins < open930) {
+    var mu = open930 - mins;
+    return { open: false, status: 'premarket', label: 'Opens in ' + Math.floor(mu / 60) + 'h ' + (mu % 60) + 'm', event: null, etTime: etTime, minsUntilOpen: mu };
+  }
+  if (mins >= close1600) {
+    return { open: false, status: 'afterhours', label: 'Markets closed', event: null, etTime: etTime };
+  }
+
+  // Market is open
+  var event = null;
+  var eventLabel = '';
+  if (mins < openBellEnd) {
+    event = 'opening-bell';
+    eventLabel = 'OPENING BELL';
+  } else if (mins >= lunchStart && mins < lunchEnd) {
+    event = 'lunch';
+    eventLabel = 'LUNCH BREAK';
+  } else if (mins >= powerHourStart) {
+    event = 'power-hour';
+    eventLabel = 'POWER HOUR';
+  }
+
+  var minsLeft = close1600 - mins;
+  return { open: true, status: 'open', label: 'Market Open', event: event, eventLabel: eventLabel, etTime: etTime, minsUntilClose: minsLeft };
+}
+
+// ============================================
 // CSS ANIMATIONS & STYLES
 // ============================================
 const PULSE_STYLES = `
@@ -1145,7 +1215,8 @@ const useMediaQuery = (query) => {
 // ============================================
 // MAIN GAME COMPONENT
 // ============================================
-const PulseGame = () => {
+const PulseGame = function(props) {
+  var gameMode = props.gameMode || 'crypto';
   const { isReady, haptic, isTelegram } = useTelegram();
   const isDesktop = useMediaQuery('(min-width: 901px)');
 
@@ -1218,6 +1289,12 @@ const PulseGame = () => {
   const [faucetCopied, setFaucetCopied] = useState(false);
   const [faucetUrlCopied, setFaucetUrlCopied] = useState(false);
   const [recentBets, setRecentBets] = useState([]); // social feed: [{side, amount, name}]
+
+  // Stocks mode state
+  var [stockTicker, setStockTicker] = useState('TSLA');
+  var [marketStatus, setMarketStatus] = useState(function() { return gameMode === 'stocks' ? getMarketStatus() : null; });
+  var isStocks = gameMode === 'stocks';
+  var activeAsset = isStocks ? stockTicker : 'BTC';
   const [betHistory, setBetHistory] = useState(function() {
     try { return JSON.parse(localStorage.getItem('pulse_bet_history') || '[]'); } catch(e) { return []; }
   });
@@ -1229,6 +1306,28 @@ const PulseGame = () => {
   useEffect(() => { try { const p = localStorage.getItem('pulse_points'); if (p) setPoints(parseInt(p)); } catch(e){} }, []);
   useEffect(() => { try { localStorage.setItem('pulse_points', points.toString()); } catch(e){} }, [points]);
   useEffect(() => { try { localStorage.setItem('pulse_bet_history', JSON.stringify(betHistory.slice(0, 100))); } catch(e){} }, [betHistory]);
+
+  // Stocks: poll market status every 30s
+  useEffect(function() {
+    if (!isStocks) return;
+    setMarketStatus(getMarketStatus());
+    var interval = setInterval(function() { setMarketStatus(getMarketStatus()); }, 30000);
+    return function() { clearInterval(interval); };
+  }, [isStocks]);
+
+  // Stocks: resubscribe WS when ticker changes
+  useEffect(function() {
+    if (!isStocks) return;
+    if (wsRef.current && wsRef.current.readyState === 1) {
+      wsRef.current.send(JSON.stringify({ type: 'subscribe', asset: stockTicker }));
+      // Reset price state for new ticker
+      setPrice(0);
+      setSnapshotPrice(null);
+      setPriceHistory([]);
+      setPriceDir(null);
+      prevPriceRef.current = 0;
+    }
+  }, [stockTicker, isStocks]);
 
   // Track transaction lifecycle
   useEffect(() => {
@@ -1332,7 +1431,7 @@ const PulseGame = () => {
       try {
         const ws = new WebSocket(WS_URL);
         wsRef.current = ws;
-        ws.onopen = () => { if (mounted) { setWsConnected(true); ws.send(JSON.stringify({ type: 'subscribe', asset: 'BTC' })); }};
+        ws.onopen = () => { if (mounted) { setWsConnected(true); ws.send(JSON.stringify({ type: 'subscribe', asset: activeAsset })); }};
         ws.onmessage = (e) => {
           if (!mounted) return;
           try {
@@ -1547,8 +1646,55 @@ const PulseGame = () => {
             <button onClick={() => refetchBalance()} style={{ padding: '5px 14px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.08)', background: 'transparent', color: '#6b7280', fontWeight: '600', cursor: 'pointer', fontSize: '11px' }}>Refresh</button>
           </div>
         )}
+          {/* STOCKS: Market Status Banner + Ticker Selector */}
+          {isStocks && (
+            <div style={{ flexShrink: 0 }}>
+              {/* Market status bar */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 12px', background: marketStatus && marketStatus.open ? 'rgba(16,185,129,0.06)' : 'rgba(239,68,68,0.06)', borderBottom: '1px solid ' + (marketStatus && marketStatus.open ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)') }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: marketStatus && marketStatus.open ? '#10b981' : '#ef4444', display: 'inline-block', animation: marketStatus && marketStatus.open ? 'pulseGlow 1.4s ease-in-out infinite' : 'none' }} />
+                  <span style={{ fontSize: '10px', fontWeight: '700', color: marketStatus && marketStatus.open ? '#10b981' : '#ef4444' }}>{marketStatus ? marketStatus.label : 'Loading...'}</span>
+                  {marketStatus && marketStatus.event && (
+                    <span style={{ fontSize: '8px', fontWeight: '800', padding: '2px 6px', borderRadius: '4px', letterSpacing: '0.5px', background: marketStatus.event === 'opening-bell' ? 'rgba(251,191,36,0.2)' : marketStatus.event === 'power-hour' ? 'rgba(168,85,247,0.2)' : 'rgba(107,114,128,0.15)', color: marketStatus.event === 'opening-bell' ? '#fbbf24' : marketStatus.event === 'power-hour' ? '#a855f7' : '#6b7280', animation: (marketStatus.event === 'opening-bell' || marketStatus.event === 'power-hour') ? 'pulseGlow 1.4s ease-in-out infinite' : 'none' }}>{marketStatus.eventLabel}</span>
+                  )}
+                </div>
+                <span style={{ fontSize: '9px', color: '#6b7280', fontFamily: 'monospace' }}>{marketStatus ? marketStatus.etTime : ''} {'\u00B7'} 30s rounds</span>
+              </div>
+
+              {/* Stock ticker selector — horizontal scroll */}
+              <div style={{ display: 'flex', gap: '4px', overflowX: 'auto', scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch', padding: '6px 8px', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                {STOCK_TICKERS.map(function(t) {
+                  var sel = stockTicker === t.symbol;
+                  return (
+                    <button key={t.symbol} onClick={function() { setStockTicker(t.symbol); haptic('impact', 'light'); }} style={{ flexShrink: 0, padding: '4px 10px', borderRadius: '8px', border: sel ? '1px solid rgba(168,85,247,0.5)' : '1px solid rgba(255,255,255,0.06)', background: sel ? 'rgba(168,85,247,0.15)' : 'rgba(255,255,255,0.03)', color: sel ? '#c084fc' : '#9ca3af', fontSize: '10px', fontWeight: '700', cursor: 'pointer', transition: 'all 0.2s', whiteSpace: 'nowrap' }}>
+                      {t.symbol}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Lunch pause overlay */}
+              {marketStatus && marketStatus.event === 'lunch' && (
+                <div style={{ padding: '10px 12px', background: 'rgba(107,114,128,0.08)', borderBottom: '1px solid rgba(107,114,128,0.12)', textAlign: 'center' }}>
+                  <div style={{ fontSize: '11px', color: '#9ca3af', fontWeight: '600' }}>{'\u{1F374}'} Lunch Pause — low volatility window</div>
+                  <div style={{ fontSize: '9px', color: '#6b7280', marginTop: '2px' }}>Rounds still active but expect flat price action. Power Hour starts at 3:00 PM ET.</div>
+                </div>
+              )}
+
+              {/* Markets closed overlay */}
+              {marketStatus && !marketStatus.open && (
+                <div style={{ padding: '24px 16px', textAlign: 'center' }}>
+                  <div style={{ fontSize: '32px', marginBottom: '8px' }}>{marketStatus.status === 'weekend' ? '\u{1F3D6}' : '\u{1F319}'}</div>
+                  <div style={{ fontSize: '16px', fontWeight: '800', color: '#fff', marginBottom: '4px' }}>Markets Closed</div>
+                  <div style={{ fontSize: '12px', color: '#9ca3af', marginBottom: '12px' }}>{marketStatus.label}</div>
+                  <div style={{ fontSize: '10px', color: '#6b7280' }}>Switch to Crypto for 24/7 trading {'\u{2193}'}</div>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* THREE-COLUMN LAYOUT (Desktop) or SINGLE COLUMN (Mobile) */}
-          <div style={{ flex: 1, minHeight: 0, display: 'flex', gap: '12px', padding: '8px 8px', overflowY: 'auto' }}>
+          <div style={{ flex: 1, minHeight: 0, gap: '12px', padding: '8px 8px', overflowY: 'auto', display: (isStocks && marketStatus && !marketStatus.open) ? 'none' : 'flex' }}>
             {/* LEFT SIDEBAR — Only on desktop */}
             {isDesktop && (
               <div style={{ flexShrink: 0 }}>
@@ -1598,7 +1744,7 @@ const PulseGame = () => {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 4px 4px', flexShrink: 0 }}>
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                    <div style={{ fontSize: '9px', color: '#4b5563', letterSpacing: '1.5px' }}>{asset}/USD</div>
+                    <div style={{ fontSize: '9px', color: '#4b5563', letterSpacing: '1.5px' }}>{isStocks ? stockTicker : asset}/USD</div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
                       <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#10b981', animation: 'pulseGlow 1.4s ease-in-out infinite', display: 'inline-block' }} />
                       <span style={{ fontSize: '8px', color: '#10b981', fontWeight: '700', letterSpacing: '0.5px' }}>LIVE</span>
@@ -2046,12 +2192,30 @@ function App() {
   // In Telegram, skip landing page and go straight to game
   var inTG = typeof window !== 'undefined' && !!(window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData);
   var [showGame, setShowGame] = useState(inTG);
+  var [gameMode, setGameMode] = useState('crypto'); // 'crypto' | 'stocks'
 
   return (
     <ErrorBoundary>
       <WagmiProvider config={wagmiAdapter.wagmiConfig}>
         <QueryClientProvider client={queryClient}>
-          {showGame ? <PulseGame /> : <LandingPage onEnter={function() { setShowGame(true); }} />}
+          {showGame ? (
+            <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh', width: '100%' }}>
+              <div style={{ flex: 1, minHeight: 0, overflow: 'hidden', position: 'relative' }}>
+                <PulseGame key={gameMode} gameMode={gameMode} />
+              </div>
+              {/* Bottom Nav — Crypto / Stocks */}
+              <div style={{ flexShrink: 0, display: 'flex', borderTop: '1px solid rgba(255,255,255,0.06)', background: 'rgba(8,8,12,0.95)', backdropFilter: 'blur(12px)', padding: '0 0 env(safe-area-inset-bottom, 0)' }}>
+                <button onClick={function() { setGameMode('crypto'); }} style={{ flex: 1, padding: '10px 0 8px', border: 'none', background: gameMode === 'crypto' ? 'rgba(16,185,129,0.08)' : 'transparent', color: gameMode === 'crypto' ? '#10b981' : '#4b5563', fontWeight: '700', fontSize: '11px', cursor: 'pointer', borderTop: gameMode === 'crypto' ? '2px solid #10b981' : '2px solid transparent', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px', transition: 'all 0.2s' }}>
+                  <span style={{ fontSize: '16px' }}>{'\u26A1'}</span>
+                  <span>Crypto</span>
+                </button>
+                <button onClick={function() { setGameMode('stocks'); }} style={{ flex: 1, padding: '10px 0 8px', border: 'none', background: gameMode === 'stocks' ? 'rgba(168,85,247,0.08)' : 'transparent', color: gameMode === 'stocks' ? '#a855f7' : '#4b5563', fontWeight: '700', fontSize: '11px', cursor: 'pointer', borderTop: gameMode === 'stocks' ? '2px solid #a855f7' : '2px solid transparent', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px', transition: 'all 0.2s' }}>
+                  <span style={{ fontSize: '16px' }}>{'\u{1F4C8}'}</span>
+                  <span>Stocks</span>
+                </button>
+              </div>
+            </div>
+          ) : <LandingPage onEnter={function() { setShowGame(true); }} />}
         </QueryClientProvider>
       </WagmiProvider>
     </ErrorBoundary>
